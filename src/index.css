@@ -2,95 +2,102 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+@import url('https://fonts.googleapis.com/css2?family=Arimo:wght@400;500;600;700&display=swap');
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: oklch(1.0000 0 0);
+    --foreground: oklch(0.2138 0.0019 286.2347);
+    --card: oklch(1.0000 0 0);
+    --card-foreground: oklch(0.2138 0.0019 286.2347);
+    --popover: oklch(1.0000 0 0);
+    --popover-foreground: oklch(0.2138 0.0019 286.2347);
+    --primary: oklch(0.3600 0 0);
+    --primary-foreground: oklch(1.0000 0 0);
+    --secondary: oklch(0.9067 0 0);
+    --secondary-foreground: oklch(0 0 0);
+    --muted: oklch(0.9702 0 0);
+    --muted-foreground: oklch(0.5555 0 0);
+    --accent: oklch(0.9702 0 0);
+    --accent-foreground: oklch(0.2138 0.0019 286.2347);
+    --destructive: oklch(0.5379 0.2186 25.9751);
+    --destructive-foreground: oklch(1.0000 0 0);
+    --border: oklch(0.9219 0 0);
+    --input: oklch(0.9219 0 0);
+    --ring: oklch(0.7090 0 0);
+    
+    --chart-1: oklch(0.8093 0.0985 252.2024);
+    --chart-2: oklch(0.6207 0.1894 259.9358);
+    --chart-3: oklch(0.5495 0.2202 263.0917);
+    --chart-4: oklch(0.4893 0.2202 264.0405);
+    --chart-5: oklch(0.3372 0.2247 264.1667);
+    
+    --sidebar-background: oklch(0.9851 0 0);
+    --sidebar-foreground: oklch(0.2138 0.0019 286.2347);
+    --sidebar-primary: oklch(0.2138 0.0019 286.2347);
+    --sidebar-primary-foreground: oklch(0.9851 0 0);
+    --sidebar-accent: oklch(0.9702 0 0);
+    --sidebar-accent-foreground: oklch(0.2138 0.0019 286.2347);
+    --sidebar-border: oklch(0.9219 0 0);
+    --sidebar-ring: oklch(0.7090 0 0);
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --success: oklch(0.6500 0.1800 145);
+    --success-foreground: oklch(1.0000 0 0);
+    --warning: oklch(0.7500 0.1500 85);
+    --warning-foreground: oklch(0.2138 0.0019 286.2347);
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --radius: 0.625rem;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
-    --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
+    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
+    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 2px 4px -1px hsl(0 0% 0% / 0.10);
+    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 4px 6px -1px hsl(0 0% 0% / 0.10);
+    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 8px 10px -1px hsl(0 0% 0% / 0.10);
+    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: oklch(0.2138 0.0019 286.2347);
+    --foreground: oklch(0.9851 0 0);
+    --card: oklch(0.2138 0.0019 286.2347);
+    --card-foreground: oklch(0.9851 0 0);
+    --popover: oklch(0.2686 0 0);
+    --popover-foreground: oklch(0.9851 0 0);
+    --primary: oklch(0.9219 0 0);
+    --primary-foreground: oklch(0.2138 0.0019 286.2347);
+    --secondary: oklch(0.2686 0 0);
+    --secondary-foreground: oklch(0.9851 0 0);
+    --muted: oklch(0.2686 0 0);
+    --muted-foreground: oklch(0.7090 0 0);
+    --accent: oklch(0.3715 0 0);
+    --accent-foreground: oklch(0.9851 0 0);
+    --destructive: oklch(0.7036 0.1881 22.1462);
+    --destructive-foreground: oklch(0.9851 0 0);
+    --border: oklch(0.2768 0 0);
+    --input: oklch(0.3250 0 0);
+    --ring: oklch(0.5555 0 0);
+    
+    --chart-1: oklch(0.8093 0.0985 252.2024);
+    --chart-2: oklch(0.6207 0.1894 259.9358);
+    --chart-3: oklch(0.5495 0.2202 263.0917);
+    --chart-4: oklch(0.4893 0.2202 264.0405);
+    --chart-5: oklch(0.4210 0.1792 266.0094);
+    
+    --sidebar-background: oklch(0.2138 0.0019 286.2347);
+    --sidebar-foreground: oklch(0.9851 0 0);
+    --sidebar-primary: oklch(0.4878 0.2432 264.4045);
+    --sidebar-primary-foreground: oklch(0.9851 0 0);
+    --sidebar-accent: oklch(0.2686 0 0);
+    --sidebar-accent-foreground: oklch(0.9851 0 0);
+    --sidebar-border: oklch(0.2768 0 0);
+    --sidebar-ring: oklch(0.4386 0 0);
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --success: oklch(0.5500 0.1600 145);
+    --success-foreground: oklch(1.0000 0 0);
+    --warning: oklch(0.6500 0.1400 85);
+    --warning-foreground: oklch(0.2138 0.0019 286.2347);
   }
 }
 
@@ -100,6 +107,7 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Arimo', ui-sans-serif, sans-serif, system-ui;
   }
 }
