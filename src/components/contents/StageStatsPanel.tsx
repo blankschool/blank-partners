@@ -36,8 +36,8 @@ export function StageStatsPanel({ items, selectedStage, onStageClick }: StageSta
               : "border-border bg-card hover:border-primary/50"
           )}
         >
-          <span className="text-2xl font-semibold">{items.length}</span>
-          <span className="text-xs text-muted-foreground">Todos</span>
+          <span className="text-2xl font-serif">{items.length}</span>
+          <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Todos</span>
         </button>
 
         {visibleStages.map(stage => {
@@ -55,10 +55,10 @@ export function StageStatsPanel({ items, selectedStage, onStageClick }: StageSta
                   : "border-border bg-card hover:border-primary/50"
               )}
             >
-              <span className={cn("text-2xl font-semibold", isSelected ? stage.color : "")}>
+              <span className={cn("text-2xl font-serif", isSelected ? stage.color : "")}>
                 {count}
               </span>
-              <span className={cn("text-xs truncate max-w-[80px]", isSelected ? stage.color : "text-muted-foreground")}>
+              <span className={cn("text-[10px] uppercase tracking-widest truncate max-w-[80px]", isSelected ? stage.color : "text-muted-foreground")}>
                 {stage.label}
               </span>
             </button>
