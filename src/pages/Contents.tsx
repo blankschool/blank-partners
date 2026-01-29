@@ -1,258 +1,213 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useGoogleSheetsContent, ContentItem } from "@/hooks/useGoogleSheetsContent";
+import { StageStatsPanel } from "@/components/contents/StageStatsPanel";
+import { ContentFilters, ViewMode, PeriodType } from "@/components/contents/ContentFilters";
+import { ContentCard } from "@/components/contents/ContentCard";
+import { ContentCalendar } from "@/components/contents/ContentCalendar";
+import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, Calendar, Grid3X3, List, Image, Video, FileText, Layers, Clock, CheckCircle, FileEdit } from "lucide-react";
+import { parseISO, isValid, isWithinInterval } from "date-fns";
 
-const contentsData = [
-  {
-    id: 1,
-    title: "Summer Campaign Post #1",
-    client: "Acme Corporation",
-    platform: "Instagram",
-    type: "image",
-    status: "approved",
-    scheduledDate: "2026-01-30",
-  },
-  {
-    id: 2,
-    title: "Product Launch Video",
-    client: "Tech Startup Inc",
-    platform: "TikTok",
-    type: "video",
-    status: "pending",
-    scheduledDate: "2026-01-31",
-  },
-  {
-    id: 3,
-    title: "Weekly Industry Update",
-    client: "Brand X Media",
-    platform: "LinkedIn",
-    type: "text",
-    status: "draft",
-    scheduledDate: "2026-02-01",
-  },
-  {
-    id: 4,
-    title: "Behind the Scenes Reel",
-    client: "Global Retail Co",
-    platform: "Instagram",
-    type: "video",
-    status: "approved",
-    scheduledDate: "2026-02-02",
-  },
-  {
-    id: 5,
-    title: "Customer Testimonial",
-    client: "Wellness Studio",
-    platform: "Facebook",
-    type: "image",
-    status: "rejected",
-    scheduledDate: "2026-02-03",
-  },
-  {
-    id: 6,
-    title: "Monthly Newsletter Promo",
-    client: "Acme Corporation",
-    platform: "Facebook",
-    type: "image",
-    status: "pending",
-    scheduledDate: "2026-02-04",
-  },
-];
+function parseDate(dateStr: string): Date | null {
+  if (!dateStr) return null;
+  
+  try {
+    const date = parseISO(dateStr);
+    if (isValid(date)) return date;
+  } catch {}
+  
+  if (dateStr.includes('/')) {
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+      const [day, month, year] = parts;
+      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      if (isValid(date)) return date;
+    }
+  }
+  
+  return null;
+}
 
 const Contents = () => {
+  const { data, isLoading, error, refetch } = useGoogleSheetsContent();
+  
+  // Filter states
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [selectedPlatform, setSelectedPlatform] = useState("all");
+  const [selectedClient, setSelectedClient] = useState("all");
+  const [selectedStage, setSelectedStage] = useState("all");
+  const [stageFromPanel, setStageFromPanel] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [periodType, setPeriodType] = useState<PeriodType>("all");
+  const [dateRange, setDateRange] = useState<{ from: Date; to: Date } | null>(null);
 
-  const filteredContents = contentsData.filter(
-    (content) =>
-      content.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      content.client.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const items = data?.items || [];
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "approved":
-        return "bg-success/10 text-success border-success/20";
-      case "pending":
-        return "bg-warning/10 text-warning border-warning/20";
-      case "draft":
-        return "bg-muted text-muted-foreground border-muted";
-      case "rejected":
-        return "bg-destructive/10 text-destructive border-destructive/20";
-      default:
-        return "bg-muted text-muted-foreground border-muted";
+  // Extract unique clients
+  const clients = useMemo(() => {
+    const uniqueClients = new Set<string>();
+    items.forEach(item => {
+      if (item.client) uniqueClients.add(item.client);
+    });
+    return Array.from(uniqueClients).sort();
+  }, [items]);
+
+  // Apply all filters
+  const filteredItems = useMemo(() => {
+    return items.filter(item => {
+      // Search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesSearch = 
+          item.id.toLowerCase().includes(query) ||
+          item.client.toLowerCase().includes(query) ||
+          item.status.toLowerCase().includes(query);
+        if (!matchesSearch) return false;
+      }
+
+      // Platform filter
+      if (selectedPlatform !== "all") {
+        if (item.socialMedia.toLowerCase() !== selectedPlatform) return false;
+      }
+
+      // Client filter
+      if (selectedClient !== "all") {
+        if (item.client !== selectedClient) return false;
+      }
+
+      // Stage filter (from dropdown or panel)
+      const activeStage = stageFromPanel || (selectedStage !== "all" ? selectedStage : null);
+      if (activeStage) {
+        if (item.status.toLowerCase().trim() !== activeStage) return false;
+      }
+
+      // Date range filter
+      if (dateRange) {
+        const itemDate = parseDate(item.date);
+        if (!itemDate || !isWithinInterval(itemDate, { start: dateRange.from, end: dateRange.to })) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [items, searchQuery, selectedPlatform, selectedClient, selectedStage, stageFromPanel, dateRange]);
+
+  const handlePeriodChange = (type: PeriodType, range?: { from: Date; to: Date }) => {
+    setPeriodType(type);
+    setDateRange(range || null);
+  };
+
+  const handleStageFromPanel = (stage: string | null) => {
+    setStageFromPanel(stage);
+    if (stage) {
+      setSelectedStage("all"); // Reset dropdown when selecting from panel
     }
   };
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case "image":
-        return Image;
-      case "video":
-        return Video;
-      case "text":
-        return FileText;
-      default:
-        return FileText;
-    }
-  };
-
-  return (
-    <AppLayout title="Contents">
-      <div className="space-y-6">
-        {/* Header Actions */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative max-w-sm flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search contents..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center rounded-xl border border-border p-1">
-              <Button
-                variant={viewMode === "grid" ? "secondary" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("grid")}
-                className="rounded-lg"
-              >
-                <Grid3X3 className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === "list" ? "secondary" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("list")}
-                className="rounded-lg"
-              >
-                <List className="h-4 w-4" />
-              </Button>
-            </div>
-            <Button variant="outline" className="gap-2">
-              <Calendar className="h-4 w-4" />
-              Calendar
-            </Button>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              New Content
-            </Button>
+  if (isLoading) {
+    return (
+      <AppLayout title="Conteúdos">
+        <div className="space-y-6">
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-12 w-full" />
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[...Array(6)].map((_, i) => (
+              <Skeleton key={i} className="h-40" />
+            ))}
           </div>
         </div>
+      </AppLayout>
+    );
+  }
 
-        {/* Tabs with Icons */}
-        <Tabs defaultValue="all" className="w-full">
-          <TabsList>
-            <TabsTrigger value="all" className="gap-2">
-              <Layers className="h-4 w-4" />
-              All ({contentsData.length})
-            </TabsTrigger>
-            <TabsTrigger value="pending" className="gap-2">
-              <Clock className="h-4 w-4" />
-              Pending ({contentsData.filter((c) => c.status === "pending").length})
-            </TabsTrigger>
-            <TabsTrigger value="approved" className="gap-2">
-              <CheckCircle className="h-4 w-4" />
-              Approved ({contentsData.filter((c) => c.status === "approved").length})
-            </TabsTrigger>
-            <TabsTrigger value="draft" className="gap-2">
-              <FileEdit className="h-4 w-4" />
-              Drafts ({contentsData.filter((c) => c.status === "draft").length})
-            </TabsTrigger>
-          </TabsList>
+  if (error) {
+    return (
+      <AppLayout title="Conteúdos">
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <AlertCircle className="h-12 w-12 text-destructive mb-4" />
+            <h3 className="text-lg font-medium mb-2">Erro ao carregar conteúdos</h3>
+            <p className="text-muted-foreground mb-4">
+              {error instanceof Error ? error.message : 'Não foi possível conectar ao Google Sheets'}
+            </p>
+            <Button onClick={() => refetch()} variant="outline" className="gap-2">
+              <RefreshCw className="h-4 w-4" />
+              Tentar novamente
+            </Button>
+          </CardContent>
+        </Card>
+      </AppLayout>
+    );
+  }
 
-          <TabsContent value="all" className="mt-6">
-            {viewMode === "grid" ? (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {filteredContents.map((content) => {
-                  const TypeIcon = getTypeIcon(content.type);
-                  return (
-                    <Card key={content.id} className="cursor-pointer transition-all duration-300 hover:shadow-lg">
-                      <CardContent className="p-5">
-                        <div className="flex items-start justify-between">
-                          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-muted">
-                            <TypeIcon className="h-5 w-5 text-muted-foreground" />
-                          </div>
-                          <Badge variant="outline" className={getStatusColor(content.status)}>
-                            {content.status}
-                          </Badge>
-                        </div>
-                        <h3 className="mt-4 font-medium text-foreground line-clamp-2">{content.title}</h3>
-                        <p className="mt-1 text-sm text-muted-foreground">{content.client}</p>
-                        <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
-                          <Badge variant="secondary">{content.platform}</Badge>
-                          <span>{new Date(content.scheduledDate).toLocaleDateString()}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+  return (
+    <AppLayout title="Conteúdos">
+      <div className="space-y-6">
+        {/* Stage Stats Panel */}
+        <StageStatsPanel
+          items={items}
+          selectedStage={stageFromPanel}
+          onStageClick={handleStageFromPanel}
+        />
+
+        {/* Filters */}
+        <ContentFilters
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          selectedPlatform={selectedPlatform}
+          onPlatformChange={setSelectedPlatform}
+          selectedClient={selectedClient}
+          onClientChange={setSelectedClient}
+          selectedStage={selectedStage}
+          onStageChange={(stage) => {
+            setSelectedStage(stage);
+            setStageFromPanel(null); // Reset panel selection when using dropdown
+          }}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          periodType={periodType}
+          onPeriodChange={handlePeriodChange}
+          dateRange={dateRange}
+          clients={clients}
+        />
+
+        {/* Content display */}
+        {filteredItems.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center text-muted-foreground">
+              Nenhum conteúdo encontrado com os filtros selecionados
+            </CardContent>
+          </Card>
+        ) : viewMode === "calendar" ? (
+          <ContentCalendar items={filteredItems} />
+        ) : viewMode === "grid" ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {filteredItems.map((item, index) => (
+              <ContentCard key={`${item.id}-${index}`} item={item} variant="grid" />
+            ))}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="p-0">
+              <div className="divide-y divide-border/50">
+                {filteredItems.map((item, index) => (
+                  <ContentCard key={`${item.id}-${index}`} item={item} variant="list" />
+                ))}
               </div>
-            ) : (
-              <Card>
-                <CardContent className="p-0">
-                  <div className="divide-y divide-border/50">
-                    {filteredContents.map((content) => {
-                      const TypeIcon = getTypeIcon(content.type);
-                      return (
-                        <div
-                          key={content.id}
-                          className="flex items-center gap-4 p-4 transition-colors duration-200 hover:bg-muted/30 cursor-pointer"
-                        >
-                          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-muted">
-                            <TypeIcon className="h-5 w-5 text-muted-foreground" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-medium text-foreground truncate">{content.title}</h3>
-                            <p className="text-sm text-muted-foreground">{content.client}</p>
-                          </div>
-                          <Badge variant="secondary">{content.platform}</Badge>
-                          <Badge variant="outline" className={getStatusColor(content.status)}>
-                            {content.status}
-                          </Badge>
-                          <span className="text-sm text-muted-foreground">
-                            {new Date(content.scheduledDate).toLocaleDateString()}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
+            </CardContent>
+          </Card>
+        )}
 
-          <TabsContent value="pending" className="mt-6">
-            <Card>
-              <CardContent className="p-8 text-center text-muted-foreground">
-                Pending contents will appear here
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="approved" className="mt-6">
-            <Card>
-              <CardContent className="p-8 text-center text-muted-foreground">
-                Approved contents will appear here
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="draft" className="mt-6">
-            <Card>
-              <CardContent className="p-8 text-center text-muted-foreground">
-                Draft contents will appear here
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        {/* Last sync info */}
+        {data?.fetchedAt && (
+          <p className="text-xs text-muted-foreground text-center">
+            Última atualização: {new Date(data.fetchedAt).toLocaleString('pt-BR')}
+          </p>
+        )}
       </div>
     </AppLayout>
   );
