@@ -35,7 +35,7 @@ export function DayContentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md bg-card dark:bg-neutral-800">
         <DialogHeader>
           <DialogTitle>{formattedDate}</DialogTitle>
           <DialogDescription>
@@ -51,7 +51,7 @@ export function DayContentDialog({
               return (
                 <div
                   key={`${item.id}-${idx}`}
-                  className="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-muted/50 border border-border/50"
+                  className="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-background dark:bg-neutral-900 border border-border"
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="font-medium text-sm truncate">
