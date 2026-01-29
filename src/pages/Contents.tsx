@@ -40,7 +40,7 @@ const Contents = () => {
   const [selectedClient, setSelectedClient] = useState("all");
   const [selectedStage, setSelectedStage] = useState("all");
   const [stageFromPanel, setStageFromPanel] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [viewMode, setViewMode] = useState<ViewMode>("calendar");
   const [periodType, setPeriodType] = useState<PeriodType>("all");
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date } | null>(null);
 

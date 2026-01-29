@@ -92,7 +92,7 @@ export function ContentFilters({
       <div className="flex flex-wrap gap-3">
         {/* Platform filter */}
         <Select value={selectedPlatform} onValueChange={onPlatformChange}>
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="w-[140px] font-sans">
             <SelectValue placeholder="Plataforma" />
           </SelectTrigger>
           <SelectContent>
@@ -107,7 +107,7 @@ export function ContentFilters({
 
         {/* Client filter */}
         <Select value={selectedClient} onValueChange={onClientChange}>
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="w-[160px] font-sans">
             <SelectValue placeholder="Cliente" />
           </SelectTrigger>
           <SelectContent>
@@ -122,7 +122,7 @@ export function ContentFilters({
 
         {/* Stage filter */}
         <Select value={selectedStage} onValueChange={onStageChange}>
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="w-[160px] font-sans">
             <SelectValue placeholder="Etapa" />
           </SelectTrigger>
           <SelectContent>
@@ -138,7 +138,7 @@ export function ContentFilters({
         {/* Period filter */}
         <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
           <PopoverTrigger asChild>
-            <Button variant="outline" className="gap-2">
+            <Button variant="outline" className="gap-2 font-sans">
               <CalendarIcon className="h-4 w-4" />
               {getPeriodLabel()}
             </Button>
