@@ -1,155 +1,173 @@
 
-# Admin Page Implementation
+# Light Theme Admin Dialogs
 
-## Overview
+## Problem
 
-Create a centralized Admin page at `/admin` that allows administrators to manage three core resources: Clients, Team Members, and Users. The page will use tabs for easy navigation between sections and will only be accessible to users with admin role.
+The admin page dialogs currently use the default dark theme styling (`bg-card/90` which is very dark), making them blend with the dark admin background. The screenshot shows that while inputs are white, the dialog background itself is dark with glassmorphism, causing poor contrast.
 
-## Current Architecture
+## Solution
 
-The project already has:
-- Role-based access via `useCurrentUserRole()` hook and `is_admin()` RLS function
-- Existing hooks: `useUsers()`, `useTeamMembers()`, `useClients()` with CRUD operations
-- Tables: `clients`, `team_members`, `profiles`, `user_roles`
-- RLS policies protecting all admin operations
+Override the dialog styling specifically for admin dialogs to use a light theme, providing clear contrast against the dark admin page background. This approach keeps the base dialog component unchanged while applying custom styling only to admin dialogs.
 
-## Implementation Plan
+## Implementation
 
-### Phase 1: Admin Route Protection
+### Approach: Add Light Theme Classes to Admin Dialogs
 
-**File: `src/components/AdminRoute.tsx`**
+Instead of modifying the base dialog component (which could affect other dialogs), we'll add custom className overrides to each admin dialog's `DialogContent` and ensure form elements render with proper dark text on light backgrounds.
 
-Create a wrapper component that:
-- Extends ProtectedRoute functionality
-- Checks if the logged-in user is an admin using `useCurrentUserRole()`
-- Redirects non-admin users to the dashboard with a toast notification
+### Files to Modify
 
-### Phase 2: Admin Page with Tabs
+| File | Changes |
+|------|---------|
+| `src/components/admin/EditTeamMemberDialog.tsx` | Add light theme styling to DialogContent |
+| `src/components/admin/AddTeamMemberDialog.tsx` | Add light theme styling to DialogContent |
+| `src/components/admin/AddClientDialog.tsx` | Add light theme styling to DialogContent |
+| `src/components/admin/EditClientDialog.tsx` | Add light theme styling to DialogContent |
+| `src/components/admin/DeleteConfirmDialog.tsx` | Add light theme styling to AlertDialogContent |
 
-**File: `src/pages/Admin.tsx`**
+### CSS Classes to Apply
 
-Create the main admin page with:
-- Header with admin icon and title "Administração"
-- Tab navigation with three sections: Clientes, Equipe, Usuários
-- Each tab contains management functionality
+For each admin dialog, add the following classes to `DialogContent`:
 
-### Phase 3: Client Management Tab
-
-**File: `src/components/admin/ClientsTab.tsx`**
-
-Features:
-- List all 54 clients with search/filter
-- Add new client dialog (name field)
-- Edit client name
-- Delete client (with confirmation)
-- Display member count per client
-
-### Phase 4: Team Management Tab
-
-**File: `src/components/admin/TeamTab.tsx`**
-
-Features:
-- List all 39 team members with filters (area, seniority)
-- Add new team member dialog (full form)
-- Edit team member (all fields including clients)
-- Delete team member (with confirmation)
-- Assign/unassign clients
-
-### Phase 5: Users Management Tab
-
-**File: `src/components/admin/UsersTab.tsx`**
-
-Features:
-- List all profiles with search
-- Edit user (name, position, team)
-- Toggle admin role
-- Delete user profile
-
-### Phase 6: Support Components
-
-Create dialogs for CRUD operations:
-
-| Component | Purpose |
-|-----------|---------|
-| `AddClientDialog.tsx` | Form to create new client |
-| `EditClientDialog.tsx` | Form to edit client name |
-| `AddTeamMemberDialog.tsx` | Full form for new team member |
-| `EditTeamMemberDialog.tsx` | Edit existing team member |
-| `DeleteConfirmDialog.tsx` | Reusable confirmation dialog |
-
-### Phase 7: Update Hooks for Admin Operations
-
-**File: `src/hooks/useClients.tsx`**
-
-Add mutations:
-- `createClient(name)` - insert into clients table
-- `updateClient(id, name)` - update client name
-- `deleteClient(id)` - remove client (cascade removes assignments)
-
-### Phase 8: Navigation & Routing
-
-**File: `src/App.tsx`**
-- Add new route: `/admin` with AdminRoute wrapper
-
-**File: `src/components/layout/AppSidebar.tsx`**
-- Add conditional "Admin" menu item (only visible to admins)
-- Use Shield icon from lucide-react
-
-## File Structure
-
-```text
-src/
-├── components/
-│   ├── AdminRoute.tsx (new)
-│   └── admin/
-│       ├── ClientsTab.tsx (new)
-│       ├── TeamTab.tsx (new)
-│       ├── UsersTab.tsx (new)
-│       ├── AddClientDialog.tsx (new)
-│       ├── EditClientDialog.tsx (new)
-│       ├── AddTeamMemberDialog.tsx (new)
-│       ├── EditTeamMemberDialog.tsx (new)
-│       └── DeleteConfirmDialog.tsx (new)
-├── pages/
-│   └── Admin.tsx (new)
-└── hooks/
-    └── useClients.tsx (modify - add mutations)
+```tsx
+<DialogContent className="sm:max-w-lg max-h-[90vh] bg-white text-foreground border-gray-200">
 ```
 
-## UI Layout
+Key styling changes:
+- `bg-white` - Solid white background instead of transparent dark
+- `text-foreground` - Dark text for readability
+- `border-gray-200` - Light border for definition
 
-```text
-┌─────────────────────────────────────────────────────────────┐
-│  ● Administração                                            │
-│  Gerenciar clientes, equipe e usuários                     │
-├─────────────────────────────────────────────────────────────┤
-│  [ Clientes ]  [ Equipe ]  [ Usuários ]     + Adicionar     │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  ┌────────────────────────────────────────────────────────┐ │
-│  │ Search bar...                                          │ │
-│  └────────────────────────────────────────────────────────┘ │
-│                                                             │
-│  ┌─────────────────────┐ ┌─────────────────────┐           │
-│  │ Item 1          ... │ │ Item 2          ... │           │
-│  │ Details             │ │ Details             │           │
-│  └─────────────────────┘ └─────────────────────┘           │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
+### Form Element Styling Updates
+
+Update form elements to work with light background:
+
+**Labels:**
+```tsx
+<Label className="text-gray-700">...</Label>
 ```
 
-## Security Considerations
+**Inputs:**
+```tsx
+<Input className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-400" />
+```
 
-- AdminRoute checks `is_admin()` before rendering
-- All mutations are protected by RLS policies requiring admin role
-- Non-admins cannot see the Admin link in the sidebar
-- Attempting to access `/admin` directly redirects to dashboard
+**Select Triggers:**
+```tsx
+<SelectTrigger className="bg-white border-gray-300 text-gray-900">
+```
 
-## Technical Notes
+**Select Content (dropdown):**
+```tsx
+<SelectContent className="bg-white border-gray-200 text-gray-900">
+```
 
-1. Reuse existing `EditUserDialog` component for user management
-2. Create new dialogs following the same pattern for clients/team
-3. Use existing `useTeamMembers()` mutations for team CRUD
-4. Add client mutations to `useClients()` hook
-5. Use shadcn Tabs component for section navigation
-6. Follow existing Portuguese translations for UI text
+**Checkbox labels:**
+```tsx
+<label className="text-sm text-gray-700 cursor-pointer">
+```
+
+**Borders:**
+```tsx
+<div className="rounded-lg border border-gray-200 p-3">
+```
+
+**Buttons:**
+```tsx
+<Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-100">
+  Cancelar
+</Button>
+<Button className="bg-gray-900 text-white hover:bg-gray-800">
+  Salvar
+</Button>
+```
+
+## Detailed File Changes
+
+### 1. EditTeamMemberDialog.tsx
+
+```tsx
+// Line 115 - Update DialogContent
+<DialogContent className="sm:max-w-lg max-h-[90vh] bg-white text-gray-900 border-gray-200">
+
+// All Labels - add text-gray-700
+<Label htmlFor="fullName" className="text-gray-700">Nome Completo *</Label>
+
+// All Inputs - add light theme styling
+<Input className="bg-white border-gray-300 text-gray-900" ... />
+
+// All SelectTriggers - add light theme
+<SelectTrigger className="bg-white border-gray-300 text-gray-900">
+
+// All SelectContent - add light theme
+<SelectContent className="bg-white border-gray-200 text-gray-900 z-50">
+
+// Clients border container
+<div className="rounded-lg border border-gray-200 bg-gray-50 p-3 max-h-40 overflow-y-auto">
+
+// Checkbox labels
+<label className="text-sm text-gray-700 cursor-pointer">
+
+// Buttons
+<Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-100">
+<Button className="bg-gray-900 text-white hover:bg-gray-800">
+```
+
+### 2. AddTeamMemberDialog.tsx
+
+Same pattern as EditTeamMemberDialog - apply identical styling updates.
+
+### 3. AddClientDialog.tsx
+
+```tsx
+// Line 45 - Update DialogContent
+<DialogContent className="sm:max-w-md bg-white text-gray-900 border-gray-200">
+
+// Label
+<Label htmlFor="clientName" className="text-gray-700">Nome do Cliente</Label>
+
+// Input
+<Input className="bg-white border-gray-300 text-gray-900" ... />
+
+// Buttons
+<Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-100">
+<Button className="bg-gray-900 text-white hover:bg-gray-800">
+```
+
+### 4. EditClientDialog.tsx
+
+Same pattern as AddClientDialog.
+
+### 5. DeleteConfirmDialog.tsx
+
+```tsx
+// Line 31 - Update AlertDialogContent
+<AlertDialogContent className="bg-white text-gray-900 border-gray-200">
+
+// AlertDialogTitle is already properly styled
+
+// AlertDialogDescription
+<AlertDialogDescription className="text-gray-600">
+
+// Cancel button
+<AlertDialogCancel className="border-gray-300 text-gray-700 hover:bg-gray-100">
+
+// Action button (already has destructive styling, but ensure proper contrast)
+<AlertDialogAction className="bg-red-600 text-white hover:bg-red-700">
+```
+
+## Visual Result
+
+| Before | After |
+|--------|-------|
+| Dark semi-transparent dialog | Solid white dialog |
+| White text on dark | Dark text on white |
+| Low contrast with background | High contrast stand-out effect |
+| Inputs blend in | Inputs clearly defined |
+
+## Benefits
+
+1. **Clear Visual Hierarchy**: Light dialogs pop against the dark admin background
+2. **Better Readability**: Dark text on light background is easier to read
+3. **No Global Impact**: Changes are scoped to admin dialogs only
+4. **Consistent UX**: All admin dialogs will have the same light appearance
