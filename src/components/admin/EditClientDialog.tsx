@@ -43,19 +43,20 @@ export function EditClientDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-white text-gray-900 border-gray-200">
         <DialogHeader>
-          <DialogTitle>Editar Cliente</DialogTitle>
+          <DialogTitle className="text-gray-900">Editar Cliente</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="clientName">Nome do Cliente</Label>
+            <Label htmlFor="clientName" className="text-gray-700">Nome do Cliente</Label>
             <Input
               id="clientName"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Digite o nome do cliente"
+              className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-400"
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleSave();
               }}
@@ -64,10 +65,18 @@ export function EditClientDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)}
+            className="border-gray-300 text-gray-700 hover:bg-gray-100"
+          >
             Cancelar
           </Button>
-          <Button onClick={handleSave} disabled={isLoading || !name.trim()}>
+          <Button 
+            onClick={handleSave} 
+            disabled={isLoading || !name.trim()}
+            className="bg-gray-900 text-white hover:bg-gray-800"
+          >
             {isLoading ? "Salvando..." : "Salvar"}
           </Button>
         </DialogFooter>
