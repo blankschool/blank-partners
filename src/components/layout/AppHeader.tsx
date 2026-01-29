@@ -1,9 +1,9 @@
-import { Bell, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { Link } from "react-router-dom";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { NotificationDropdown } from "@/components/notifications/NotificationDropdown";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -54,12 +54,7 @@ export function AppHeader({ title = "Dashboard" }: AppHeaderProps) {
           />
         </div>
 
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5 text-muted-foreground" />
-          <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-accent-orange text-[10px] font-medium text-accent-orange-foreground">
-            3
-          </span>
-        </Button>
+        <NotificationDropdown />
 
         <Link
           to="/profile"
