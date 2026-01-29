@@ -30,7 +30,7 @@ export function AppSidebar() {
       <SidebarHeader className="p-5">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-foreground to-muted-foreground">
-            <span className="font-serif text-lg font-normal text-white">M</span>
+            <span className="font-serif text-lg font-normal text-white">B</span>
           </div>
           {!isCollapsed && (
             <div className="flex flex-col">
