@@ -1,218 +1,100 @@
 
-# Create Users Management Page
+# Fix Users Page Design - Match Dashboard Template
 
-## Overview
+## Problems Identified
 
-Build a new "Users" page at `/users` where administrators can view and manage user profiles with Name, Email, Position, and Team fields. This requires database tables with proper security (RLS), admin role management, and a new UI page.
+Looking at the screenshot and comparing with the Dashboard, the Users page stats cards have several design inconsistencies:
+
+| Issue | Current (Users Page) | Expected (StatCard Template) |
+|-------|---------------------|------------------------------|
+| Icon Container | Colored backgrounds (`bg-primary/10`, `bg-success/10`) | Neutral `bg-secondary` with hover animation |
+| Number Size | `text-2xl font-semibold` | `font-serif text-5xl font-normal tracking-tight` |
+| Label Style | `text-sm` below number | `text-[10px] uppercase tracking-widest` above number |
+| Layout | Icon on left, content on right | Content on left, icon on right |
 
 ---
 
-## Database Architecture
+## Solution
 
-### Tables to Create
+Refactor the Users page to use the existing `StatCard` component from the Dashboard, ensuring visual consistency across the application.
 
-```text
-+-------------------+     +-------------------+     +-------------------+
-|   user_roles      |     |    profiles       |     |    positions      |
-+-------------------+     +-------------------+     +-------------------+
-| id (uuid, PK)     |     | id (uuid, PK)     |     | id (uuid, PK)     |
-| user_id (FK)      |     | user_id (FK)      |     | name (text)       |
-| role (app_role)   |     | full_name (text)  |     | created_at        |
-| created_at        |     | email (text)      |     +-------------------+
-+-------------------+     | position_id (FK)  |
-                          | team (team_type)  |
-                          | avatar_url (text) |
-                          | created_at        |
-                          | updated_at        |
-                          +-------------------+
+---
+
+## Changes Required
+
+### File: `src/pages/Users.tsx`
+
+**Current Implementation (Lines 96-153):**
+```tsx
+<div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+  <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+    <CardContent className="p-6">
+      <div className="flex items-center gap-4">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+          <UsersIcon className="h-6 w-6 text-primary" />
+        </div>
+        <div>
+          <p className="text-2xl font-semibold text-foreground">{stats.totalUsers}</p>
+          <p className="text-sm text-muted-foreground">Total Users</p>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+  ...
+</div>
 ```
 
-### Enums
+**Updated Implementation:**
+```tsx
+import { StatCard } from "@/components/dashboard/StatCard";
 
-1. **app_role**: `'admin'`, `'user'`
-2. **team_type**: `'Creative'`, `'Marketing'`, `'Client Services'`, `'Operations'`
-
-### Security Functions
-
-- `has_role(user_id, role)`: Security definer function to check user roles (prevents RLS recursion)
-- `is_admin()`: Convenience function to check if current user is admin
-
-### RLS Policies
-
-| Table | Operation | Policy |
-|-------|-----------|--------|
-| profiles | SELECT | Authenticated users can view all profiles |
-| profiles | INSERT/UPDATE/DELETE | Admins only |
-| user_roles | SELECT | Users can see their own roles |
-| user_roles | INSERT/UPDATE/DELETE | Admins only |
-| positions | SELECT | All authenticated users |
-| positions | INSERT/UPDATE/DELETE | Admins only |
-
-### Automatic Profile Creation
-
-A database trigger will automatically create a profile when a new user signs up, using the email from `auth.users`.
-
----
-
-## Implementation Steps
-
-### Step 1: Database Migration
-
-Create all tables, enums, functions, triggers, and RLS policies:
-
-1. Create `app_role` enum with values `'admin'`, `'user'`
-2. Create `team_type` enum with predefined teams
-3. Create `user_roles` table with unique constraint on (user_id, role)
-4. Create `profiles` table with position and team references
-5. Create `positions` table with seed data
-6. Create `has_role()` security definer function
-7. Create `is_admin()` helper function
-8. Create trigger to auto-create profiles on signup
-9. Enable RLS and add policies to all tables
-
-### Step 2: Create Positions Seed Data
-
-Insert predefined positions:
-- Content Manager
-- Social Media Specialist
-- Graphic Designer
-- Video Editor
-- Account Manager
-- Project Manager
-- Creative Director
-
-### Step 3: New Files to Create
-
-| File | Purpose |
-|------|---------|
-| `src/pages/Users.tsx` | Main Users management page |
-| `src/hooks/useUsers.tsx` | Hook for fetching/managing users |
-| `src/hooks/useCurrentUserRole.tsx` | Hook for checking current user's role |
-| `src/components/users/UserCard.tsx` | User card component |
-| `src/components/users/AddUserDialog.tsx` | Dialog for adding new users |
-| `src/components/users/EditUserDialog.tsx` | Dialog for editing users |
-
-### Step 4: Files to Modify
-
-| File | Changes |
-|------|---------|
-| `src/App.tsx` | Add `/users` route |
-| `src/components/layout/AppSidebar.tsx` | Add Users navigation item |
-
----
-
-## Page Features
-
-### Users Page Layout
-
-1. **Header Section**
-   - Page title "Users"
-   - Search input for filtering users
-   - "Add User" button (visible only to admins)
-
-2. **Stats Summary** (4 cards)
-   - Total Users
-   - Admins count
-   - By team breakdown (optional)
-   - Recently added
-
-3. **Users Grid**
-   - User cards displaying:
-     - Avatar with initials
-     - Full name
-     - Email
-     - Position badge
-     - Team badge
-     - Admin badge (if applicable)
-     - Edit/Delete buttons (admin only)
-
-### Add User Flow (Admin Only)
-
-1. Admin clicks "Add User"
-2. Dialog opens with form fields:
-   - Full Name (text input)
-   - Email (text input, must match an existing auth user)
-   - Position (dropdown from positions table)
-   - Team (dropdown from predefined teams)
-3. Submit creates/updates the profile
-
-### Edit User Flow (Admin Only)
-
-1. Admin clicks edit on a user card
-2. Dialog opens with pre-filled fields
-3. Admin can modify Name, Position, Team
-4. Email is read-only (tied to auth)
-
----
-
-## Technical Details
-
-### TypeScript Types
-
-```typescript
-interface Profile {
-  id: string;
-  user_id: string;
-  full_name: string;
-  email: string;
-  position_id: string | null;
-  team: 'Creative' | 'Marketing' | 'Client Services' | 'Operations' | null;
-  avatar_url: string | null;
-  created_at: string;
-  updated_at: string;
-  positions?: { name: string };
-  user_roles?: { role: 'admin' | 'user' }[];
-}
-
-interface Position {
-  id: string;
-  name: string;
-}
-```
-
-### Queries
-
-```typescript
-// Fetch all profiles with positions and roles
-const { data } = await supabase
-  .from('profiles')
-  .select(`
-    *,
-    positions (name),
-    user_roles (role)
-  `)
-  .order('full_name');
-
-// Check if current user is admin
-const { data } = await supabase
-  .rpc('is_admin');
+<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  <StatCard
+    title="Total Users"
+    value={stats.totalUsers}
+    icon={UsersIcon}
+  />
+  <StatCard
+    title="Admins"
+    value={stats.admins}
+    icon={Shield}
+  />
+  <StatCard
+    title="Teams"
+    value={stats.teamsCount}
+    icon={Building2}
+  />
+  <StatCard
+    title="New (30 days)"
+    value={stats.recentUsers}
+    icon={UserPlus}
+  />
+</div>
 ```
 
 ---
 
-## Admin Setup Note
+## Benefits
 
-After implementation, you'll need to manually assign the first admin role in the Supabase Dashboard:
-
-1. Go to Table Editor > user_roles
-2. Insert a new row with:
-   - `user_id`: Your user's ID (from auth.users)
-   - `role`: `admin`
-
-This bootstraps the first admin who can then manage other users through the UI.
+1. **Consistency**: Uses the same design language as the Dashboard
+2. **Maintainability**: Single source of truth for stat card styling
+3. **Correct Typography**: Large serif numbers with tiny uppercase labels (matches project style guide)
+4. **Proper Icon Styling**: Neutral background with hover animation effect
 
 ---
 
-## Summary
+## Files to Modify
 
-| Component | Count |
-|-----------|-------|
-| New database tables | 3 (profiles, user_roles, positions) |
-| New enums | 2 (app_role, team_type) |
-| New functions | 2 (has_role, is_admin) |
-| New triggers | 1 (auto-create profile) |
-| RLS policies | 8 (multiple per table) |
-| New pages | 1 (Users.tsx) |
-| New components | 3 (UserCard, AddUserDialog, EditUserDialog) |
-| New hooks | 2 (useUsers, useCurrentUserRole) |
-| Modified files | 2 (App.tsx, AppSidebar.tsx) |
+| File | Change |
+|------|--------|
+| `src/pages/Users.tsx` | Import and use `StatCard` component instead of custom card markup |
+
+---
+
+## Visual Result
+
+After this change, the Users page stats will display:
+- Large serif numbers (like "24" on Dashboard)
+- Tiny uppercase labels above the numbers
+- Icons in rounded containers on the right side
+- Hover animation that changes icon background to accent color
