@@ -1,62 +1,102 @@
 
-# Fix Typography Inconsistencies on Dashboard
+# Fix SM Filter and Content Display on Contents Page
 
 ## Problem Analysis
 
-The StatCard numbers (24, 358, 312, 4.8%) display with inconsistent character styling. This happens because DM Serif Display font uses **oldstyle/proportional numerals** where certain digits (3, 5, 8) have distinctive descenders and varying widths compared to other digits (2, 4).
+### Issue 1: SM Filter Not Working
+The "SM" filter dropdown is configured to filter by social media **platforms** (Instagram, LinkedIn, YouTube, TikTok), but the actual data in the `socialMedia` field contains **person names** - the social media managers/assignees responsible for the content (e.g., "Henrique Portella").
 
-This is a font design characteristic, not a bug - but it creates an unintended visual inconsistency for numerical metrics.
+This is a data mapping mismatch - the filter needs to be updated to filter by person instead of platform.
 
-## Solution
-
-For numerical metrics and data displays, use Inter font (font-sans) which has uniform, tabular-lining numerals. Reserve DM Serif Display for headings and text content only.
+### Issue 2: Content ID Displayed Instead of Client Name
+Currently the `ContentCard` shows `item.id` (a Notion UUID like "2eed77361cee80569c3ad1ca63ef3df7") as the main title. The user wants to see the **client name** as the primary identifier.
 
 ## Changes Required
 
-### 1. StatCard.tsx - Fix Numeric Display
+### 1. ContentFilters.tsx - Change SM Filter to Filter by Person
 
-| Element | Current | Updated |
-|---------|---------|---------|
-| Value (line 24) | `font-serif text-5xl font-normal` | `font-sans text-5xl font-semibold tabular-nums` |
-| Description (line 26) | `text-sm text-muted-foreground` | `font-sans text-sm text-muted-foreground` |
-| Trend text (line 31-36) | `text-xs font-medium` | `font-sans text-xs font-medium` |
+| Current | Updated |
+|---------|---------|
+| Platform dropdown with predefined options | Dynamic person dropdown populated from data |
+| Filter label "Todas SM" | "Todos responsáveis" |
+| `selectedPlatform` prop | `selectedPerson` prop (or repurpose the same) |
 
-### 2. Add Tabular Numerals Utility
+**Changes:**
+- Rename the platform filter to "Responsável" (Person in charge)
+- Populate options dynamically from unique `socialMedia` values in the data
+- Update filter logic to match person names exactly
 
-Add a CSS utility class to ensure consistent numeral width across all metrics:
+### 2. Contents.tsx - Add Persons Extraction and Update Filter Logic
 
-```text
-src/index.css:
-+------------------------------------------+
-| .tabular-nums {                          |
-|   font-variant-numeric: tabular-nums;    |
-| }                                        |
-+------------------------------------------+
-```
+| Current | Updated |
+|---------|---------|
+| `selectedPlatform` filters by platform key | Filters by exact person name |
+| No persons extraction | Extract unique `socialMedia` values |
 
-### 3. Update Project Typography Guidelines
+**Changes:**
+- Add `persons` extraction similar to `clients`
+- Pass `persons` to `ContentFilters`
+- Update filter logic to compare against person names
 
-Clarify the typography rule in memory:
-- DM Serif Display: Headings, welcome messages, dates (text content)
-- Inter: Metrics, numbers, UI elements, body text
+### 3. ContentCard.tsx - Show Client Name Instead of ID
+
+| Current | Updated |
+|---------|---------|
+| Title: `{item.id || "Sem título"}` | Title: `{item.client || "Sem título"}` |
+| Shows client separately below | Optionally show format or status |
+
+**Changes:**
+- Grid view: Display `item.client` as the title
+- List view: Display `item.client` as the title
+- Calendar tooltips: Display `item.client` instead of `item.id`
+
+### 4. ContentCalendar.tsx - Update Tooltips
+
+| Current | Updated |
+|---------|---------|
+| Shows `item.id` in tooltip | Shows `item.client` |
 
 ## Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/components/dashboard/StatCard.tsx` | Change value to `font-sans` with `tabular-nums`, add explicit font classes |
-| `src/index.css` | Add `tabular-nums` utility class |
+| `src/pages/Contents.tsx` | Extract persons, update filter prop names, adjust filter logic |
+| `src/components/contents/ContentFilters.tsx` | Change platform filter to person filter with dynamic options |
+| `src/components/contents/ContentCard.tsx` | Display `client` as title instead of `id` |
+| `src/components/contents/ContentCalendar.tsx` | Show `client` in tooltips |
 
 ## Technical Details
 
-The `font-variant-numeric: tabular-nums` CSS property ensures:
-- All digits have equal width (monospaced numbers)
-- Consistent alignment in columns and data displays
-- Professional appearance for metrics and statistics
+```text
+Contents.tsx:
++------------------------------------------+
+| Add: persons = unique socialMedia values |
+| Rename: selectedPlatform -> selectedPerson|
+| Filter: exact match on socialMedia       |
++------------------------------------------+
+
+ContentFilters.tsx:
++------------------------------------------+
+| Props: add persons: string[]             |
+| Label: "Responsável" / "Todos resp."     |
+| Options: dynamic from persons array      |
++------------------------------------------+
+
+ContentCard.tsx:
++------------------------------------------+
+| Grid title: item.client                  |
+| List title: item.client                  |
+| Remove duplicate client display below    |
++------------------------------------------+
+
+ContentCalendar.tsx:
++------------------------------------------+
+| Tooltip text: item.client                |
++------------------------------------------+
+```
 
 ## Expected Result
-
-- All StatCard numbers display uniformly in Inter font
-- Numbers align consistently (2, 3, 4, 5, 8 all same width)
-- Description and trend text match the rest of the UI
-- Clear visual hierarchy: serif for headings, sans-serif for data
+- The SM filter shows actual person names from the data and filters correctly
+- Content cards display the client name as the main title
+- Calendar tooltips show client names
+- Filter functionality works as expected for filtering by responsible person
