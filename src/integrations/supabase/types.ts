@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      clients: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -109,6 +127,105 @@ export type Database = {
           },
         ]
       }
+      team_member_clients: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          team_member_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          team_member_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          team_member_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_member_clients_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_member_clients_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_members: {
+        Row: {
+          area: Database["public"]["Enums"]["team_type"] | null
+          birth_date: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          leader_id: string | null
+          position: string | null
+          profile_id: string | null
+          seniority: Database["public"]["Enums"]["seniority_level"] | null
+          squad: string | null
+          start_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          area?: Database["public"]["Enums"]["team_type"] | null
+          birth_date?: string | null
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          leader_id?: string | null
+          position?: string | null
+          profile_id?: string | null
+          seniority?: Database["public"]["Enums"]["seniority_level"] | null
+          squad?: string | null
+          start_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          area?: Database["public"]["Enums"]["team_type"] | null
+          birth_date?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          leader_id?: string | null
+          position?: string | null
+          profile_id?: string | null
+          seniority?: Database["public"]["Enums"]["seniority_level"] | null
+          squad?: string | null
+          start_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_leader_id_fkey"
+            columns: ["leader_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_members_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -146,7 +263,16 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
-      team_type: "Creative" | "Marketing" | "Client Services" | "Operations"
+      seniority_level: "Júnior" | "Pleno" | "Sênior"
+      team_type:
+        | "Creative"
+        | "Marketing"
+        | "Client Services"
+        | "Operations"
+        | "Social Media"
+        | "Criação"
+        | "Diretoria"
+        | "Comercial"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -275,7 +401,17 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
-      team_type: ["Creative", "Marketing", "Client Services", "Operations"],
+      seniority_level: ["Júnior", "Pleno", "Sênior"],
+      team_type: [
+        "Creative",
+        "Marketing",
+        "Client Services",
+        "Operations",
+        "Social Media",
+        "Criação",
+        "Diretoria",
+        "Comercial",
+      ],
     },
   },
 } as const
