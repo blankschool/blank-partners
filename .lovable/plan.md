@@ -1,114 +1,128 @@
 
-# Optimize ClientsTab: Convert from Cards Grid to List Layout
+# Convert Team and Users Tabs to List Layout
 
-## Problem
+## Overview
 
-The current Clients tab displays 54 clients in a 3-column card grid layout. Each card takes significant vertical space, requiring extensive scrolling. For administrative purposes, a compact list view would be more efficient and allow faster scanning of clients.
+Convert the Team (Equipe) and Users (Usuários) tabs from card grid layouts to compact, table-like list layouts, matching the optimized Clients tab design.
 
-## Solution
+## Current State
 
-Convert the card-based grid layout to a compact, table-like list layout that shows all essential information in a single row per client.
+Both tabs use a 3-column card grid that takes significant vertical space:
+- **TeamTab**: Shows 39 team members with name, email, area, seniority, position, start date, and clients
+- **UsersTab**: Shows users with name, email, team, position, and admin status
 
-## Implementation
+## New List Layout Design
 
-### Changes to `src/components/admin/ClientsTab.tsx`
+### TeamTab Columns
+| Avatar | Nome | Email | Área | Senioridade | Cargo | Ações |
 
-**Layout Change:**
-- Replace `grid gap-4 md:grid-cols-2 lg:grid-cols-3` with a vertical list container
-- Use horizontal rows with flexbox for each client entry
+### UsersTab Columns
+| Avatar | Nome | Email | Equipe | Cargo | Tipo | Ações |
 
-**New Row Structure:**
-```text
-[Avatar] | Client Name | Member Count | Member Names | [Edit] [Delete]
-```
+## Technical Changes
 
-**Styling Updates:**
-- Each row: `flex items-center justify-between py-3 px-4 border-b border-border`
-- Hover effect: `hover:bg-muted/50` for interactive feedback
-- Header row with column labels for clarity
-- Compact avatar size (h-8 w-8)
-- Truncate member names with proper max-width
+### File: `src/components/admin/TeamTab.tsx`
+
+**Replace grid layout (lines 130-210) with:**
+- Rounded container with header row and dividers
+- Header: Avatar space, Nome, Email, Área, Senioridade, Cargo, Ações
+- Each member as a single row with:
+  - Compact avatar (h-8 w-8)
+  - Name (font-medium, truncate)
+  - Email (hidden on mobile, text-muted-foreground)
+  - Area badge (hidden on small screens)
+  - Seniority badge (hidden on small screens)
+  - Position text (hidden on medium screens)
+  - Edit/Delete buttons (opacity on hover)
+
+**Responsive behavior:**
+- Mobile: Avatar, Name, Actions only
+- Tablet: Add Email
+- Desktop: Show all columns
+
+### File: `src/components/admin/UsersTab.tsx`
+
+**Replace grid layout (lines 80-158) with:**
+- Same container style as TeamTab
+- Header: Avatar space, Nome, Email, Equipe, Cargo, Tipo, Ações
+- Each user as a single row with:
+  - Avatar with image support
+  - Name with admin shield icon inline
+  - Email (hidden on mobile)
+  - Team badge (hidden on small screens)
+  - Position text (hidden on medium screens)
+  - Admin/User badge
+  - Edit/Delete buttons (opacity on hover)
 
 ## Visual Comparison
 
 ### Before (Card Grid)
 ```text
-┌─────────────┐ ┌─────────────┐ ┌─────────────┐
-│ [AV]        │ │ [AG]        │ │ [AF]        │
-│ A Grande    │ │ Agroadvance │ │ Ale Frankel │
-│ 3 membros   │ │ 2 membros   │ │ 2 membros   │
-│ Names...    │ │ Names...    │ │ Names...    │
-└─────────────┘ └─────────────┘ └─────────────┘
+┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+│ [Avatar]     │ │ [Avatar]     │ │ [Avatar]     │
+│ Name         │ │ Name         │ │ Name         │
+│ email@...    │ │ email@...    │ │ email@...    │
+│ [Area][Sen]  │ │ [Area][Sen]  │ │ [Area][Sen]  │
+│ Start: Date  │ │ Start: Date  │ │ Start: Date  │
+└──────────────┘ └──────────────┘ └──────────────┘
 ```
 
 ### After (List)
 ```text
-┌─────────────────────────────────────────────────────────────┐
-│ Cliente              Membros    Responsáveis         Ações  │
-├─────────────────────────────────────────────────────────────┤
-│ [AV] A Grande Mesa   3 membros  Henrique, Luiz...   [✎] [🗑]│
-│ [AG] Agroadvance     2 membros  Gabriel, Eduarda    [✎] [🗑]│
-│ [AF] Ale Frankel     2 membros  Daniel, Maria       [✎] [🗑]│
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│      Nome           Email              Área    Senior.   Ações   │
+├──────────────────────────────────────────────────────────────────┤
+│ [AV] João Silva     joao@email.com     Design  Pleno     [✎][🗑] │
+│ [MA] Maria Santos   maria@email.com    Dev     Senior    [✎][🗑] │
+│ [PE] Pedro Costa    pedro@email.com    Growth  Junior    [✎][🗑] │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
 ## Benefits
 
-1. **Space Efficiency**: Show more clients per screen (10-15 vs 6-9)
-2. **Faster Scanning**: Horizontal reading is faster for comparison
-3. **Better for Large Lists**: Scales well with 54+ clients
-4. **Consistent Actions**: Edit/Delete buttons in predictable position
-5. **Cleaner UI**: Reduces visual noise from card borders
+1. **Space Efficiency**: Display 15+ members per screen vs 6-9 with cards
+2. **Faster Scanning**: Horizontal alignment enables quick comparison
+3. **Consistent Design**: Matches the optimized Clients tab
+4. **Better for Admin Tasks**: Quick access to edit/delete across many records
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/components/admin/ClientsTab.tsx` | Replace grid layout with list layout |
+| `src/components/admin/TeamTab.tsx` | Replace grid with list layout |
+| `src/components/admin/UsersTab.tsx` | Replace grid with list layout |
 
-## Technical Details
+## Implementation Details
 
-### Updated JSX Structure
-
+### List Container Structure
 ```tsx
-{/* List header */}
-<div className="flex items-center gap-4 px-4 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider border-b border-border">
-  <span className="w-10"></span>
-  <span className="flex-1 min-w-0">Cliente</span>
-  <span className="w-24 text-center">Membros</span>
-  <span className="flex-1 min-w-0 hidden md:block">Responsáveis</span>
-  <span className="w-20 text-right">Ações</span>
-</div>
-
-{/* List items */}
-<div className="divide-y divide-border">
-  {filteredClients.map((client) => (
-    <div
-      key={client.id}
-      className="group flex items-center gap-4 px-4 py-3 transition-colors hover:bg-muted/50"
-    >
-      <Avatar className="h-8 w-8 shrink-0">...</Avatar>
-      <span className="flex-1 min-w-0 font-medium truncate">{client.name}</span>
-      <span className="w-24 text-center text-sm text-muted-foreground">
-        {client.member_count} {client.member_count === 1 ? "membro" : "membros"}
-      </span>
-      <span className="flex-1 min-w-0 text-sm text-muted-foreground truncate hidden md:block">
-        {client.members.map((m) => m.full_name).join(", ")}
-      </span>
-      <div className="w-20 flex justify-end gap-1">
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-          <Pencil className="h-4 w-4" />
-        </Button>
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
-          <Trash2 className="h-4 w-4" />
-        </Button>
+<div className="rounded-xl border border-border bg-card overflow-hidden">
+  {/* Header row */}
+  <div className="flex items-center gap-4 px-4 py-3 text-xs font-medium 
+                  text-muted-foreground uppercase tracking-wider 
+                  border-b border-border bg-muted/30">
+    <span className="w-8"></span>
+    <span className="flex-1 min-w-0">Nome</span>
+    <span className="w-48 hidden sm:block">Email</span>
+    <span className="w-24 hidden md:block">Área</span>
+    <span className="w-20 hidden lg:block">Senioridade</span>
+    <span className="w-20 text-right">Ações</span>
+  </div>
+  
+  {/* List items */}
+  <div className="divide-y divide-border">
+    {filteredMembers.map((member) => (
+      <div className="group flex items-center gap-4 px-4 py-3 
+                      transition-colors hover:bg-muted/50">
+        {/* Row content */}
       </div>
-    </div>
-  ))}
+    ))}
+  </div>
 </div>
 ```
 
-### Responsive Behavior
-
-- On mobile: Hide member names column, show only avatar, name, count, actions
-- On desktop: Show all columns including member names
+### Badge Styling
+Keep existing badge styles but make them more compact:
+- Area/Team: `variant="secondary"` with smaller text
+- Seniority/Position: `variant="outline"`
+- Admin status: Keep the primary colored badge for visibility
