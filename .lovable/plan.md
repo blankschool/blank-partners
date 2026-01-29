@@ -1,75 +1,89 @@
 
 
-# Fix OTP Login - Enable 6-Digit Code for Email
+# Fix OTP Login - Correct Token Type
 
 ## Problem Identified
-Supabase's `signInWithOtp` for email sends a **magic link** (clickable URL) by default, not a 6-digit code. The auth logs confirm:
-- Successful login at 02:58:05 was via clicking the magic link (GET /verify, status 303)
-- Error "token has expired or is invalid" occurred when manually entering the token
 
-## Solution
-Configure Supabase to send 6-digit codes instead of magic links for email authentication.
+After thorough investigation of the auth logs and Supabase documentation, I found the root cause:
+
+**The `verifyOtp` function is using the wrong `type` parameter.**
+
+When calling `signInWithOtp` for an existing user (with `shouldCreateUser: false`), Supabase logs show:
+```
+"action":"user_recovery_requested"
+```
+
+This means Supabase internally treats this as a "recovery" flow, and the generated token is a **magic link/recovery token** - not a standard email OTP token.
+
+The current code uses:
+```typescript
+type: "email"  // Wrong for this flow
+```
+
+But it should use:
+```typescript
+type: "magiclink"  // Correct for signInWithOtp flow
+```
 
 ---
 
-## Implementation Steps
+## Solution
 
-### 1. Update Supabase Email Template (Dashboard Action - Required)
+Update the `verifyOtp` function in `src/hooks/useAuth.tsx` to use `type: "magiclink"` instead of `type: "email"`.
 
-You must modify the "Magic Link" email template in Supabase Dashboard:
-
-**Path:** Authentication > Email Templates > Magic Link
-
-**Replace the template with this:**
-```html
-<h2>Your verification code</h2>
-
-<p>Enter the following code to sign in:</p>
-
-<h1 style="font-size: 32px; letter-spacing: 4px; font-family: monospace;">{{ .Token }}</h1>
-
-<p>This code will expire in 1 hour.</p>
-
-<p>If you didn't request this code, you can safely ignore this email.</p>
+### Current Code (Line 52-58)
+```typescript
+const verifyOtp = async (email: string, token: string) => {
+  const { error } = await supabase.auth.verifyOtp({
+    email,
+    token,
+    type: "email",  // <-- WRONG
+  });
+  return { error };
+};
 ```
 
-This template uses `{{ .Token }}` which is the 6-digit OTP code that Supabase generates automatically.
-
-### 2. No Code Changes Required
-
-The current implementation in `src/hooks/useAuth.tsx` and `src/pages/Auth.tsx` is correct:
-- `signInWithOtp(email)` correctly sends the OTP request
-- `verifyOtp(email, token)` with `type: "email"` correctly verifies the 6-digit code
-
-The code is already set up to handle 6-digit codes - only the Supabase email template needs to be updated.
+### Fixed Code
+```typescript
+const verifyOtp = async (email: string, token: string) => {
+  const { error } = await supabase.auth.verifyOtp({
+    email,
+    token,
+    type: "magiclink",  // <-- CORRECT
+  });
+  return { error };
+};
+```
 
 ---
 
 ## Why This Works
 
-Supabase always generates both:
-1. A **magic link** URL with a token hash
-2. A **6-digit numeric code** (`{{ .Token }}`)
+According to Supabase documentation and GitHub discussions:
 
-The default email template only shows the magic link. By updating the template to show `{{ .Token }}`, users will receive the 6-digit code they can manually enter.
+| Token Type | Use Case |
+|------------|----------|
+| `"email"` | For numeric OTP codes sent during **signup** flow |
+| `"magiclink"` | For tokens sent via `signInWithOtp()` for existing users |
+| `"recovery"` | For password reset flows |
+
+Since we're using `signInWithOtp` with `shouldCreateUser: false` (login-only for existing users), the correct type is `"magiclink"`.
 
 ---
 
-## Post-Implementation Verification
+## Files to Modify
 
-After updating the email template:
+| File | Change |
+|------|--------|
+| `src/hooks/useAuth.tsx` | Change `type: "email"` to `type: "magiclink"` on line 56 |
+
+---
+
+## Verification Steps
+
+After applying this fix:
 1. Go to the Auth page and enter your email
-2. Check your email - you should now see a 6-digit code
+2. Check your email for the 6-digit code (from your updated template)
 3. Enter the code in the OTP input fields
-4. You should be signed in successfully
-
----
-
-## Summary
-
-| Component | Status | Action Required |
-|-----------|--------|-----------------|
-| `src/hooks/useAuth.tsx` | Correct | None |
-| `src/pages/Auth.tsx` | Correct | None |
-| Supabase Email Template | Needs Update | Update "Magic Link" template in Dashboard |
+4. You should now be signed in successfully
 
