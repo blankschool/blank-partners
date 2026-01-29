@@ -144,7 +144,7 @@ const Clients = () => {
                 >
                   <Avatar className="h-12 w-12">
                     <AvatarImage src="" />
-                    <AvatarFallback className="bg-chart-2 text-primary-foreground font-medium">
+                    <AvatarFallback className="bg-foreground text-background font-medium">
                       {client.avatar}
                     </AvatarFallback>
                   </Avatar>
