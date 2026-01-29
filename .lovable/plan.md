@@ -1,102 +1,164 @@
 
-# Fix SM Filter and Content Display on Contents Page
+# Enhanced Calendar View with Content Preview and Day Popup
 
-## Problem Analysis
+## Overview
 
-### Issue 1: SM Filter Not Working
-The "SM" filter dropdown is configured to filter by social media **platforms** (Instagram, LinkedIn, YouTube, TikTok), but the actual data in the `socialMedia` field contains **person names** - the social media managers/assignees responsible for the content (e.g., "Henrique Portella").
+This plan adds two features to the calendar view on the Contents page:
+1. **Enhanced tooltip preview** showing content name + stage with visual badges
+2. **Click-to-open popup** displaying all contents for the selected day in a scrollable dialog
 
-This is a data mapping mismatch - the filter needs to be updated to filter by person instead of platform.
+## Current State
 
-### Issue 2: Content ID Displayed Instead of Client Name
-Currently the `ContentCard` shows `item.id` (a Notion UUID like "2eed77361cee80569c3ad1ca63ef3df7") as the main title. The user wants to see the **client name** as the primary identifier.
+- Calendar shows colored dots for each content item
+- Simple tooltip with count and client names (first 3)
+- `onDayClick` prop exists but is not connected to anything
 
 ## Changes Required
 
-### 1. ContentFilters.tsx - Change SM Filter to Filter by Person
+### 1. Enhanced Tooltip Preview (ContentCalendar.tsx)
+
+Update the tooltip to show richer content information:
 
 | Current | Updated |
 |---------|---------|
-| Platform dropdown with predefined options | Dynamic person dropdown populated from data |
-| Filter label "Todas SM" | "Todos responsáveis" |
-| `selectedPlatform` prop | `selectedPerson` prop (or repurpose the same) |
+| Shows only count + client names | Shows client name + stage badge for each item |
+| Plain text display | Colored badges matching stage configuration |
+| Limited to 3 items preview | Show 4-5 items with stage indicators |
 
-**Changes:**
-- Rename the platform filter to "Responsável" (Person in charge)
-- Populate options dynamically from unique `socialMedia` values in the data
-- Update filter logic to match person names exactly
+**Tooltip will display:**
+- Total count header
+- Each item with: Client name + Stage badge (colored)
+- "e mais X..." for overflow
 
-### 2. Contents.tsx - Add Persons Extraction and Update Filter Logic
+### 2. Day Click Popup (New Component + Integration)
 
-| Current | Updated |
-|---------|---------|
-| `selectedPlatform` filters by platform key | Filters by exact person name |
-| No persons extraction | Extract unique `socialMedia` values |
+Create a new `DayContentDialog` component that opens when clicking on a calendar day:
 
-**Changes:**
-- Add `persons` extraction similar to `clients`
-- Pass `persons` to `ContentFilters`
-- Update filter logic to compare against person names
+**Dialog Features:**
+- Header showing the selected date (e.g., "29 de janeiro de 2026")
+- Total content count
+- Scrollable list of all contents for that day
+- Each content shows: Client name, Stage badge, Format, Link to Notion
+- Close button
 
-### 3. ContentCard.tsx - Show Client Name Instead of ID
+### 3. State Management (Contents.tsx)
 
-| Current | Updated |
-|---------|---------|
-| Title: `{item.id || "Sem título"}` | Title: `{item.client || "Sem título"}` |
-| Shows client separately below | Optionally show format or status |
+Add state to manage the popup:
+- `selectedDay: Date | null`
+- `selectedDayItems: ContentItem[]`
+- Handler for `onDayClick` callback
 
-**Changes:**
-- Grid view: Display `item.client` as the title
-- List view: Display `item.client` as the title
-- Calendar tooltips: Display `item.client` instead of `item.id`
+## Files to Create/Modify
 
-### 4. ContentCalendar.tsx - Update Tooltips
-
-| Current | Updated |
-|---------|---------|
-| Shows `item.id` in tooltip | Shows `item.client` |
-
-## Files to Modify
-
-| File | Change |
-|------|--------|
-| `src/pages/Contents.tsx` | Extract persons, update filter prop names, adjust filter logic |
-| `src/components/contents/ContentFilters.tsx` | Change platform filter to person filter with dynamic options |
-| `src/components/contents/ContentCard.tsx` | Display `client` as title instead of `id` |
-| `src/components/contents/ContentCalendar.tsx` | Show `client` in tooltips |
+| File | Action | Changes |
+|------|--------|---------|
+| `src/components/contents/DayContentDialog.tsx` | Create | New dialog component for day content list |
+| `src/components/contents/ContentCalendar.tsx` | Modify | Enhanced tooltip with stage badges |
+| `src/pages/Contents.tsx` | Modify | Add state and handler for day popup |
 
 ## Technical Details
 
+### DayContentDialog.tsx (New Component)
+
 ```text
-Contents.tsx:
-+------------------------------------------+
-| Add: persons = unique socialMedia values |
-| Rename: selectedPlatform -> selectedPerson|
-| Filter: exact match on socialMedia       |
-+------------------------------------------+
+Props:
+- open: boolean
+- onOpenChange: (open: boolean) => void
+- date: Date | null
+- items: ContentItem[]
 
-ContentFilters.tsx:
+Structure:
 +------------------------------------------+
-| Props: add persons: string[]             |
-| Label: "Responsável" / "Todos resp."     |
-| Options: dynamic from persons array      |
-+------------------------------------------+
-
-ContentCard.tsx:
-+------------------------------------------+
-| Grid title: item.client                  |
-| List title: item.client                  |
-| Remove duplicate client display below    |
-+------------------------------------------+
-
-ContentCalendar.tsx:
-+------------------------------------------+
-| Tooltip text: item.client                |
+| Dialog                                    |
+|   DialogContent                           |
+|     DialogHeader                          |
+|       DialogTitle: "29 de janeiro de 2026"|
+|       DialogDescription: "X conteúdo(s)" |
+|     ScrollArea (max-h-96)                 |
+|       For each item:                      |
+|         - Client name                     |
+|         - Stage badge (colored)           |
+|         - Format (if exists)              |
+|         - External link icon              |
+|     DialogFooter: Close button            |
 +------------------------------------------+
 ```
 
+### ContentCalendar.tsx Updates
+
+```text
+Enhanced TooltipContent:
+- Show each item with colored stage badge
+- Client name + stage label on same row
+- Better visual hierarchy
+
+Lines 174-190: Update tooltip content structure
+```
+
+### Contents.tsx Updates
+
+```text
+New state (around line 45):
++ const [selectedDay, setSelectedDay] = useState<Date | null>(null);
++ const [selectedDayItems, setSelectedDayItems] = useState<ContentItem[]>([]);
+
+Handler function:
++ const handleDayClick = (date: Date, items: ContentItem[]) => {
++   setSelectedDay(date);
++   setSelectedDayItems(items);
++ };
+
+Calendar prop (line 196):
+- <ContentCalendar items={filteredItems} />
++ <ContentCalendar items={filteredItems} onDayClick={handleDayClick} />
+
+Add dialog component after calendar:
++ <DayContentDialog
++   open={selectedDay !== null}
++   onOpenChange={(open) => !open && setSelectedDay(null)}
++   date={selectedDay}
++   items={selectedDayItems}
++ />
+```
+
+## Visual Design
+
+### Enhanced Tooltip
+```text
++--------------------------------+
+| 5 conteúdo(s)                  |
+| Rony Meisler  [Backlog]        |
+| João Silva    [Publicado]      |
+| Maria Santos  [Escrita]        |
+| e mais 2...                    |
++--------------------------------+
+```
+
+### Day Content Dialog
+```text
++----------------------------------------+
+| [X]                                    |
+|                                        |
+| 29 de janeiro de 2026                  |
+| 5 conteúdo(s) agendados                |
+|                                        |
+| +------------------------------------+ |
+| | Rony Meisler                       | |
+| | [Backlog]  Carrossel    [link]     | |
+| +------------------------------------+ |
+| | João Silva                         | |
+| | [Publicado]  Reels      [link]     | |
+| +------------------------------------+ |
+| | ...                                | |
+| +------------------------------------+ |
+|                                        |
+|                        [Fechar]        |
++----------------------------------------+
+```
+
 ## Expected Result
-- The SM filter shows actual person names from the data and filters correctly
-- Content cards display the client name as the main title
-- Calendar tooltips show client names
-- Filter functionality works as expected for filtering by responsible person
+
+1. **Hover on calendar day**: Shows enhanced tooltip with client names and colored stage badges
+2. **Click on calendar day**: Opens dialog showing all contents for that day with full details
+3. **Dialog interaction**: Scrollable content list with links to open each content in Notion
+4. **Visual consistency**: Uses existing stage color configuration for badges
