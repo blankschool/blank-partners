@@ -11,6 +11,7 @@ import { DayContentDialog } from "@/components/contents/DayContentDialog";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { parseISO, isValid, isWithinInterval } from "date-fns";
+import { normalizeStatus } from "@/lib/contentStages";
 
 function parseDate(dateStr: string): Date | null {
   if (!dateStr) return null;
@@ -93,7 +94,7 @@ const Contents = () => {
       // Stage filter (from dropdown or panel)
       const activeStage = stageFromPanel || (selectedStage !== "all" ? selectedStage : null);
       if (activeStage) {
-        if (item.status.toLowerCase().trim() !== activeStage) return false;
+        if (normalizeStatus(item.status) !== activeStage) return false;
       }
 
       // Date range filter

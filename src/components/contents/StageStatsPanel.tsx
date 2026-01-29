@@ -1,5 +1,5 @@
 import { ContentItem } from "@/hooks/useGoogleSheetsContent";
-import { CONTENT_STAGES, getStageConfig } from "@/lib/contentStages";
+import { CONTENT_STAGES, normalizeStatus } from "@/lib/contentStages";
 import { cn } from "@/lib/utils";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
@@ -13,7 +13,7 @@ export function StageStatsPanel({ items, selectedStage, onStageClick }: StageSta
   // Count items per stage
   const stageCounts = CONTENT_STAGES.reduce((acc, stage) => {
     acc[stage.key] = items.filter(
-      item => item.status.toLowerCase().trim() === stage.key
+      item => normalizeStatus(item.status) === stage.key
     ).length;
     return acc;
   }, {} as Record<string, number>);
