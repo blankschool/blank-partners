@@ -1,150 +1,111 @@
 
-# Group Content Stages into Macro Categories
 
-## Overview
+# Show Content Cards in Calendar Days
 
-The StageStatsPanel currently displays 15+ individual stages, making the layout cluttered. This plan groups them into 6 macro categories for the stats panel while preserving the detailed stages for filtering and badges.
+## Problem
 
-## New Stage Groups
+The current calendar displays only colored dots at the bottom of each day cell with a "+47" style count. Users cannot see what content is scheduled without hovering (tooltip) or clicking (dialog). This makes it hard to quickly scan and understand the calendar at a glance.
 
-| Group | Label | Included Stages | Color Theme |
-|-------|-------|-----------------|-------------|
-| 1 | Escrevendo | backlog, rascunho, escrita, aprovacao escrita, em briefing, ajustes escrita | Orange |
-| 2 | Criação | gravacao de video, gravacao de audio, edicao de video, criacao design, ajustes edicao de video, ajustes criacao design | Purple |
-| 3 | Aprovação | aprovacao post | Blue |
-| 4 | Pronto para postar | pronto para postar | Yellow |
-| 5 | Publicado | publicado | Green |
-| 6 | Cancelado | cancelado | Red |
+## Solution
 
-## Implementation
+Replace the dots with mini content cards showing:
+- Client name (truncated)
+- Stage badge with color
 
-### File 1: `src/lib/contentStages.ts`
-
-Add a new interface and array for stage groups:
-
-```text
-export interface StageGroup {
-  key: string;
-  label: string;
-  stages: string[];  // Keys of CONTENT_STAGES that belong to this group
-  color: string;
-  bgColor: string;
-  borderColor: string;
-}
-
-export const STAGE_GROUPS: StageGroup[] = [
-  {
-    key: 'escrevendo',
-    label: 'Escrevendo',
-    stages: ['backlog', 'rascunho', 'escrita', 'aprovacao escrita', 'em briefing', 'ajustes escrita'],
-    color: 'text-orange-600',
-    bgColor: 'bg-orange-100',
-    borderColor: 'border-orange-200'
-  },
-  {
-    key: 'criacao',
-    label: 'Criação',
-    stages: ['gravacao de video', 'gravacao de audio', 'edicao de video', 'criacao design', 'ajustes edicao de video', 'ajustes criacao design'],
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-100',
-    borderColor: 'border-purple-200'
-  },
-  {
-    key: 'aprovacao',
-    label: 'Aprovação',
-    stages: ['aprovacao post'],
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-100',
-    borderColor: 'border-blue-200'
-  },
-  {
-    key: 'pronto',
-    label: 'Pronto para postar',
-    stages: ['pronto para postar'],
-    color: 'text-yellow-600',
-    bgColor: 'bg-yellow-100',
-    borderColor: 'border-yellow-200'
-  },
-  {
-    key: 'publicado',
-    label: 'Publicado',
-    stages: ['publicado'],
-    color: 'text-green-600',
-    bgColor: 'bg-green-100',
-    borderColor: 'border-green-200'
-  },
-  {
-    key: 'cancelado',
-    label: 'Cancelado',
-    stages: ['cancelado'],
-    color: 'text-red-600',
-    bgColor: 'bg-red-100',
-    borderColor: 'border-red-200'
-  }
-];
-```
-
-Add a helper function to find which group a status belongs to:
-
-```text
-export function getStageGroup(status: string): StageGroup | undefined {
-  const normalizedStatus = normalizeStatus(status);
-  return STAGE_GROUPS.find(group => group.stages.includes(normalizedStatus));
-}
-```
-
-### File 2: `src/components/contents/StageStatsPanel.tsx`
-
-Update to use STAGE_GROUPS instead of individual stages:
-
-- Import `STAGE_GROUPS` instead of `CONTENT_STAGES`
-- Count items per group by checking if normalized status is in the group's stages array
-- Update the selected state to track group keys instead of stage keys
-- Display 6 group buttons instead of 15+ stage buttons
-
-### File 3: `src/pages/Contents.tsx`
-
-Update filtering logic to work with groups:
-
-- When a group is selected from the panel, filter items where the normalized status is in the group's stages array
-- The dropdown filter still uses individual stages for granular filtering
-- Add a new state or modify existing to handle group-based filtering
+Show 2-3 items per day cell with a "+X more" indicator for additional items.
 
 ## Visual Comparison
 
 ```text
-BEFORE (15+ buttons, horizontal scroll needed):
-+-------+-------+-------+-------+-------+-------+-------+-------+...
-| Todos |Backlog|Rascunho|Escrita|Aprov. |Gravação|Edição |Design|
-|  142  |   5   |   3    |   8   | escr. | vídeo  | vídeo |      |
-+-------+-------+-------+-------+-------+-------+-------+-------+...
+BEFORE (dots only):
++------------------+
+| 15               |
+|                  |
+|                  |
+|   ●●●● +47       |
++------------------+
 
-AFTER (7 buttons, fits on screen):
-+-------+----------+--------+----------+--------+----------+----------+
-| Todos |Escrevendo| Criação| Aprovação| Pronto | Publicado| Cancelado|
-|  142  |    32    |   18   |    4     |   12   |    68    |    8     |
-+-------+----------+--------+----------+--------+----------+----------+
+AFTER (mini cards):
++------------------+
+| 15               |
+| [Rony Meisler]   |
+| [Cliente ABC]    |
+| +45 mais...      |
++------------------+
 ```
+
+## Implementation Details
+
+### File: `src/components/contents/ContentCalendar.tsx`
+
+**Changes to day cell content area (lines 150-170):**
+
+Replace the dots-only display with mini content preview cards:
+
+```text
+{/* Content preview - show up to 2 items */}
+{dayItems.length > 0 && (
+  <div className="absolute bottom-1 left-1 right-1 space-y-0.5 overflow-hidden">
+    {dayItems.slice(0, 2).map((item, idx) => {
+      const stageConfig = getStageConfig(item.status);
+      return (
+        <div
+          key={idx}
+          className={cn(
+            "text-[9px] px-1 py-0.5 rounded truncate",
+            stageConfig?.bgColor || 'bg-muted',
+            stageConfig?.color || 'text-muted-foreground'
+          )}
+        >
+          {item.client || 'Sem cliente'}
+        </div>
+      );
+    })}
+    {dayItems.length > 2 && (
+      <span className="text-[9px] text-muted-foreground block text-center">
+        +{dayItems.length - 2} mais
+      </span>
+    )}
+  </div>
+)}
+```
+
+**Adjust cell height to accommodate cards:**
+
+Update the button className from `aspect-[4/3]` to a slightly taller ratio or minimum height to fit the content cards:
+
+```text
+// Before
+"aspect-[4/3] p-1 rounded-lg..."
+
+// After  
+"min-h-[80px] p-1 rounded-lg..."
+```
+
+**Position day number properly:**
+
+Keep the day number in the top-left, but ensure there's enough space below for the content cards.
+
+## Styling Details
+
+| Element | Current | Updated |
+|---------|---------|---------|
+| Day cell height | `aspect-[4/3]` | `min-h-[80px]` or `aspect-[3/4]` |
+| Content display | 4 colored dots + count | 2 mini cards with client name |
+| Card style | N/A | Small rounded pill with stage color |
+| Overflow indicator | `+{n}` small text | `+{n} mais` centered |
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/lib/contentStages.ts` | Add `StageGroup` interface, `STAGE_GROUPS` array, and `getStageGroup()` helper |
-| `src/components/contents/StageStatsPanel.tsx` | Update to display and count by groups instead of individual stages |
-| `src/pages/Contents.tsx` | Update filtering logic to handle group selections |
-
-## What Stays the Same
-
-- **ContentFilters dropdown**: Still shows all 15 individual stages for detailed filtering
-- **ContentCard badges**: Still show the specific stage label (e.g., "Edição de vídeo")
-- **DayContentDialog**: Still shows specific stage badges
-- **CONTENT_STAGES array**: Unchanged, still used for individual stage styling
+| `src/components/contents/ContentCalendar.tsx` | Replace dots with mini content cards, adjust cell dimensions |
 
 ## Expected Result
 
-1. StageStatsPanel shows 7 buttons (Todos + 6 groups) instead of 15+
-2. Clicking a group filters to show all items in that group's stages
-3. Group counts aggregate all underlying stages correctly
-4. Dropdown filter still allows selection of specific stages
-5. No horizontal scroll needed on most screens
+1. Each calendar day shows up to 2 content items with client names
+2. Items are color-coded by their stage (using stage background colors)
+3. Days with more than 2 items show a "+X mais" indicator
+4. Clicking a day still opens the full dialog with all items
+5. Calendar remains scannable but now shows meaningful content previews
+
