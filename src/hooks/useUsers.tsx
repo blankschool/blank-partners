@@ -2,7 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-export type TeamType = "Creative" | "Marketing" | "Client Services" | "Operations";
+export type TeamType = "Creative" | "Marketing" | "Client Services" | "Operations" | "Social Media" | "Criação" | "Diretoria" | "Comercial";
+export type SeniorityLevel = "Júnior" | "Pleno" | "Sênior";
 export type AppRole = "admin" | "user";
 
 export interface Position {
@@ -183,4 +184,4 @@ export function useUsers() {
   };
 }
 
-export const TEAMS: TeamType[] = ["Creative", "Marketing", "Client Services", "Operations"];
+export const TEAMS: TeamType[] = ["Creative", "Marketing", "Client Services", "Operations", "Social Media", "Criação", "Diretoria", "Comercial"];

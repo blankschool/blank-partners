@@ -24,12 +24,12 @@ import type { Database } from "@/integrations/supabase/types";
 type Position = Database["public"]["Tables"]["positions"]["Row"];
 type TeamType = Database["public"]["Enums"]["team_type"];
 
-const TEAMS: TeamType[] = ["Creative", "Marketing", "Client Services", "Operations"];
+const TEAMS: TeamType[] = ["Creative", "Marketing", "Client Services", "Operations", "Social Media", "Criação", "Diretoria", "Comercial"];
 
 const profileSchema = z.object({
   full_name: z.string().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
   position_id: z.string().nullable(),
-  team: z.enum(["Creative", "Marketing", "Client Services", "Operations"]).nullable(),
+  team: z.enum(["Creative", "Marketing", "Client Services", "Operations", "Social Media", "Criação", "Diretoria", "Comercial"]).nullable(),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
