@@ -1,5 +1,9 @@
-import { LayoutDashboard, Users, FileText, UsersRound, HeartPulse } from "lucide-react";
+import { LayoutDashboard, Users, FileText, UsersRound, HeartPulse, LogOut } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
@@ -23,7 +27,26 @@ const navigationItems = [
 
 export function AppSidebar() {
   const { state } = useSidebar();
+  const { user, signOut } = useAuth();
+  const { toast } = useToast();
   const isCollapsed = state === "collapsed";
+
+  const handleSignOut = async () => {
+    const { error } = await signOut();
+    if (error) {
+      toast({
+        title: "Error signing out",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const userInitials = user?.email
+    ? user.email.substring(0, 2).toUpperCase()
+    : "U";
+
+  const userDisplayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User";
 
   return (
     <Sidebar collapsible="icon" className="border-none">
@@ -66,7 +89,37 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-5">
-        {!isCollapsed && (
+        {user && (
+          <div className={`flex items-center gap-3 ${isCollapsed ? "justify-center" : ""}`}>
+            <Avatar className="h-9 w-9 ring-2 ring-white/20">
+              <AvatarImage src={user.user_metadata?.avatar_url} alt={userDisplayName} />
+              <AvatarFallback className="bg-white/10 text-white text-xs font-medium">
+                {userInitials}
+              </AvatarFallback>
+            </Avatar>
+            {!isCollapsed && (
+              <div className="flex flex-1 items-center justify-between">
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-white truncate max-w-[120px]">
+                    {userDisplayName}
+                  </span>
+                  <span className="text-[10px] text-white/50 truncate max-w-[120px]">
+                    {user.email}
+                  </span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleSignOut}
+                  className="h-8 w-8 text-white/50 hover:text-white hover:bg-white/10"
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+        {!user && !isCollapsed && (
           <div className="rounded-lg border border-white/10 p-4">
             <p className="text-xs font-medium text-white">Need help?</p>
             <p className="mt-1 text-[10px] text-white/50">Contact support for assistance</p>
