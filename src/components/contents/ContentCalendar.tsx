@@ -88,7 +88,7 @@ export function ContentCalendar({ items, onDayClick }: ContentCalendarProps) {
 
   return (
     <Card>
-      <CardContent className="p-4">
+      <CardContent className="p-4 max-w-5xl mx-auto">
         {/* Header with navigation */}
         <div className="flex items-center justify-between mb-4">
           <Button
@@ -137,7 +137,7 @@ export function ContentCalendar({ items, onDayClick }: ContentCalendarProps) {
                     <button
                       onClick={() => onDayClick?.(day, dayItems)}
                       className={cn(
-                        "aspect-square p-1 rounded-lg text-sm transition-colors relative",
+                        "aspect-[4/3] p-1 rounded-lg text-sm transition-colors relative",
                         "hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring",
                         !isCurrentMonth && "text-muted-foreground/50",
                         isToday && "ring-2 ring-primary"
