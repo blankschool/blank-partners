@@ -1,53 +1,62 @@
 
-# Complete Typography Fix for Contents Page Filters
+# Fix Typography Inconsistencies on Dashboard
 
-## Issue
-The filters on the Contents page are still not displaying the correct Inter typography consistently across all elements.
+## Problem Analysis
 
-## Root Cause Analysis
-While the body uses Inter as the default font and `font-sans` was added to SelectTrigger elements and the period button, other filter elements are missing the explicit font class:
-- Buttons inside the period popover (Tudo, Semana, Mes)
-- Search input field
-- SelectContent and SelectItem elements
+The StatCard numbers (24, 358, 312, 4.8%) display with inconsistent character styling. This happens because DM Serif Display font uses **oldstyle/proportional numerals** where certain digits (3, 5, 8) have distinctive descenders and varying widths compared to other digits (2, 4).
+
+This is a font design characteristic, not a bug - but it creates an unintended visual inconsistency for numerical metrics.
+
+## Solution
+
+For numerical metrics and data displays, use Inter font (font-sans) which has uniform, tabular-lining numerals. Reserve DM Serif Display for headings and text content only.
 
 ## Changes Required
 
-### 1. ContentFilters.tsx - Complete Font Coverage
+### 1. StatCard.tsx - Fix Numeric Display
 
-| Element | Current | Change |
-|---------|---------|--------|
-| Period popover buttons (lines 149-177) | No font-sans | Add `font-sans` class |
-| Search Input (line 201-206) | No font-sans | Add `font-sans` class |
+| Element | Current | Updated |
+|---------|---------|---------|
+| Value (line 24) | `font-serif text-5xl font-normal` | `font-sans text-5xl font-semibold tabular-nums` |
+| Description (line 26) | `text-sm text-muted-foreground` | `font-sans text-sm text-muted-foreground` |
+| Trend text (line 31-36) | `text-xs font-medium` | `font-sans text-xs font-medium` |
 
-### 2. UI Component Updates for Global Consistency
+### 2. Add Tabular Numerals Utility
 
-To ensure all Select dropdowns across the app use the correct font, update the base components:
+Add a CSS utility class to ensure consistent numeral width across all metrics:
 
-| Component | Change |
-|-----------|--------|
-| `src/components/ui/select.tsx` | Add `font-sans` to SelectContent and SelectItem |
-| `src/components/ui/input.tsx` | Add `font-sans` to Input base class |
-| `src/components/ui/button.tsx` | Add `font-sans` to buttonVariants base class |
+```text
+src/index.css:
++------------------------------------------+
+| .tabular-nums {                          |
+|   font-variant-numeric: tabular-nums;    |
+| }                                        |
++------------------------------------------+
+```
+
+### 3. Update Project Typography Guidelines
+
+Clarify the typography rule in memory:
+- DM Serif Display: Headings, welcome messages, dates (text content)
+- Inter: Metrics, numbers, UI elements, body text
+
+## Files to Modify
+
+| File | Change |
+|------|--------|
+| `src/components/dashboard/StatCard.tsx` | Change value to `font-sans` with `tabular-nums`, add explicit font classes |
+| `src/index.css` | Add `tabular-nums` utility class |
 
 ## Technical Details
 
-```text
-ContentFilters.tsx:
-- Line 149-177: Add font-sans to period picker buttons
-- Line 201: Add font-sans to search Input
-
-select.tsx:
-- SelectContent: Add font-sans to className
-- SelectItem: Add font-sans to className  
-
-input.tsx:
-- Add font-sans to base className string
-
-button.tsx:
-- Add font-sans to cva base class string
-```
+The `font-variant-numeric: tabular-nums` CSS property ensures:
+- All digits have equal width (monospaced numbers)
+- Consistent alignment in columns and data displays
+- Professional appearance for metrics and statistics
 
 ## Expected Result
-- All filter elements (dropdowns, buttons, input) display in Inter font
-- Consistent typography across the entire Contents page
-- Global UI components updated to prevent similar issues elsewhere
+
+- All StatCard numbers display uniformly in Inter font
+- Numbers align consistently (2, 3, 4, 5, 8 all same width)
+- Description and trend text match the rest of the UI
+- Clear visual hierarchy: serif for headings, sans-serif for data
