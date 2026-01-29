@@ -1,47 +1,43 @@
 
-# Design System Adaptation Plan
+# Design Refinement Plan - Matching Giga AI Reference
 
 ## Overview
-Transform the ERP panel to match the Giga AI reference design, featuring a sophisticated dark/light modern aesthetic with serif headings, pill-shaped buttons, and refined visual hierarchy.
+Refine the ERP panel elements to precisely match the Giga AI reference design, focusing on dark card styling, status indicators with colored dots, pill-shaped tabs with icons, table styling, and refined stat displays.
 
 ---
 
-## Design Analysis from Reference
+## Analysis of Reference Screenshots
 
-### Typography
-- **Headings**: Modern serif font (DM Serif Display - free Google Font similar to reference)
-- **Body text**: Clean sans-serif (Inter for body, keeping complementary feel)
-- **Font weights**: 300 (light), 400 (regular), 500 (medium), 600 (semibold), 700 (bold)
-- **Heading sizes**: Large display headings for key metrics, smaller for labels
-- **Letter spacing**: Slightly loose for headings (-0.02em)
+### Key Design Patterns Identified
 
-### Color Palette
-- **Background (light)**: White (#FFFFFF) and off-white (#F8F9FA)
-- **Background (dark)**: Rich black (#000000, #0A0A0A)
-- **Accent orange**: #FF5722 (for badges, highlights, stats indicators)
-- **Text on dark**: White (#FFFFFF)
-- **Text on light**: Dark gray (#1A1A1A to #333333)
-- **Muted text**: #666666 to #888888
+**1. Dark Cards/Modals**
+- Rich dark gray background (not pure black): `oklch(0.12-0.15 0 0)`
+- Large border-radius: 20-24px
+- Subtle lighter border for definition
+- Internal sections with even lighter gray backgrounds
 
-### Border Radius System
-- **Cards**: 16px to 24px (much larger than current 10px)
-- **Buttons**: 9999px (pill-shaped)
-- **Small elements/badges**: 9999px (pill-shaped)
-- **Inputs**: 12px
+**2. Stats Display**
+- Large serif numbers (60-80px equivalent)
+- Small uppercase labels above the numbers
+- Muted description text below
+- Cards with subtle inner padding and rounded corners
 
-### Shadows
-- **Light mode**: Very subtle (0 2px 8px rgba(0,0,0,0.08))
-- **Dark mode**: Deeper (0 4px 24px rgba(0,0,0,0.4))
+**3. Status Indicators (Table)**
+- Colored dots (green = passed, yellow/amber = deviated) instead of badges
+- Clean table with subtle row separators (not full borders)
+- Header row with slightly darker background
+- Simple text-based status with dot prefix
 
-### Button Styles
-- **Primary**: White background, black text, pill-shaped
-- **Secondary**: Black background, white text, pill-shaped
-- **Hover**: Scale 1.02 with increased shadow
+**4. Tabs/Navigation**
+- Pill-shaped active state with dark background
+- Icon + text combination
+- Orange accent on active icon
+- Smooth rounded container
 
-### Special Elements
-- **Section badges**: Orange dot + uppercase text
-- **Stats display**: Large serif numbers with small labels
-- **Smooth transitions**: 0.3s ease for interactions
+**5. Primary Buttons**
+- White/light background with dark text
+- Fully pill-shaped (rounded-full)
+- Clean, minimal design
 
 ---
 
@@ -49,155 +45,166 @@ Transform the ERP panel to match the Giga AI reference design, featuring a sophi
 
 ### 1. src/index.css
 **Changes:**
-- Add Google Fonts import for DM Serif Display and Inter
-- Update CSS variables with new color palette
-- Add orange accent color
-- Update shadow variables
-- Increase border-radius values
-- Add dark mode with true black background
+- Add new muted card background variable for inner sections
+- Fine-tune dark mode card colors to match reference (slightly lighter gray)
+- Add status dot color variables (passed = green, deviated = amber)
 
-### 2. tailwind.config.ts
-**Changes:**
-- Add serif font family (DM Serif Display)
-- Update sans font to Inter
-- Add new border-radius variants (xl, 2xl, full)
-- Add accent-orange color
-- Update shadow scale
-- Add custom transition utilities
+### 2. src/components/ui/card.tsx
+**No changes needed** - Already has rounded-2xl and proper styling
 
-### 3. src/components/ui/button.tsx
+### 3. src/components/ui/tabs.tsx
 **Changes:**
-- Update to pill-shaped (rounded-full)
-- Add hover scale transform
-- Update primary variant (white bg, black text)
-- Update secondary variant (black bg, white text)
-- Add smooth transition effects
-
-### 4. src/components/ui/card.tsx
-**Changes:**
-- Increase border-radius to rounded-2xl
-- Update shadow styles
-- Add subtle border
-
-### 5. src/components/ui/badge.tsx
-**Changes:**
-- Make pill-shaped (rounded-full)
-- Add orange accent variant
-
-### 6. src/components/ui/input.tsx
-**Changes:**
-- Update border-radius
-- Refine focus states
-
-### 7. src/components/dashboard/StatCard.tsx
-**Changes:**
-- Use serif font for values
-- Increase value font size
-- Add subtle hover effect
-- Update icon container styling
-
-### 8. src/components/layout/AppSidebar.tsx
-**Changes:**
-- Update to dark sidebar matching reference
-- Refine navigation item styling
-- Update logo container
+- Update TabsList to have rounded-xl with dark background in dark mode
+- Update TabsTrigger to be pill-shaped with icon support
 - Add smooth transitions
+- Active state: filled background with orange icon tint
 
-### 9. src/components/layout/AppHeader.tsx
+### 4. src/components/ui/table.tsx
 **Changes:**
-- Update search input styling
-- Refine button and avatar styles
-- Add subtle border treatment
+- Update TableHeader to have rounded corners and subtle dark background
+- Refine row separators to be more subtle
+- Add hover states
 
-### 10. src/pages/Dashboard.tsx
+### 5. src/components/ui/progress.tsx
 **Changes:**
-- Update welcome banner styling
-- Add section badge style (orange dot + uppercase)
-- Refine quick actions buttons
+- Update indicator color to use accent-orange for better visual consistency
+- Ensure proper dark mode styling
 
-### 11. All other pages (Clients, Contents, Team, Healthscore)
+### 6. src/pages/Healthscore.tsx
+**Major Redesign:**
+- Create stat cards matching reference (large serif number, uppercase label, description)
+- Replace badges with colored dot status indicators
+- Add a clean table view for test cases/metrics
+- Use the reference "Test results" card layout
+
+### 7. src/pages/Dashboard.tsx
 **Changes:**
-- Apply new card styling
-- Update typography hierarchy
-- Refine badge and button usage
+- Ensure stat cards use serif numbers prominently
+- Refine section styling
+
+### 8. src/components/dashboard/StatCard.tsx
+**Changes:**
+- Increase number size for more impact
+- Ensure uppercase labels
+- Add description support below numbers
+
+### 9. src/components/layout/AppSidebar.tsx
+**Changes:**
+- Refine navigation item active state with orange icon tint
+- Update logo to use gradient/colorful style like reference
+- Adjust spacing and padding
+
+### 10. src/pages/Contents.tsx
+**Changes:**
+- Update tabs to match new pill-style with icons
+- Refine view toggle buttons
 
 ---
 
 ## Technical Implementation Details
 
-### CSS Variables Update
+### New CSS Variables
 
 ```css
 :root {
-  /* Updated color palette */
-  --background: oklch(0.9950 0 0); /* Off-white */
-  --foreground: oklch(0.1500 0 0); /* Near black */
-  --primary: oklch(0.9800 0 0); /* White for buttons */
-  --primary-foreground: oklch(0.0500 0 0); /* Black text */
-  --accent-orange: oklch(0.6500 0.2000 30); /* #FF5722 equivalent */
+  /* Inner card sections (slightly darker than card) */
+  --card-muted: oklch(0.9400 0 0);
   
-  /* Larger radius */
-  --radius: 1rem; /* 16px base */
-  --radius-xl: 1.5rem; /* 24px for cards */
+  /* Status dot colors */
+  --status-passed: oklch(0.6500 0.1800 145);
+  --status-deviated: oklch(0.7500 0.1500 85);
+  --status-failed: oklch(0.5379 0.2186 25.9751);
 }
 
 .dark {
-  --background: oklch(0.0500 0 0); /* True black */
-  --card: oklch(0.0800 0 0); /* Slightly lighter */
+  --card: oklch(0.1200 0 0); /* Slightly lighter for cards */
+  --card-muted: oklch(0.1500 0 0); /* Inner sections */
 }
 ```
 
-### Font Configuration
-
-```css
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700&display=swap');
-```
-
-### Button Transform
+### Updated Tabs Component
 
 ```tsx
-const buttonVariants = cva(
-  "... rounded-full transition-all duration-300 hover:scale-[1.02] ...",
-  {
-    variants: {
-      variant: {
-        default: "bg-white text-black shadow-sm hover:shadow-md",
-        secondary: "bg-black text-white hover:bg-black/90",
-      }
-    }
-  }
+const TabsList = (
+  <TabsPrimitive.List
+    className={cn(
+      "inline-flex h-12 items-center gap-1 rounded-xl bg-muted p-1.5",
+      className
+    )}
+  />
 );
+
+const TabsTrigger = (
+  <TabsPrimitive.Trigger
+    className={cn(
+      "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium",
+      "transition-all duration-300",
+      "data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground",
+      "data-[state=active]:shadow-sm",
+      className
+    )}
+  />
+);
+```
+
+### Healthscore Page Redesign
+
+New structure:
+1. **Stats Row** - Three cards with:
+   - Uppercase label (e.g., "PASS RATE")
+   - Large serif number (e.g., "99%")
+   - Muted description
+
+2. **Test Results Table**:
+   - Rounded card container
+   - Header with slightly darker background
+   - Rows with:
+     - Test case name
+     - Status with colored dot (Passed/Deviated)
+     - Pass rate percentage
+
+### Status Dot Component
+
+```tsx
+function StatusDot({ status }: { status: "passed" | "deviated" | "failed" }) {
+  const colors = {
+    passed: "bg-success",
+    deviated: "bg-warning",
+    failed: "bg-destructive"
+  };
+  
+  return (
+    <span className="flex items-center gap-2">
+      <span className={cn("h-2.5 w-2.5 rounded-full", colors[status])} />
+      <span className="capitalize">{status === "deviated" ? "Deviated" : status}</span>
+    </span>
+  );
+}
 ```
 
 ---
 
-## Visual Preview of Changes
-
-### Before vs After
+## Visual Changes Summary
 
 | Element | Current | Updated |
 |---------|---------|---------|
-| Card radius | 10px | 24px |
-| Button shape | Rounded corners | Pill-shaped |
-| Heading font | Arimo (sans-serif) | DM Serif Display |
-| Primary button | Dark gray bg | White bg, black text |
-| Accent color | Blue chart colors | Orange (#FF5722) |
-| Shadows | Moderate | Subtle and refined |
+| Tabs | Rounded-sm, minimal | Pill-shaped, icon + text, filled active |
+| Status indicators | Badge component | Colored dot + text |
+| Stat numbers | text-3xl | text-5xl to text-6xl serif |
+| Stat labels | text-sm | text-xs uppercase tracking-widest |
+| Table header | Default | Rounded corners, darker bg |
+| Card inner sections | Same as card | Slightly different shade |
+| Dark mode cards | oklch(0.08) | oklch(0.12) - lighter gray |
 
 ---
 
 ## Implementation Order
 
-1. Update fonts and CSS variables in index.css
-2. Update tailwind.config.ts with new design tokens
-3. Modify core UI components (button, card, badge, input)
-4. Update layout components (sidebar, header)
-5. Update dashboard components (StatCard, charts)
-6. Apply changes across all pages
-7. Test in both light and dark modes
-
----
-
-## Summary
-
-This update transforms the ERP panel from a standard enterprise look to a sophisticated, modern design matching the Giga AI reference. Key changes include serif headings for elegance, pill-shaped buttons for a softer feel, larger card border-radius, an orange accent color for highlights, and refined shadows for depth without heaviness.
+1. Update CSS variables in index.css
+2. Modify tabs.tsx for pill-shaped style
+3. Update table.tsx with refined styling
+4. Enhance StatCard component
+5. Redesign Healthscore page with reference layout
+6. Update Contents page tabs with icons
+7. Refine AppSidebar active states
+8. Test across all pages in light and dark modes
