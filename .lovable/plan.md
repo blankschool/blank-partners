@@ -1,65 +1,53 @@
 
-# Typography and Default View Fixes for Contents Page
+# Complete Typography Fix for Contents Page Filters
 
-## Overview
-Apply the project's typography standards to the Contents page and change the default view to calendar.
+## Issue
+The filters on the Contents page are still not displaying the correct Inter typography consistently across all elements.
+
+## Root Cause Analysis
+While the body uses Inter as the default font and `font-sans` was added to SelectTrigger elements and the period button, other filter elements are missing the explicit font class:
+- Buttons inside the period popover (Tudo, Semana, Mes)
+- Search input field
+- SelectContent and SelectItem elements
 
 ## Changes Required
 
-### 1. StageStatsPanel.tsx - Fix Numbers and Labels Typography
+### 1. ContentFilters.tsx - Complete Font Coverage
 
-**Numbers (metrics)**
-- Add `font-serif` class to display numbers in DM Serif Display
-- Current: `text-2xl font-semibold`
-- Updated: `text-2xl font-serif`
+| Element | Current | Change |
+|---------|---------|--------|
+| Period popover buttons (lines 149-177) | No font-sans | Add `font-sans` class |
+| Search Input (line 201-206) | No font-sans | Add `font-sans` class |
 
-**Labels**
-- Add uppercase and tracking-widest for the tiny label style
-- Current: `text-xs text-muted-foreground`
-- Updated: `text-[10px] uppercase tracking-widest text-muted-foreground`
+### 2. UI Component Updates for Global Consistency
 
-### 2. Contents.tsx - Change Default View to Calendar
+To ensure all Select dropdowns across the app use the correct font, update the base components:
 
-**viewMode initial state**
-- Current: `useState<ViewMode>("grid")`
-- Updated: `useState<ViewMode>("calendar")`
-
-### 3. ContentFilters.tsx - Ensure Sans-Serif Typography
-
-**Add explicit font-sans** to filter labels and select triggers for consistency with the Inter font family used for body/UI text.
-
-## Files to Modify
-
-| File | Change |
-|------|--------|
-| `src/components/contents/StageStatsPanel.tsx` | Apply `font-serif` to numbers, `uppercase tracking-widest` to labels |
-| `src/pages/Contents.tsx` | Change default `viewMode` from `"grid"` to `"calendar"` |
-| `src/components/contents/ContentFilters.tsx` | Add `font-sans` to select triggers and filter text |
+| Component | Change |
+|-----------|--------|
+| `src/components/ui/select.tsx` | Add `font-sans` to SelectContent and SelectItem |
+| `src/components/ui/input.tsx` | Add `font-sans` to Input base class |
+| `src/components/ui/button.tsx` | Add `font-sans` to buttonVariants base class |
 
 ## Technical Details
 
 ```text
-StageStatsPanel.tsx changes:
-+------------------------------------------+
-| Numbers: text-2xl font-serif             |
-| Labels:  text-[10px] uppercase           |
-|          tracking-widest                 |
-+------------------------------------------+
+ContentFilters.tsx:
+- Line 149-177: Add font-sans to period picker buttons
+- Line 201: Add font-sans to search Input
 
-Contents.tsx changes:
-+------------------------------------------+
-| viewMode: useState("calendar")           |
-+------------------------------------------+
+select.tsx:
+- SelectContent: Add font-sans to className
+- SelectItem: Add font-sans to className  
 
-ContentFilters.tsx changes:
-+------------------------------------------+
-| SelectTrigger: font-sans                 |
-| Button labels: font-sans                 |
-+------------------------------------------+
+input.tsx:
+- Add font-sans to base className string
+
+button.tsx:
+- Add font-sans to cva base class string
 ```
 
 ## Expected Result
-- Stage stat numbers display in DM Serif Display font
-- Stage labels appear as tiny uppercase text with wide letter spacing
-- Calendar view loads by default when visiting the Contents page
-- All filter elements use consistent Inter font
+- All filter elements (dropdowns, buttons, input) display in Inter font
+- Consistent typography across the entire Contents page
+- Global UI components updated to prevent similar issues elsewhere
