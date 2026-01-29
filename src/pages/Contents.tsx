@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, Calendar, Grid3X3, List, Image, Video, FileText } from "lucide-react";
+import { Search, Plus, Calendar, Grid3X3, List, Image, Video, FileText, Layers, Clock, CheckCircle, FileEdit } from "lucide-react";
 
 const contentsData = [
   {
@@ -118,11 +118,12 @@ const Contents = () => {
             />
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex items-center rounded-lg border border-border p-1">
+            <div className="flex items-center rounded-xl border border-border p-1">
               <Button
                 variant={viewMode === "grid" ? "secondary" : "ghost"}
                 size="sm"
                 onClick={() => setViewMode("grid")}
+                className="rounded-lg"
               >
                 <Grid3X3 className="h-4 w-4" />
               </Button>
@@ -130,6 +131,7 @@ const Contents = () => {
                 variant={viewMode === "list" ? "secondary" : "ghost"}
                 size="sm"
                 onClick={() => setViewMode("list")}
+                className="rounded-lg"
               >
                 <List className="h-4 w-4" />
               </Button>
@@ -145,17 +147,23 @@ const Contents = () => {
           </div>
         </div>
 
-        {/* Tabs */}
+        {/* Tabs with Icons */}
         <Tabs defaultValue="all" className="w-full">
           <TabsList>
-            <TabsTrigger value="all">All ({contentsData.length})</TabsTrigger>
-            <TabsTrigger value="pending">
+            <TabsTrigger value="all" className="gap-2">
+              <Layers className="h-4 w-4" />
+              All ({contentsData.length})
+            </TabsTrigger>
+            <TabsTrigger value="pending" className="gap-2">
+              <Clock className="h-4 w-4" />
               Pending ({contentsData.filter((c) => c.status === "pending").length})
             </TabsTrigger>
-            <TabsTrigger value="approved">
+            <TabsTrigger value="approved" className="gap-2">
+              <CheckCircle className="h-4 w-4" />
               Approved ({contentsData.filter((c) => c.status === "approved").length})
             </TabsTrigger>
-            <TabsTrigger value="draft">
+            <TabsTrigger value="draft" className="gap-2">
+              <FileEdit className="h-4 w-4" />
               Drafts ({contentsData.filter((c) => c.status === "draft").length})
             </TabsTrigger>
           </TabsList>
@@ -166,19 +174,19 @@ const Contents = () => {
                 {filteredContents.map((content) => {
                   const TypeIcon = getTypeIcon(content.type);
                   return (
-                    <Card key={content.id} className="shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-                      <CardContent className="p-4">
+                    <Card key={content.id} className="cursor-pointer transition-all duration-300 hover:shadow-lg">
+                      <CardContent className="p-5">
                         <div className="flex items-start justify-between">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+                          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-muted">
                             <TypeIcon className="h-5 w-5 text-muted-foreground" />
                           </div>
                           <Badge variant="outline" className={getStatusColor(content.status)}>
                             {content.status}
                           </Badge>
                         </div>
-                        <h3 className="mt-3 font-medium text-foreground line-clamp-2">{content.title}</h3>
+                        <h3 className="mt-4 font-medium text-foreground line-clamp-2">{content.title}</h3>
                         <p className="mt-1 text-sm text-muted-foreground">{content.client}</p>
-                        <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+                        <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
                           <Badge variant="secondary">{content.platform}</Badge>
                           <span>{new Date(content.scheduledDate).toLocaleDateString()}</span>
                         </div>
@@ -188,17 +196,17 @@ const Contents = () => {
                 })}
               </div>
             ) : (
-              <Card className="shadow-sm">
+              <Card>
                 <CardContent className="p-0">
-                  <div className="divide-y divide-border">
+                  <div className="divide-y divide-border/50">
                     {filteredContents.map((content) => {
                       const TypeIcon = getTypeIcon(content.type);
                       return (
                         <div
                           key={content.id}
-                          className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors cursor-pointer"
+                          className="flex items-center gap-4 p-4 transition-colors duration-200 hover:bg-muted/30 cursor-pointer"
                         >
-                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+                          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-muted">
                             <TypeIcon className="h-5 w-5 text-muted-foreground" />
                           </div>
                           <div className="flex-1 min-w-0">
@@ -222,24 +230,24 @@ const Contents = () => {
           </TabsContent>
 
           <TabsContent value="pending" className="mt-6">
-            <Card className="shadow-sm">
-              <CardContent className="p-6 text-center text-muted-foreground">
+            <Card>
+              <CardContent className="p-8 text-center text-muted-foreground">
                 Pending contents will appear here
               </CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value="approved" className="mt-6">
-            <Card className="shadow-sm">
-              <CardContent className="p-6 text-center text-muted-foreground">
+            <Card>
+              <CardContent className="p-8 text-center text-muted-foreground">
                 Approved contents will appear here
               </CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value="draft" className="mt-6">
-            <Card className="shadow-sm">
-              <CardContent className="p-6 text-center text-muted-foreground">
+            <Card>
+              <CardContent className="p-8 text-center text-muted-foreground">
                 Draft contents will appear here
               </CardContent>
             </Card>

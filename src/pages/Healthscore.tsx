@@ -1,8 +1,9 @@
 import { AppLayout } from "@/components/layout/AppLayout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { TrendingUp, TrendingDown, Minus, AlertTriangle, CheckCircle, Clock } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { TrendingUp, TrendingDown, Minus, AlertTriangle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const healthScoreData = [
   {
@@ -14,7 +15,7 @@ const healthScoreData = [
     contentDelivery: 100,
     responseTime: 98,
     issues: 0,
-    status: "healthy",
+    status: "passed",
   },
   {
     id: 2,
@@ -25,7 +26,7 @@ const healthScoreData = [
     contentDelivery: 95,
     responseTime: 85,
     issues: 1,
-    status: "good",
+    status: "passed",
   },
   {
     id: 3,
@@ -36,7 +37,7 @@ const healthScoreData = [
     contentDelivery: 80,
     responseTime: 70,
     issues: 3,
-    status: "attention",
+    status: "deviated",
   },
   {
     id: 4,
@@ -47,7 +48,7 @@ const healthScoreData = [
     contentDelivery: 98,
     responseTime: 92,
     issues: 0,
-    status: "healthy",
+    status: "passed",
   },
   {
     id: 5,
@@ -58,31 +59,39 @@ const healthScoreData = [
     contentDelivery: 50,
     responseTime: 60,
     issues: 5,
-    status: "critical",
+    status: "failed",
   },
 ];
 
-const Healthscore = () => {
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-success";
-    if (score >= 60) return "text-warning";
-    return "text-destructive";
+function StatusDot({ status }: { status: "passed" | "deviated" | "failed" }) {
+  const colors = {
+    passed: "bg-success",
+    deviated: "bg-warning",
+    failed: "bg-destructive",
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "healthy":
-        return <Badge className="bg-success/10 text-success border-success/20">Healthy</Badge>;
-      case "good":
-        return <Badge className="bg-chart-1/20 text-chart-3 border-chart-1/30">Good</Badge>;
-      case "attention":
-        return <Badge className="bg-warning/10 text-warning border-warning/20">Needs Attention</Badge>;
-      case "critical":
-        return <Badge className="bg-destructive/10 text-destructive border-destructive/20">Critical</Badge>;
-      default:
-        return <Badge variant="secondary">Unknown</Badge>;
-    }
+  const labels = {
+    passed: "Passed",
+    deviated: "Deviated",
+    failed: "Failed",
   };
+
+  return (
+    <span className="flex items-center gap-2">
+      <span className={cn("h-2.5 w-2.5 rounded-full", colors[status])} />
+      <span className="text-sm">{labels[status]}</span>
+    </span>
+  );
+}
+
+const Healthscore = () => {
+  const avgScore = Math.round(
+    healthScoreData.reduce((acc, c) => acc + c.score, 0) / healthScoreData.length
+  );
+  const passRate = Math.round(
+    (healthScoreData.filter((c) => c.status === "passed").length / healthScoreData.length) * 100
+  );
+  const totalIssues = healthScoreData.reduce((acc, c) => acc + c.issues, 0);
 
   const getTrendIcon = (trend: string) => {
     switch (trend) {
@@ -95,82 +104,117 @@ const Healthscore = () => {
     }
   };
 
-  const avgScore = Math.round(healthScoreData.reduce((acc, c) => acc + c.score, 0) / healthScoreData.length);
-
   return (
     <AppLayout title="Healthscore">
-      <div className="space-y-6">
-        {/* Overall Stats */}
-        <div className="grid gap-4 sm:grid-cols-4">
-          <Card className="shadow-sm">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Average Score</p>
-                  <p className={`mt-1 text-3xl font-bold ${getScoreColor(avgScore)}`}>{avgScore}</p>
-                </div>
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-                  <CheckCircle className="h-6 w-6 text-success" />
-                </div>
-              </div>
+      <div className="space-y-8">
+        {/* Stats Row - Matching Reference */}
+        <div className="grid gap-6 sm:grid-cols-3">
+          <Card>
+            <CardContent className="p-8">
+              <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+                Pass Rate
+              </p>
+              <p className="mt-2 font-serif text-6xl font-normal tracking-tight text-foreground">
+                {passRate}%
+              </p>
+              <p className="mt-3 text-sm text-muted-foreground">
+                Clients meeting performance targets
+              </p>
             </CardContent>
           </Card>
-          <Card className="shadow-sm">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Healthy Clients</p>
-                  <p className="mt-1 text-3xl font-bold text-success">
-                    {healthScoreData.filter((c) => c.status === "healthy").length}
-                  </p>
-                </div>
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-success/10">
-                  <TrendingUp className="h-6 w-6 text-success" />
-                </div>
-              </div>
+
+          <Card>
+            <CardContent className="p-8">
+              <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+                Avg Score
+              </p>
+              <p className="mt-2 font-serif text-6xl font-normal tracking-tight text-foreground">
+                {avgScore}
+              </p>
+              <p className="mt-3 text-sm text-muted-foreground">
+                Across all active clients
+              </p>
             </CardContent>
           </Card>
-          <Card className="shadow-sm">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Need Attention</p>
-                  <p className="mt-1 text-3xl font-bold text-warning">
-                    {healthScoreData.filter((c) => c.status === "attention").length}
-                  </p>
-                </div>
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-warning/10">
-                  <Clock className="h-6 w-6 text-warning" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="shadow-sm">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Critical</p>
-                  <p className="mt-1 text-3xl font-bold text-destructive">
-                    {healthScoreData.filter((c) => c.status === "critical").length}
-                  </p>
-                </div>
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
-                  <AlertTriangle className="h-6 w-6 text-destructive" />
-                </div>
-              </div>
+
+          <Card>
+            <CardContent className="p-8">
+              <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+                Open Issues
+              </p>
+              <p className="mt-2 font-serif text-6xl font-normal tracking-tight text-accent-orange">
+                {totalIssues}
+              </p>
+              <p className="mt-3 text-sm text-muted-foreground">
+                Requiring immediate attention
+              </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Client Health Cards */}
-        <div className="grid gap-4 lg:grid-cols-2">
+        {/* Test Results Table - Matching Reference */}
+        <Card>
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-2">
+              <span className="flex h-2 w-2 rounded-full bg-accent-orange" />
+              <CardTitle className="text-sm font-medium uppercase tracking-widest">
+                Client Health Results
+              </CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="pl-6">Client</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Score</TableHead>
+                  <TableHead>Trend</TableHead>
+                  <TableHead className="pr-6">Engagement</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {healthScoreData.map((client) => (
+                  <TableRow key={client.id}>
+                    <TableCell className="pl-6 font-medium">{client.client}</TableCell>
+                    <TableCell>
+                      <StatusDot status={client.status as "passed" | "deviated" | "failed"} />
+                    </TableCell>
+                    <TableCell>
+                      <span className="font-serif text-lg">{client.score}%</span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {getTrendIcon(client.trend)}
+                        <span className="text-sm capitalize text-muted-foreground">
+                          {client.trend}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="pr-6">
+                      <div className="flex items-center gap-3">
+                        <Progress value={client.engagementRate * 10} className="h-2 w-20" />
+                        <span className="text-sm text-muted-foreground">
+                          {client.engagementRate}%
+                        </span>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {/* Detailed Client Cards */}
+        <div className="grid gap-6 lg:grid-cols-2">
           {healthScoreData.map((client) => (
-            <Card key={client.id} className="shadow-sm">
-              <CardHeader className="pb-2">
+            <Card key={client.id}>
+              <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="text-base font-semibold">{client.client}</CardTitle>
-                    <CardDescription className="flex items-center gap-2 mt-1">
+                    <CardTitle className="text-lg">{client.client}</CardTitle>
+                    <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
                       {getTrendIcon(client.trend)}
                       <span>
                         {client.trend === "up"
@@ -179,39 +223,39 @@ const Healthscore = () => {
                           ? "Declining"
                           : "Stable"}
                       </span>
-                    </CardDescription>
+                    </div>
                   </div>
                   <div className="text-right">
-                    <p className={`text-3xl font-bold ${getScoreColor(client.score)}`}>{client.score}</p>
-                    {getStatusBadge(client.status)}
+                    <p className="font-serif text-4xl font-normal text-foreground">{client.score}</p>
+                    <StatusDot status={client.status as "passed" | "deviated" | "failed"} />
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div>
-                    <div className="flex items-center justify-between text-sm mb-1">
+                    <div className="mb-2 flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Engagement Rate</span>
                       <span className="font-medium">{client.engagementRate}%</span>
                     </div>
                     <Progress value={client.engagementRate * 10} className="h-2" />
                   </div>
                   <div>
-                    <div className="flex items-center justify-between text-sm mb-1">
+                    <div className="mb-2 flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Content Delivery</span>
                       <span className="font-medium">{client.contentDelivery}%</span>
                     </div>
                     <Progress value={client.contentDelivery} className="h-2" />
                   </div>
                   <div>
-                    <div className="flex items-center justify-between text-sm mb-1">
+                    <div className="mb-2 flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Response Time</span>
                       <span className="font-medium">{client.responseTime}%</span>
                     </div>
                     <Progress value={client.responseTime} className="h-2" />
                   </div>
                   {client.issues > 0 && (
-                    <div className="flex items-center gap-2 rounded-lg bg-destructive/5 p-3">
+                    <div className="flex items-center gap-2 rounded-xl bg-destructive/5 p-4">
                       <AlertTriangle className="h-4 w-4 text-destructive" />
                       <span className="text-sm text-destructive">
                         {client.issues} active issue{client.issues > 1 ? "s" : ""} require attention
