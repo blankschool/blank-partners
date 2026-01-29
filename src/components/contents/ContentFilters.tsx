@@ -212,6 +212,14 @@ export function ContentFilters({
         {/* View mode toggle */}
         <div className="flex items-center rounded-xl border border-border p-1">
           <Button
+            variant={viewMode === "calendar" ? "secondary" : "ghost"}
+            size="sm"
+            onClick={() => onViewModeChange("calendar")}
+            className="rounded-lg"
+          >
+            <CalendarIcon className="h-4 w-4" />
+          </Button>
+          <Button
             variant={viewMode === "grid" ? "secondary" : "ghost"}
             size="sm"
             onClick={() => onViewModeChange("grid")}
@@ -226,14 +234,6 @@ export function ContentFilters({
             className="rounded-lg"
           >
             <List className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={viewMode === "calendar" ? "secondary" : "ghost"}
-            size="sm"
-            onClick={() => onViewModeChange("calendar")}
-            className="rounded-lg"
-          >
-            <CalendarIcon className="h-4 w-4" />
           </Button>
         </div>
       </div>
