@@ -14,7 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Arimo', 'ui-sans-serif', 'sans-serif', 'system-ui'],
+        sans: ['Inter', 'ui-sans-serif', 'sans-serif', 'system-ui'],
+        serif: ['DM Serif Display', 'ui-serif', 'Georgia', 'serif'],
       },
       colors: {
         border: "var(--border)",
@@ -42,6 +43,10 @@ export default {
           DEFAULT: "var(--accent)",
           foreground: "var(--accent-foreground)",
         },
+        "accent-orange": {
+          DEFAULT: "var(--accent-orange)",
+          foreground: "var(--accent-orange-foreground)",
+        },
         popover: {
           DEFAULT: "var(--popover)",
           foreground: "var(--popover-foreground)",
@@ -59,6 +64,7 @@ export default {
           "accent-foreground": "var(--sidebar-accent-foreground)",
           border: "var(--sidebar-border)",
           ring: "var(--sidebar-ring)",
+          "muted-foreground": "var(--sidebar-muted-foreground)",
         },
         chart: {
           1: "var(--chart-1)",
@@ -78,8 +84,10 @@ export default {
       },
       borderRadius: {
         lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        md: "calc(var(--radius) - 4px)",
+        sm: "calc(var(--radius) - 8px)",
+        xl: "var(--radius-xl)",
+        "2xl": "calc(var(--radius-xl) + 0.5rem)",
       },
       boxShadow: {
         "2xs": "var(--shadow-2xs)",
@@ -104,6 +112,9 @@ export default {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+      },
+      transitionDuration: {
+        DEFAULT: "300ms",
       },
     },
   },
