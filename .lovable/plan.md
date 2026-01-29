@@ -1,173 +1,114 @@
 
-# Light Theme Admin Dialogs
+# Optimize ClientsTab: Convert from Cards Grid to List Layout
 
 ## Problem
 
-The admin page dialogs currently use the default dark theme styling (`bg-card/90` which is very dark), making them blend with the dark admin background. The screenshot shows that while inputs are white, the dialog background itself is dark with glassmorphism, causing poor contrast.
+The current Clients tab displays 54 clients in a 3-column card grid layout. Each card takes significant vertical space, requiring extensive scrolling. For administrative purposes, a compact list view would be more efficient and allow faster scanning of clients.
 
 ## Solution
 
-Override the dialog styling specifically for admin dialogs to use a light theme, providing clear contrast against the dark admin page background. This approach keeps the base dialog component unchanged while applying custom styling only to admin dialogs.
+Convert the card-based grid layout to a compact, table-like list layout that shows all essential information in a single row per client.
 
 ## Implementation
 
-### Approach: Add Light Theme Classes to Admin Dialogs
+### Changes to `src/components/admin/ClientsTab.tsx`
 
-Instead of modifying the base dialog component (which could affect other dialogs), we'll add custom className overrides to each admin dialog's `DialogContent` and ensure form elements render with proper dark text on light backgrounds.
+**Layout Change:**
+- Replace `grid gap-4 md:grid-cols-2 lg:grid-cols-3` with a vertical list container
+- Use horizontal rows with flexbox for each client entry
 
-### Files to Modify
-
-| File | Changes |
-|------|---------|
-| `src/components/admin/EditTeamMemberDialog.tsx` | Add light theme styling to DialogContent |
-| `src/components/admin/AddTeamMemberDialog.tsx` | Add light theme styling to DialogContent |
-| `src/components/admin/AddClientDialog.tsx` | Add light theme styling to DialogContent |
-| `src/components/admin/EditClientDialog.tsx` | Add light theme styling to DialogContent |
-| `src/components/admin/DeleteConfirmDialog.tsx` | Add light theme styling to AlertDialogContent |
-
-### CSS Classes to Apply
-
-For each admin dialog, add the following classes to `DialogContent`:
-
-```tsx
-<DialogContent className="sm:max-w-lg max-h-[90vh] bg-white text-foreground border-gray-200">
+**New Row Structure:**
+```text
+[Avatar] | Client Name | Member Count | Member Names | [Edit] [Delete]
 ```
 
-Key styling changes:
-- `bg-white` - Solid white background instead of transparent dark
-- `text-foreground` - Dark text for readability
-- `border-gray-200` - Light border for definition
+**Styling Updates:**
+- Each row: `flex items-center justify-between py-3 px-4 border-b border-border`
+- Hover effect: `hover:bg-muted/50` for interactive feedback
+- Header row with column labels for clarity
+- Compact avatar size (h-8 w-8)
+- Truncate member names with proper max-width
 
-### Form Element Styling Updates
+## Visual Comparison
 
-Update form elements to work with light background:
-
-**Labels:**
-```tsx
-<Label className="text-gray-700">...</Label>
+### Before (Card Grid)
+```text
+┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+│ [AV]        │ │ [AG]        │ │ [AF]        │
+│ A Grande    │ │ Agroadvance │ │ Ale Frankel │
+│ 3 membros   │ │ 2 membros   │ │ 2 membros   │
+│ Names...    │ │ Names...    │ │ Names...    │
+└─────────────┘ └─────────────┘ └─────────────┘
 ```
 
-**Inputs:**
-```tsx
-<Input className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-400" />
+### After (List)
+```text
+┌─────────────────────────────────────────────────────────────┐
+│ Cliente              Membros    Responsáveis         Ações  │
+├─────────────────────────────────────────────────────────────┤
+│ [AV] A Grande Mesa   3 membros  Henrique, Luiz...   [✎] [🗑]│
+│ [AG] Agroadvance     2 membros  Gabriel, Eduarda    [✎] [🗑]│
+│ [AF] Ale Frankel     2 membros  Daniel, Maria       [✎] [🗑]│
+└─────────────────────────────────────────────────────────────┘
 ```
-
-**Select Triggers:**
-```tsx
-<SelectTrigger className="bg-white border-gray-300 text-gray-900">
-```
-
-**Select Content (dropdown):**
-```tsx
-<SelectContent className="bg-white border-gray-200 text-gray-900">
-```
-
-**Checkbox labels:**
-```tsx
-<label className="text-sm text-gray-700 cursor-pointer">
-```
-
-**Borders:**
-```tsx
-<div className="rounded-lg border border-gray-200 p-3">
-```
-
-**Buttons:**
-```tsx
-<Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-100">
-  Cancelar
-</Button>
-<Button className="bg-gray-900 text-white hover:bg-gray-800">
-  Salvar
-</Button>
-```
-
-## Detailed File Changes
-
-### 1. EditTeamMemberDialog.tsx
-
-```tsx
-// Line 115 - Update DialogContent
-<DialogContent className="sm:max-w-lg max-h-[90vh] bg-white text-gray-900 border-gray-200">
-
-// All Labels - add text-gray-700
-<Label htmlFor="fullName" className="text-gray-700">Nome Completo *</Label>
-
-// All Inputs - add light theme styling
-<Input className="bg-white border-gray-300 text-gray-900" ... />
-
-// All SelectTriggers - add light theme
-<SelectTrigger className="bg-white border-gray-300 text-gray-900">
-
-// All SelectContent - add light theme
-<SelectContent className="bg-white border-gray-200 text-gray-900 z-50">
-
-// Clients border container
-<div className="rounded-lg border border-gray-200 bg-gray-50 p-3 max-h-40 overflow-y-auto">
-
-// Checkbox labels
-<label className="text-sm text-gray-700 cursor-pointer">
-
-// Buttons
-<Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-100">
-<Button className="bg-gray-900 text-white hover:bg-gray-800">
-```
-
-### 2. AddTeamMemberDialog.tsx
-
-Same pattern as EditTeamMemberDialog - apply identical styling updates.
-
-### 3. AddClientDialog.tsx
-
-```tsx
-// Line 45 - Update DialogContent
-<DialogContent className="sm:max-w-md bg-white text-gray-900 border-gray-200">
-
-// Label
-<Label htmlFor="clientName" className="text-gray-700">Nome do Cliente</Label>
-
-// Input
-<Input className="bg-white border-gray-300 text-gray-900" ... />
-
-// Buttons
-<Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-100">
-<Button className="bg-gray-900 text-white hover:bg-gray-800">
-```
-
-### 4. EditClientDialog.tsx
-
-Same pattern as AddClientDialog.
-
-### 5. DeleteConfirmDialog.tsx
-
-```tsx
-// Line 31 - Update AlertDialogContent
-<AlertDialogContent className="bg-white text-gray-900 border-gray-200">
-
-// AlertDialogTitle is already properly styled
-
-// AlertDialogDescription
-<AlertDialogDescription className="text-gray-600">
-
-// Cancel button
-<AlertDialogCancel className="border-gray-300 text-gray-700 hover:bg-gray-100">
-
-// Action button (already has destructive styling, but ensure proper contrast)
-<AlertDialogAction className="bg-red-600 text-white hover:bg-red-700">
-```
-
-## Visual Result
-
-| Before | After |
-|--------|-------|
-| Dark semi-transparent dialog | Solid white dialog |
-| White text on dark | Dark text on white |
-| Low contrast with background | High contrast stand-out effect |
-| Inputs blend in | Inputs clearly defined |
 
 ## Benefits
 
-1. **Clear Visual Hierarchy**: Light dialogs pop against the dark admin background
-2. **Better Readability**: Dark text on light background is easier to read
-3. **No Global Impact**: Changes are scoped to admin dialogs only
-4. **Consistent UX**: All admin dialogs will have the same light appearance
+1. **Space Efficiency**: Show more clients per screen (10-15 vs 6-9)
+2. **Faster Scanning**: Horizontal reading is faster for comparison
+3. **Better for Large Lists**: Scales well with 54+ clients
+4. **Consistent Actions**: Edit/Delete buttons in predictable position
+5. **Cleaner UI**: Reduces visual noise from card borders
+
+## Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/components/admin/ClientsTab.tsx` | Replace grid layout with list layout |
+
+## Technical Details
+
+### Updated JSX Structure
+
+```tsx
+{/* List header */}
+<div className="flex items-center gap-4 px-4 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider border-b border-border">
+  <span className="w-10"></span>
+  <span className="flex-1 min-w-0">Cliente</span>
+  <span className="w-24 text-center">Membros</span>
+  <span className="flex-1 min-w-0 hidden md:block">Responsáveis</span>
+  <span className="w-20 text-right">Ações</span>
+</div>
+
+{/* List items */}
+<div className="divide-y divide-border">
+  {filteredClients.map((client) => (
+    <div
+      key={client.id}
+      className="group flex items-center gap-4 px-4 py-3 transition-colors hover:bg-muted/50"
+    >
+      <Avatar className="h-8 w-8 shrink-0">...</Avatar>
+      <span className="flex-1 min-w-0 font-medium truncate">{client.name}</span>
+      <span className="w-24 text-center text-sm text-muted-foreground">
+        {client.member_count} {client.member_count === 1 ? "membro" : "membros"}
+      </span>
+      <span className="flex-1 min-w-0 text-sm text-muted-foreground truncate hidden md:block">
+        {client.members.map((m) => m.full_name).join(", ")}
+      </span>
+      <div className="w-20 flex justify-end gap-1">
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+          <Pencil className="h-4 w-4" />
+        </Button>
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  ))}
+</div>
+```
+
+### Responsive Behavior
+
+- On mobile: Hide member names column, show only avatar, name, count, actions
+- On desktop: Show all columns including member names
