@@ -2,3 +2,6 @@ project_id = "okrxrccvvztawynoavqd"
 
 [functions.fetch-sheets-content]
 verify_jwt = false
+
+[functions.import-team-data]
+verify_jwt = false
