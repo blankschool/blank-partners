@@ -177,7 +177,7 @@ export function ContentCalendar({ items, onDayClick }: ContentCalendarProps) {
                         <p className="font-medium">{dayItems.length} conteúdo(s)</p>
                         {dayItems.slice(0, 3).map((item, idx) => (
                           <p key={idx} className="text-xs text-muted-foreground truncate">
-                            {item.id || item.client || 'Sem título'}
+                            {item.client || 'Sem título'}
                           </p>
                         ))}
                         {dayItems.length > 3 && (

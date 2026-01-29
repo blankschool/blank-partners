@@ -26,8 +26,8 @@ export type PeriodType = "all" | "week" | "month" | "custom";
 interface ContentFiltersProps {
   searchQuery: string;
   onSearchChange: (value: string) => void;
-  selectedPlatform: string;
-  onPlatformChange: (value: string) => void;
+  selectedPerson: string;
+  onPersonChange: (value: string) => void;
   selectedClient: string;
   onClientChange: (value: string) => void;
   selectedStage: string;
@@ -38,13 +38,14 @@ interface ContentFiltersProps {
   onPeriodChange: (type: PeriodType, dateRange?: { from: Date; to: Date }) => void;
   dateRange: { from: Date; to: Date } | null;
   clients: string[];
+  persons: string[];
 }
 
 export function ContentFilters({
   searchQuery,
   onSearchChange,
-  selectedPlatform,
-  onPlatformChange,
+  selectedPerson,
+  onPersonChange,
   selectedClient,
   onClientChange,
   selectedStage,
@@ -55,6 +56,7 @@ export function ContentFilters({
   onPeriodChange,
   dateRange,
   clients,
+  persons,
 }: ContentFiltersProps) {
   const [calendarOpen, setCalendarOpen] = useState(false);
 
@@ -90,16 +92,16 @@ export function ContentFilters({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-3">
-        {/* Platform filter */}
-        <Select value={selectedPlatform} onValueChange={onPlatformChange}>
-          <SelectTrigger className="w-[140px] font-sans">
-            <SelectValue placeholder="Plataforma" />
+        {/* Person (SM) filter */}
+        <Select value={selectedPerson} onValueChange={onPersonChange}>
+          <SelectTrigger className="w-[160px] font-sans">
+            <SelectValue placeholder="Responsável" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todas SM</SelectItem>
-            {SOCIAL_MEDIA_PLATFORMS.map(platform => (
-              <SelectItem key={platform.key} value={platform.key}>
-                {platform.label}
+            <SelectItem value="all">Todos responsáveis</SelectItem>
+            {persons.map(person => (
+              <SelectItem key={person} value={person}>
+                {person}
               </SelectItem>
             ))}
           </SelectContent>

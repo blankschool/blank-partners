@@ -36,7 +36,7 @@ const Contents = () => {
   
   // Filter states
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedPlatform, setSelectedPlatform] = useState("all");
+  const [selectedPerson, setSelectedPerson] = useState("all");
   const [selectedClient, setSelectedClient] = useState("all");
   const [selectedStage, setSelectedStage] = useState("all");
   const [stageFromPanel, setStageFromPanel] = useState<string | null>(null);
@@ -55,6 +55,15 @@ const Contents = () => {
     return Array.from(uniqueClients).sort();
   }, [items]);
 
+  // Extract unique persons (SM/responsáveis)
+  const persons = useMemo(() => {
+    const uniquePersons = new Set<string>();
+    items.forEach(item => {
+      if (item.socialMedia) uniquePersons.add(item.socialMedia);
+    });
+    return Array.from(uniquePersons).sort();
+  }, [items]);
+
   // Apply all filters
   const filteredItems = useMemo(() => {
     return items.filter(item => {
@@ -68,9 +77,9 @@ const Contents = () => {
         if (!matchesSearch) return false;
       }
 
-      // Platform filter
-      if (selectedPlatform !== "all") {
-        if (item.socialMedia.toLowerCase() !== selectedPlatform) return false;
+      // Person (SM) filter
+      if (selectedPerson !== "all") {
+        if (item.socialMedia !== selectedPerson) return false;
       }
 
       // Client filter
@@ -94,7 +103,7 @@ const Contents = () => {
 
       return true;
     });
-  }, [items, searchQuery, selectedPlatform, selectedClient, selectedStage, stageFromPanel, dateRange]);
+  }, [items, searchQuery, selectedPerson, selectedClient, selectedStage, stageFromPanel, dateRange]);
 
   const handlePeriodChange = (type: PeriodType, range?: { from: Date; to: Date }) => {
     setPeriodType(type);
@@ -158,8 +167,8 @@ const Contents = () => {
         <ContentFilters
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
-          selectedPlatform={selectedPlatform}
-          onPlatformChange={setSelectedPlatform}
+          selectedPerson={selectedPerson}
+          onPersonChange={setSelectedPerson}
           selectedClient={selectedClient}
           onClientChange={setSelectedClient}
           selectedStage={selectedStage}
@@ -173,6 +182,7 @@ const Contents = () => {
           onPeriodChange={handlePeriodChange}
           dateRange={dateRange}
           clients={clients}
+          persons={persons}
         />
 
         {/* Content display */}
