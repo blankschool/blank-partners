@@ -1,123 +1,73 @@
 
 
-# Fix Day Content Dialog Display Issues
+# Fix Day Content Dialog Background Contrast
 
-## Problem Analysis
+## Problem
 
-Based on the screenshot and data review, I found several issues with the popup:
+The dialog background is too dark in dark mode, making it difficult to read the content. The current styling uses:
+- Dialog background: `bg-card/90` (card color is ~12% lightness in dark mode)
+- Content cards: `bg-muted/50` (muted is ~15% lightness)
 
-### Issue 1: Title Capitalization
-The date "8 De Janeiro De 2026" incorrectly capitalizes "De" - should be "8 de janeiro de 2026"
-
-**Cause**: The `capitalize` CSS class capitalizes the first letter of each word, but Portuguese date format requires lowercase prepositions.
-
-### Issue 2: Stage Badges Not Showing
-Content cards are missing stage badges because the status values from the API include emoji prefixes:
-- API returns: `"✅ Publicado"`, `"📝 Escrita"`, `"🔴 Cancelado"`
-- Code expects: `"publicado"`, `"escrita"`, `"cancelado"`
-
-**Cause**: The `getStageConfig()` function does a lowercase comparison but doesn't strip emoji prefixes.
-
-### Issue 3: Empty/Sparse Cards
-Cards appear empty because:
-- Most items have empty `format` field
-- Stage badges are not rendering (issue 2)
-- Vertical layout creates excessive whitespace
+This results in a dark-on-dark appearance with poor contrast.
 
 ## Solution
 
-### 1. Fix Title Capitalization
-Remove the `capitalize` class from the DialogTitle - the `format()` function from date-fns already produces the correct lowercase format.
+Override the dialog background specifically in `DayContentDialog.tsx` to use a lighter background color that provides better contrast. Two approaches:
 
-### 2. Fix Status Matching
-Update `getStageConfig()` to strip emoji prefixes and handle variations:
-```text
-"✅ Publicado" → normalize to → "publicado"
-"📝 Escrita" → normalize to → "escrita"
-```
+### Option A: Use lighter card variant
+Add explicit background classes to the DialogContent to make it lighter in dark mode while maintaining the design language.
 
-### 3. Improve Card Layout
-Make the card layout more compact and always show useful information:
-- Horizontal layout with client name + stage badge on same row
-- Show format inline if available
-- Reduce padding for denser display
+### Option B: Use background color with higher contrast
+Use `bg-background` or a custom lighter value that works better in dark mode.
 
-## Files to Modify
+## Implementation
+
+Modify `DayContentDialog.tsx` to add custom styling:
+
+| Element | Current | Updated |
+|---------|---------|---------|
+| DialogContent | `className="max-w-md"` | `className="max-w-md bg-card dark:bg-neutral-800"` |
+| Content cards | `bg-muted/50 border-border/50` | `bg-background dark:bg-neutral-900 border-border` |
+
+The changes use:
+- `dark:bg-neutral-800` for the dialog background (~31% lightness) - significantly lighter than current card (~12%)
+- `dark:bg-neutral-900` for content cards (~17% lightness) - darker than dialog for visual hierarchy
+
+This creates a layered effect where:
+- Dialog background is lighter (neutral-800)
+- Content cards are slightly darker (neutral-900)
+- Text and badges stand out clearly
+
+## File to Modify
 
 | File | Changes |
 |------|---------|
-| `src/components/contents/DayContentDialog.tsx` | Remove `capitalize` class, improve card layout |
-| `src/lib/contentStages.ts` | Update `getStageConfig()` to strip emojis and special characters |
+| `src/components/contents/DayContentDialog.tsx` | Add dark mode background overrides for better contrast |
 
-## Technical Details
-
-### contentStages.ts - getStageConfig Function
+## Visual Comparison
 
 ```text
-Current:
-  const normalizedStatus = status.toLowerCase().trim();
-  return CONTENT_STAGES.find(stage => stage.key === normalizedStatus);
+BEFORE (poor contrast):
++----------------------------------------+
+| Dialog bg: ~12% lightness              |
+|   +----------------------------------+ |
+|   | Card bg: ~15% lightness          | |
+|   +----------------------------------+ |
++----------------------------------------+
 
-Updated:
-  // Strip emojis and special characters, then normalize
-  const cleanedStatus = status
-    .replace(/[\u{1F300}-\u{1F9FF}]/gu, '') // Remove emojis
-    .replace(/[^\w\sáàâãéèêíïóôõöúçñ]/gi, '') // Keep only letters/numbers
-    .toLowerCase()
-    .trim();
-  return CONTENT_STAGES.find(stage => stage.key === cleanedStatus);
-```
-
-### DayContentDialog.tsx - Layout Changes
-
-```text
-Before:
-  <DialogTitle className="capitalize">{formattedDate}</DialogTitle>
-  ...
-  <div className="flex flex-col gap-2 p-3 ...">
-    <div className="font-medium">{client}</div>
-    <div className="flex items-center gap-2">
-      {stageBadge}
-      {format}
-      {link}
-    </div>
-  </div>
-
-After:
-  <DialogTitle className="font-serif">{formattedDate}</DialogTitle>
-  ...
-  <div className="flex items-center justify-between gap-3 p-3 ...">
-    <div className="flex items-center gap-2 min-w-0">
-      <span className="font-medium truncate">{client}</span>
-      {stageBadge}
-    </div>
-    <div className="flex items-center gap-2 shrink-0">
-      {format}
-      {link}
-    </div>
-  </div>
-```
-
-## Visual Before/After
-
-```text
-BEFORE (current):
-+------------------------------------+
-| Rony Meisler                       |
-|                                    |
-|                            [link]  |
-+------------------------------------+
-
-AFTER (fixed):
-+------------------------------------+
-| Rony Meisler  [Publicado]   [link] |
-+------------------------------------+
+AFTER (good contrast):
++----------------------------------------+
+| Dialog bg: ~31% lightness (neutral-800)|
+|   +----------------------------------+ |
+|   | Card bg: ~17% lightness (neutral-900)
+|   +----------------------------------+ |
++----------------------------------------+
 ```
 
 ## Expected Result
 
-1. Date title displays as "8 de janeiro de 2026" (proper Portuguese)
-2. Stage badges appear with correct colors (Publicado = green, Backlog = gray, etc.)
-3. Compact single-row layout with client + stage + format + link
-4. Reduced card height for better information density
+1. Dialog background is noticeably lighter in dark mode
+2. Content cards have clear visual separation from dialog background
+3. Text and stage badges are easy to read with sufficient contrast
+4. Maintains design consistency with the rest of the application
 
