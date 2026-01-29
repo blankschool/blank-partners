@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, startTransition, useCallback } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -8,10 +8,13 @@ import { ContentFilters, ViewMode, PeriodType } from "@/components/contents/Cont
 import { ContentCard } from "@/components/contents/ContentCard";
 import { ContentCalendar } from "@/components/contents/ContentCalendar";
 import { DayContentDialog } from "@/components/contents/DayContentDialog";
+import { ContentPagination } from "@/components/contents/ContentPagination";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { parseISO, isValid, isWithinInterval } from "date-fns";
 import { normalizeStatus, STAGE_GROUPS } from "@/lib/contentStages";
+
+const ITEMS_PER_PAGE = 50;
 
 function parseDate(dateStr: string): Date | null {
   if (!dateStr) return null;
@@ -47,6 +50,7 @@ const Contents = () => {
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date } | null>(null);
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [selectedDayItems, setSelectedDayItems] = useState<ContentItem[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const items = data?.items || [];
 
@@ -117,22 +121,75 @@ const Contents = () => {
     });
   }, [items, searchQuery, selectedPerson, selectedClient, selectedStage, selectedGroupFromPanel, dateRange]);
 
-  const handlePeriodChange = (type: PeriodType, range?: { from: Date; to: Date }) => {
-    setPeriodType(type);
-    setDateRange(range || null);
-  };
+  // Paginated items for grid/list views
+  const paginatedItems = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredItems.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredItems, currentPage]);
 
-  const handleGroupFromPanel = (group: string | null) => {
-    setSelectedGroupFromPanel(group);
-    if (group) {
-      setSelectedStage("all"); // Reset dropdown when selecting from panel
-    }
-  };
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedPerson, selectedClient, selectedStage, selectedGroupFromPanel, dateRange]);
 
-  const handleDayClick = (date: Date, dayItems: ContentItem[]) => {
+  const handlePeriodChange = useCallback((type: PeriodType, range?: { from: Date; to: Date }) => {
+    startTransition(() => {
+      setPeriodType(type);
+      setDateRange(range || null);
+    });
+  }, []);
+
+  const handleGroupFromPanel = useCallback((group: string | null) => {
+    startTransition(() => {
+      setSelectedGroupFromPanel(group);
+      if (group) {
+        setSelectedStage("all");
+      }
+    });
+  }, []);
+
+  const handleViewModeChange = useCallback((mode: ViewMode) => {
+    startTransition(() => {
+      setViewMode(mode);
+      setCurrentPage(1);
+    });
+  }, []);
+
+  const handleSearchChange = useCallback((query: string) => {
+    startTransition(() => {
+      setSearchQuery(query);
+    });
+  }, []);
+
+  const handlePersonChange = useCallback((person: string) => {
+    startTransition(() => {
+      setSelectedPerson(person);
+    });
+  }, []);
+
+  const handleClientChange = useCallback((client: string) => {
+    startTransition(() => {
+      setSelectedClient(client);
+    });
+  }, []);
+
+  const handleStageChange = useCallback((stage: string) => {
+    startTransition(() => {
+      setSelectedStage(stage);
+      setSelectedGroupFromPanel(null);
+    });
+  }, []);
+
+  const handleDayClick = useCallback((date: Date, dayItems: ContentItem[]) => {
     setSelectedDay(date);
     setSelectedDayItems(dayItems);
-  };
+  }, []);
+
+  const handlePageChange = useCallback((page: number) => {
+    startTransition(() => {
+      setCurrentPage(page);
+    });
+  }, []);
 
   if (isLoading) {
     return (
@@ -183,18 +240,15 @@ const Contents = () => {
         {/* Filters */}
         <ContentFilters
           searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
+          onSearchChange={handleSearchChange}
           selectedPerson={selectedPerson}
-          onPersonChange={setSelectedPerson}
+          onPersonChange={handlePersonChange}
           selectedClient={selectedClient}
-          onClientChange={setSelectedClient}
+          onClientChange={handleClientChange}
           selectedStage={selectedStage}
-          onStageChange={(stage) => {
-            setSelectedStage(stage);
-            setSelectedGroupFromPanel(null); // Reset panel selection when using dropdown
-          }}
+          onStageChange={handleStageChange}
           viewMode={viewMode}
-          onViewModeChange={setViewMode}
+          onViewModeChange={handleViewModeChange}
           periodType={periodType}
           onPeriodChange={handlePeriodChange}
           dateRange={dateRange}
@@ -220,21 +274,37 @@ const Contents = () => {
             />
           </>
         ) : viewMode === "grid" ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredItems.map((item, index) => (
-              <ContentCard key={`${item.id}-${index}`} item={item} variant="grid" />
-            ))}
-          </div>
+          <>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {paginatedItems.map((item, index) => (
+                <ContentCard key={`${item.id}-${index}`} item={item} variant="grid" />
+              ))}
+            </div>
+            <ContentPagination
+              currentPage={currentPage}
+              totalItems={filteredItems.length}
+              itemsPerPage={ITEMS_PER_PAGE}
+              onPageChange={handlePageChange}
+            />
+          </>
         ) : (
-          <Card>
-            <CardContent className="p-0">
-              <div className="divide-y divide-border/50">
-                {filteredItems.map((item, index) => (
-                  <ContentCard key={`${item.id}-${index}`} item={item} variant="list" />
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <>
+            <Card>
+              <CardContent className="p-0">
+                <div className="divide-y divide-border/50">
+                  {paginatedItems.map((item, index) => (
+                    <ContentCard key={`${item.id}-${index}`} item={item} variant="list" />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+            <ContentPagination
+              currentPage={currentPage}
+              totalItems={filteredItems.length}
+              itemsPerPage={ITEMS_PER_PAGE}
+              onPageChange={handlePageChange}
+            />
+          </>
         )}
 
         {/* Last sync info */}
