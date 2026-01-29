@@ -38,13 +38,18 @@ export const SOCIAL_MEDIA_PLATFORMS = [
   { key: 'tiktok', label: 'TikTok', color: 'text-foreground', bgColor: 'bg-muted' },
 ];
 
-export function getStageConfig(status: string): ContentStage | undefined {
-  // Strip emojis and special characters, then normalize
-  const cleanedStatus = status
-    .replace(/[\u{1F300}-\u{1F9FF}]/gu, '') // Remove emojis
-    .replace(/[^\w\sáàâãéèêíïóôõöúçñ]/gi, '') // Keep only letters/numbers/accents
+export function normalizeStatus(status: string): string {
+  return status
+    .replace(/[\u{1F300}-\u{1F9FF}]/gu, '')     // Remove emojis
+    .replace(/[^\w\sáàâãéèêíïóôõöúçñ]/gi, '')   // Remove special chars
+    .normalize('NFD')                            // Decompose accents
+    .replace(/[\u0300-\u036f]/g, '')            // Remove accent marks
     .toLowerCase()
     .trim();
+}
+
+export function getStageConfig(status: string): ContentStage | undefined {
+  const cleanedStatus = normalizeStatus(status);
   return CONTENT_STAGES.find(stage => stage.key === cleanedStatus);
 }
 
