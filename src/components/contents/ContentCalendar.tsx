@@ -137,7 +137,7 @@ export function ContentCalendar({ items, onDayClick }: ContentCalendarProps) {
                     <button
                       onClick={() => onDayClick?.(day, dayItems)}
                       className={cn(
-                        "aspect-[4/3] p-1 rounded-lg text-sm transition-colors relative",
+                        "min-h-[80px] p-1 rounded-lg text-sm transition-colors relative",
                         "hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring",
                         !isCurrentMonth && "text-muted-foreground/50",
                         isToday && "ring-2 ring-primary"
@@ -147,24 +147,27 @@ export function ContentCalendar({ items, onDayClick }: ContentCalendarProps) {
                         {format(day, 'd')}
                       </span>
                       
-                      {/* Content dots */}
+                      {/* Content preview - show up to 2 items */}
                       {dayItems.length > 0 && (
-                        <div className="absolute bottom-1 left-1 right-1 flex flex-wrap justify-center gap-0.5">
-                          {dayItems.slice(0, 4).map((item, idx) => {
+                        <div className="absolute bottom-1 left-1 right-1 space-y-0.5 overflow-hidden">
+                          {dayItems.slice(0, 2).map((item, idx) => {
                             const stageConfig = getStageConfig(item.status);
-                            const platformConfig = getPlatformConfig(item.socialMedia);
-                            const dotColor = stageConfig?.bgColor || platformConfig?.bgColor || 'bg-muted';
-                            
                             return (
                               <div
                                 key={idx}
-                                className={cn("w-2 h-2 rounded-full", dotColor)}
-                              />
+                                className={cn(
+                                  "text-[9px] px-1 py-0.5 rounded truncate",
+                                  stageConfig?.bgColor || 'bg-muted',
+                                  stageConfig?.color || 'text-muted-foreground'
+                                )}
+                              >
+                                {item.client || 'Sem cliente'}
+                              </div>
                             );
                           })}
-                          {dayItems.length > 4 && (
-                            <span className="text-[10px] text-muted-foreground">
-                              +{dayItems.length - 4}
+                          {dayItems.length > 2 && (
+                            <span className="text-[9px] text-muted-foreground block text-center">
+                              +{dayItems.length - 2} mais
                             </span>
                           )}
                         </div>
