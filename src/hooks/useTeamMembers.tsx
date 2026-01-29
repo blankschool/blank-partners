@@ -50,13 +50,10 @@ export function useTeamMembers() {
   const { data: teamMembers, isLoading: teamMembersLoading, error } = useQuery({
     queryKey: ["team-members"],
     queryFn: async () => {
-      // Fetch team members with leader info
+      // Fetch team members (no self-join - PostgREST doesn't handle it well)
       const { data: membersData, error: membersError } = await supabase
         .from("team_members")
-        .select(`
-          *,
-          leader:team_members!team_members_leader_id_fkey(full_name)
-        `)
+        .select("*")
         .order("full_name");
 
       if (membersError) throw membersError;
@@ -81,15 +78,19 @@ export function useTeamMembers() {
         clientsMap.set(assignment.team_member_id, existing);
       });
 
-      // Merge clients into team members and fix leader structure
+      // Create a map for leader lookup
+      const leaderMap = new Map<string, string>();
+      membersData.forEach((member) => {
+        leaderMap.set(member.id, member.full_name);
+      });
+
+      // Merge clients and leader into team members
       return membersData.map((member) => {
-        // Leader comes as an array from Supabase, get the first item
-        const leaderArray = member.leader as unknown as { full_name: string }[] | null;
-        const leaderObj = leaderArray && leaderArray.length > 0 ? leaderArray[0] : null;
+        const leaderName = member.leader_id ? leaderMap.get(member.leader_id) : null;
 
         return {
           ...member,
-          leader: leaderObj,
+          leader: leaderName ? { full_name: leaderName } : null,
           clients: clientsMap.get(member.id) || [],
         };
       }) as TeamMember[];
