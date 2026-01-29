@@ -154,7 +154,7 @@ const Team = () => {
               <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
                 Júnior
               </p>
-              <p className="mt-2 font-serif text-5xl font-normal tracking-tight text-primary">
+              <p className="mt-2 font-serif text-5xl font-normal tracking-tight text-foreground">
                 {stats.bySeniority.get("Júnior") || 0}
               </p>
               <p className="mt-2 text-sm text-muted-foreground">Colaboradores júnior</p>
