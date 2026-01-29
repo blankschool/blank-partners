@@ -79,36 +79,45 @@ export function ClientsTab() {
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filteredClients.map((client) => (
-          <div
-            key={client.id}
-            className="group relative rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/50"
-          >
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <Avatar className="h-10 w-10">
-                  <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
-                    {getInitials(client.name)}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <h3 className="font-medium text-foreground">{client.name}</h3>
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <Users className="h-3 w-3" />
-                    <span>
-                      {client.member_count}{" "}
-                      {client.member_count === 1 ? "membro" : "membros"}
-                    </span>
-                  </div>
-                </div>
-              </div>
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        {/* List header */}
+        <div className="flex items-center gap-4 px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider border-b border-border bg-muted/30">
+          <span className="w-8"></span>
+          <span className="flex-1 min-w-0">Cliente</span>
+          <span className="w-24 text-center hidden sm:block">Membros</span>
+          <span className="flex-1 min-w-0 hidden md:block">Responsáveis</span>
+          <span className="w-20 text-right">Ações</span>
+        </div>
 
-              <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+        {/* List items */}
+        <div className="divide-y divide-border">
+          {filteredClients.map((client) => (
+            <div
+              key={client.id}
+              className="group flex items-center gap-4 px-4 py-3 transition-colors hover:bg-muted/50"
+            >
+              <Avatar className="h-8 w-8 shrink-0">
+                <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                  {getInitials(client.name)}
+                </AvatarFallback>
+              </Avatar>
+              <span className="flex-1 min-w-0 font-medium text-foreground truncate">
+                {client.name}
+              </span>
+              <span className="w-24 text-center text-sm text-muted-foreground hidden sm:flex items-center justify-center gap-1">
+                <Users className="h-3 w-3" />
+                {client.member_count}
+              </span>
+              <span className="flex-1 min-w-0 text-sm text-muted-foreground truncate hidden md:block">
+                {client.members.length > 0
+                  ? client.members.map((m) => m.full_name).join(", ")
+                  : "—"}
+              </span>
+              <div className="w-20 flex justify-end gap-1">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8"
+                  className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
                   onClick={() => setEditingClient(client)}
                 >
                   <Pencil className="h-4 w-4" />
@@ -116,29 +125,23 @@ export function ClientsTab() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-destructive hover:text-destructive"
+                  className="h-8 w-8 text-destructive hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
                   onClick={() => setDeletingClient(client)}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
             </div>
+          ))}
 
-            {client.members.length > 0 && (
-              <p className="mt-2 text-xs text-muted-foreground truncate">
-                {client.members.map((m) => m.full_name).join(", ")}
-              </p>
-            )}
-          </div>
-        ))}
-
-        {filteredClients.length === 0 && (
-          <div className="col-span-full text-center py-12 text-muted-foreground">
-            {searchQuery
-              ? "Nenhum cliente encontrado com esse termo."
-              : "Nenhum cliente cadastrado."}
-          </div>
-        )}
+          {filteredClients.length === 0 && (
+            <div className="text-center py-12 text-muted-foreground">
+              {searchQuery
+                ? "Nenhum cliente encontrado com esse termo."
+                : "Nenhum cliente cadastrado."}
+            </div>
+          )}
+        </div>
       </div>
 
       <AddClientDialog
