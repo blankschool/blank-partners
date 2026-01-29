@@ -117,38 +117,41 @@ const Team = () => {
         {/* Stats Summary */}
         <div className="grid gap-4 sm:grid-cols-4">
           <Card className="shadow-sm">
-            <CardContent className="p-4">
-              <p className="text-sm text-muted-foreground">Team Members</p>
-              <p className="mt-1 text-2xl font-semibold text-foreground">{teamData.length}</p>
+            <CardContent className="p-6">
+              <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Team Members</p>
+              <p className="mt-2 font-serif text-5xl font-normal tracking-tight text-foreground">{teamData.length}</p>
+              <p className="mt-2 text-sm text-muted-foreground">Total headcount</p>
             </CardContent>
           </Card>
           <Card className="shadow-sm">
-            <CardContent className="p-4">
-              <p className="text-sm text-muted-foreground">Online Now</p>
-              <p className="mt-1 text-2xl font-semibold text-success">
+            <CardContent className="p-6">
+              <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Online Now</p>
+              <p className="mt-2 font-serif text-5xl font-normal tracking-tight text-success">
                 {teamData.filter((m) => m.status === "online").length}
               </p>
+              <p className="mt-2 text-sm text-muted-foreground">Currently available</p>
             </CardContent>
           </Card>
           <Card className="shadow-sm">
-            <CardContent className="p-4">
-              <p className="text-sm text-muted-foreground">Total Tasks</p>
-              <p className="mt-1 text-2xl font-semibold text-foreground">
+            <CardContent className="p-6">
+              <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Total Tasks</p>
+              <p className="mt-2 font-serif text-5xl font-normal tracking-tight text-foreground">
                 {teamData.reduce((acc, m) => acc + m.totalTasks, 0)}
               </p>
+              <p className="mt-2 text-sm text-muted-foreground">Assigned this period</p>
             </CardContent>
           </Card>
           <Card className="shadow-sm">
-            <CardContent className="p-4">
-              <p className="text-sm text-muted-foreground">Completion Rate</p>
-              <p className="mt-1 text-2xl font-semibold text-chart-3">
+            <CardContent className="p-6">
+              <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Completion Rate</p>
+              <p className="mt-2 font-serif text-5xl font-normal tracking-tight text-accent-orange">
                 {Math.round(
                   (teamData.reduce((acc, m) => acc + m.tasksCompleted, 0) /
                     teamData.reduce((acc, m) => acc + m.totalTasks, 0)) *
                     100
-                )}
-                %
+                )}%
               </p>
+              <p className="mt-2 text-sm text-muted-foreground">Tasks completed</p>
             </CardContent>
           </Card>
         </div>

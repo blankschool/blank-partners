@@ -104,25 +104,28 @@ const Clients = () => {
         {/* Stats Summary */}
         <div className="grid gap-4 sm:grid-cols-3">
           <Card className="shadow-sm">
-            <CardContent className="p-4">
-              <p className="text-sm text-muted-foreground">Total Clients</p>
-              <p className="mt-1 text-2xl font-semibold text-foreground">{clientsData.length}</p>
+            <CardContent className="p-6">
+              <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Total Clients</p>
+              <p className="mt-2 font-serif text-5xl font-normal tracking-tight text-foreground">{clientsData.length}</p>
+              <p className="mt-2 text-sm text-muted-foreground">Registered in system</p>
             </CardContent>
           </Card>
           <Card className="shadow-sm">
-            <CardContent className="p-4">
-              <p className="text-sm text-muted-foreground">Active</p>
-              <p className="mt-1 text-2xl font-semibold text-success">
+            <CardContent className="p-6">
+              <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Active</p>
+              <p className="mt-2 font-serif text-5xl font-normal tracking-tight text-success">
                 {clientsData.filter((c) => c.status === "active").length}
               </p>
+              <p className="mt-2 text-sm text-muted-foreground">Currently active clients</p>
             </CardContent>
           </Card>
           <Card className="shadow-sm">
-            <CardContent className="p-4">
-              <p className="text-sm text-muted-foreground">Pending Onboarding</p>
-              <p className="mt-1 text-2xl font-semibold text-warning">
+            <CardContent className="p-6">
+              <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Pending Onboarding</p>
+              <p className="mt-2 font-serif text-5xl font-normal tracking-tight text-warning">
                 {clientsData.filter((c) => c.status === "pending").length}
               </p>
+              <p className="mt-2 text-sm text-muted-foreground">Awaiting setup</p>
             </CardContent>
           </Card>
         </div>
