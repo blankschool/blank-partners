@@ -137,7 +137,7 @@ export function ContentCalendar({ items, onDayClick }: ContentCalendarProps) {
                     <button
                       onClick={() => onDayClick?.(day, dayItems)}
                       className={cn(
-                        "min-h-[100px] p-2 rounded-xl text-sm transition-colors relative",
+                        "min-h-[100px] p-2 rounded-xl text-sm transition-colors flex flex-col items-start",
                         "bg-card border border-border",
                         "hover:bg-muted hover:border-muted-foreground/20",
                         "focus:outline-none focus:ring-2 focus:ring-ring",
@@ -145,13 +145,13 @@ export function ContentCalendar({ items, onDayClick }: ContentCalendarProps) {
                         isToday && "ring-2 ring-primary"
                       )}
                     >
-                      <span className="absolute top-2 left-2 text-xs font-medium text-foreground">
+                      <span className="text-xs font-medium text-foreground mb-1">
                         {format(day, 'd')}
                       </span>
                       
                       {/* Content preview - show up to 2 items */}
                       {dayItems.length > 0 && (
-                        <div className="absolute bottom-2 left-2 right-2 space-y-1 overflow-hidden">
+                        <div className="mt-auto w-full space-y-1 overflow-hidden">
                           {dayItems.slice(0, 2).map((item, idx) => {
                             const stageConfig = getStageConfig(item.status);
                             return (
