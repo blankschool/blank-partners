@@ -1,126 +1,80 @@
 
 
-# Fix Stage Filtering and Display for All Stages
+# Reduce Calendar Cell Size
 
-## Problem Identified
+## Problem
 
-Three issues are preventing stages like "Gravação de áudio", "Gravação de vídeo", "Edição de vídeo" from appearing correctly:
-
-### Issue 1: Accent Mismatch
-- Stage keys in `CONTENT_STAGES` use **unaccented** versions: `"edicao de video"`, `"gravacao de audio"`
-- API data returns **accented** versions: `"Edição de vídeo"`, `"Gravação de áudio"`
-- The comparison `item.status.toLowerCase().trim() === stage.key` fails because accents are preserved
-
-### Issue 2: Inconsistent Normalization
-The `getStageConfig` function was updated to strip emojis, but it still preserves accented characters. Meanwhile, the stage keys are unaccented. This causes a mismatch.
-
-### Issue 3: Filtering Logic Doesn't Use getStageConfig
-Two locations use direct string comparison instead of the centralized normalization:
-- `StageStatsPanel.tsx` line 16
-- `Contents.tsx` line 96
+The calendar cells use `aspect-square` which makes them as tall as they are wide. On a wide viewport, this results in very large cells (approximately 150-200px tall each), making the calendar take up excessive vertical space and requiring scrolling.
 
 ## Solution
 
-### 1. Create a Reusable Status Normalization Function
-Add a `normalizeStatus()` function in `contentStages.ts` that:
-- Strips emojis
-- Removes accents (normalize to ASCII)
-- Converts to lowercase
-- Trims whitespace
+Constrain the calendar grid to a maximum width and adjust the cell aspect ratio for a more compact display:
 
-### 2. Update getStageConfig to Use It
-The existing function will use the new normalizer.
+1. **Limit calendar grid width** - Add `max-w-4xl` (896px) to contain the calendar
+2. **Reduce cell aspect ratio** - Change from `aspect-square` to a shorter aspect ratio or fixed height
+3. **Center the calendar** - Add `mx-auto` to center the constrained grid
 
-### 3. Update StageStatsPanel to Use Normalization
-Replace direct comparison with normalized comparison.
+## Implementation Details
 
-### 4. Update Contents.tsx Stage Filter
-Replace direct comparison with normalized comparison.
+### File: `src/components/contents/ContentCalendar.tsx`
+
+| Element | Current | Updated |
+|---------|---------|---------|
+| Calendar container | `<CardContent className="p-4">` | `<CardContent className="p-4 max-w-4xl mx-auto">` |
+| Day cell | `aspect-square p-1 rounded-lg...` | `aspect-[4/3] p-1 rounded-lg...` or fixed `h-20` |
+
+### Specific Changes
+
+**Option 1 - Constrained aspect ratio (recommended)**:
+```text
+// Day button class
+BEFORE: "aspect-square p-1 rounded-lg..."
+AFTER:  "aspect-[4/3] p-1 rounded-lg..."
+
+// Container
+BEFORE: <CardContent className="p-4">
+AFTER:  <CardContent className="p-4 max-w-5xl mx-auto">
+```
+
+This creates cells that are 4 units wide by 3 units tall - shorter than a square but still proportional.
+
+**Option 2 - Fixed height**:
+```text
+// Day button class  
+BEFORE: "aspect-square p-1..."
+AFTER:  "h-20 p-1..."
+```
+
+Fixed 80px height cells regardless of width.
+
+## Visual Comparison
+
+```text
+BEFORE (aspect-square, full width):
++-------+-------+-------+-------+-------+-------+-------+
+|       |       |       |       |       |       |       |
+|  5    |  6    |  7    |  8    |  9    |  10   |  11   |  ~200px tall
+|       |       |       |       |       |       |       |
+| ●●●●  | ●●●●  | ●●●●  | ●●●●  | ●●●●  | ●●●●  | ●●●●  |
++-------+-------+-------+-------+-------+-------+-------+
+
+AFTER (aspect-[4/3], max-width constrained):
++------+------+------+------+------+------+------+
+| 5    | 6    | 7    | 8    | 9    | 10   | 11   |  ~100px tall
+|●●●●  |●●●●  |●●●●  |●●●●  |●●●●  |●●●●  |●●●●  |
++------+------+------+------+------+------+------+
+```
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/lib/contentStages.ts` | Add `normalizeStatus()` helper function |
-| `src/components/contents/StageStatsPanel.tsx` | Import and use `normalizeStatus()` for counting |
-| `src/pages/Contents.tsx` | Import and use `normalizeStatus()` for filtering |
-
-## Technical Details
-
-### contentStages.ts - New Helper Function
-
-```text
-export function normalizeStatus(status: string): string {
-  return status
-    .replace(/[\u{1F300}-\u{1F9FF}]/gu, '')     // Remove emojis
-    .replace(/[^\w\sáàâãéèêíïóôõöúçñ]/gi, '')   // Remove special chars
-    .normalize('NFD')                            // Decompose accents
-    .replace(/[\u0300-\u036f]/g, '')            // Remove accent marks
-    .toLowerCase()
-    .trim();
-}
-```
-
-The key addition is `.normalize('NFD').replace(/[\u0300-\u036f]/g, '')` which:
-- `normalize('NFD')` decomposes characters like "é" into "e" + combining accent
-- `replace(/[\u0300-\u036f]/g, '')` removes the combining accent marks
-
-Example transformations:
-- `"✅ Publicado"` → `"publicado"`
-- `"Edição de vídeo"` → `"edicao de video"`
-- `"Gravação de áudio"` → `"gravacao de audio"`
-
-### StageStatsPanel.tsx Updates
-
-```text
-// Import
-import { CONTENT_STAGES, normalizeStatus } from "@/lib/contentStages";
-
-// Line 15-16 change:
-// BEFORE:
-acc[stage.key] = items.filter(
-  item => item.status.toLowerCase().trim() === stage.key
-).length;
-
-// AFTER:
-acc[stage.key] = items.filter(
-  item => normalizeStatus(item.status) === stage.key
-).length;
-```
-
-### Contents.tsx Updates
-
-```text
-// Import
-import { normalizeStatus } from "@/lib/contentStages";
-
-// Line 96 change:
-// BEFORE:
-if (item.status.toLowerCase().trim() !== activeStage) return false;
-
-// AFTER:
-if (normalizeStatus(item.status) !== activeStage) return false;
-```
-
-## Data Verification
-
-From the API data, these statuses will now match correctly:
-
-| API Status | Normalized | Stage Key | Match? |
-|------------|------------|-----------|--------|
-| "Edição de vídeo" | "edicao de video" | "edicao de video" | Yes |
-| "Gravação de áudio" | "gravacao de audio" | "gravacao de audio" | Yes |
-| "Gravação de vídeo" | "gravacao de video" | "gravacao de video" | Yes |
-| "✅ Publicado" | "publicado" | "publicado" | Yes |
-| "❌ Cancelado" | "cancelado" | "cancelado" | Yes |
-| "Criação Design" | "criacao design" | "criacao design" | Yes |
-| "Ajustes Escrita" | "ajustes escrita" | "ajustes escrita" | Yes |
+| `src/components/contents/ContentCalendar.tsx` | Add max-width to container, change aspect ratio on cells |
 
 ## Expected Result
 
-1. All stages will appear correctly in the StageStatsPanel with accurate counts
-2. Clicking on stage buttons will filter contents correctly
-3. The stage dropdown filter will work for all stages
-4. Stage badges will display correctly in calendars and dialogs
-5. Previously "invisible" stages (Gravação de áudio, Edição de vídeo, etc.) will now be visible
+1. Calendar cells are approximately 50% shorter
+2. Entire month fits on screen without scrolling
+3. Content dots and day numbers remain visible and properly positioned
+4. Calendar is centered on larger screens
 
