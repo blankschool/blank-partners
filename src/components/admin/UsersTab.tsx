@@ -77,34 +77,70 @@ export function UsersTab() {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filteredProfiles.map((profile) => (
-          <div
-            key={profile.id}
-            className="group relative rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/50"
-          >
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={profile.avatar_url ?? undefined} />
-                  <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
-                    {getInitials(profile.full_name, profile.email)}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-medium text-foreground">
-                      {profile.full_name || "Sem nome"}
-                    </h3>
-                    {isAdmin(profile) && (
-                      <Shield className="h-4 w-4 text-primary" />
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground">{profile.email}</p>
-                </div>
-              </div>
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        {/* Header row */}
+        <div className="flex items-center gap-4 px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider border-b border-border bg-muted/30">
+          <span className="w-8"></span>
+          <span className="flex-1 min-w-0">Nome</span>
+          <span className="w-48 hidden sm:block">Email</span>
+          <span className="w-24 hidden md:block text-center">Equipe</span>
+          <span className="w-28 hidden lg:block">Cargo</span>
+          <span className="w-20 hidden xl:block text-center">Tipo</span>
+          <span className="w-20 text-right">Ações</span>
+        </div>
 
-              <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+        {/* List items */}
+        <div className="divide-y divide-border">
+          {filteredProfiles.map((profile) => (
+            <div
+              key={profile.id}
+              className="group flex items-center gap-4 px-4 py-3 transition-colors hover:bg-muted/50"
+            >
+              <Avatar className="h-8 w-8 shrink-0">
+                <AvatarImage src={profile.avatar_url ?? undefined} />
+                <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                  {getInitials(profile.full_name, profile.email)}
+                </AvatarFallback>
+              </Avatar>
+
+              <span className="flex-1 min-w-0 flex items-center gap-2">
+                <span className="font-medium text-foreground truncate">
+                  {profile.full_name || "Sem nome"}
+                </span>
+                {isAdmin(profile) && (
+                  <Shield className="h-4 w-4 text-primary shrink-0" />
+                )}
+              </span>
+
+              <span className="w-48 hidden sm:block text-sm text-muted-foreground truncate">
+                {profile.email}
+              </span>
+
+              <span className="w-24 hidden md:flex justify-center">
+                {profile.team && (
+                  <Badge variant="secondary" className="text-xs">
+                    {profile.team}
+                  </Badge>
+                )}
+              </span>
+
+              <span className="w-28 hidden lg:block text-sm text-muted-foreground truncate">
+                {profile.positions?.name || "-"}
+              </span>
+
+              <span className="w-20 hidden xl:flex justify-center">
+                {isAdmin(profile) ? (
+                  <Badge className="text-xs bg-primary/20 text-primary hover:bg-primary/30">
+                    Admin
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-xs">
+                    Usuário
+                  </Badge>
+                )}
+              </span>
+
+              <div className="w-20 flex justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                 <Button
                   variant="ghost"
                   size="icon"
@@ -123,38 +159,16 @@ export function UsersTab() {
                 </Button>
               </div>
             </div>
+          ))}
 
-            <div className="mt-3 flex flex-wrap gap-2">
-              {profile.team && (
-                <Badge variant="secondary" className="text-xs">
-                  {profile.team}
-                </Badge>
-              )}
-              {profile.positions?.name && (
-                <Badge variant="outline" className="text-xs">
-                  {profile.positions.name}
-                </Badge>
-              )}
-              {isAdmin(profile) ? (
-                <Badge className="text-xs bg-primary/20 text-primary hover:bg-primary/30">
-                  Admin
-                </Badge>
-              ) : (
-                <Badge variant="outline" className="text-xs">
-                  Usuário
-                </Badge>
-              )}
+          {filteredProfiles.length === 0 && (
+            <div className="text-center py-12 text-muted-foreground">
+              {searchQuery
+                ? "Nenhum usuário encontrado com esse termo."
+                : "Nenhum usuário cadastrado."}
             </div>
-          </div>
-        ))}
-
-        {filteredProfiles.length === 0 && (
-          <div className="col-span-full text-center py-12 text-muted-foreground">
-            {searchQuery
-              ? "Nenhum usuário encontrado com esse termo."
-              : "Nenhum usuário cadastrado."}
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       <EditUserDialog

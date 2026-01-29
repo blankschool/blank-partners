@@ -127,26 +127,60 @@ export function TeamTab() {
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filteredMembers.map((member) => (
-          <div
-            key={member.id}
-            className="group relative rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/50"
-          >
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <Avatar className="h-10 w-10">
-                  <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
-                    {getInitials(member.full_name)}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <h3 className="font-medium text-foreground">{member.full_name}</h3>
-                  <p className="text-sm text-muted-foreground">{member.email}</p>
-                </div>
-              </div>
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        {/* Header row */}
+        <div className="flex items-center gap-4 px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider border-b border-border bg-muted/30">
+          <span className="w-8"></span>
+          <span className="flex-1 min-w-0">Nome</span>
+          <span className="w-48 hidden sm:block">Email</span>
+          <span className="w-24 hidden md:block text-center">Área</span>
+          <span className="w-20 hidden lg:block text-center">Senioridade</span>
+          <span className="w-28 hidden xl:block">Cargo</span>
+          <span className="w-20 text-right">Ações</span>
+        </div>
 
-              <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+        {/* List items */}
+        <div className="divide-y divide-border">
+          {filteredMembers.map((member) => (
+            <div
+              key={member.id}
+              className="group flex items-center gap-4 px-4 py-3 transition-colors hover:bg-muted/50"
+            >
+              <Avatar className="h-8 w-8 shrink-0">
+                <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                  {getInitials(member.full_name)}
+                </AvatarFallback>
+              </Avatar>
+
+              <span className="flex-1 min-w-0 font-medium text-foreground truncate">
+                {member.full_name}
+              </span>
+
+              <span className="w-48 hidden sm:block text-sm text-muted-foreground truncate">
+                {member.email}
+              </span>
+
+              <span className="w-24 hidden md:flex justify-center">
+                {member.area && (
+                  <Badge variant="secondary" className="text-xs">
+                    {member.area}
+                  </Badge>
+                )}
+              </span>
+
+              <span className="w-20 hidden lg:flex justify-center">
+                {member.seniority && (
+                  <Badge variant="outline" className="text-xs">
+                    {member.seniority}
+                  </Badge>
+                )}
+              </span>
+
+              <span className="w-28 hidden xl:block text-sm text-muted-foreground truncate">
+                {member.position || "-"}
+              </span>
+
+              <div className="w-20 flex justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                 <Button
                   variant="ghost"
                   size="icon"
@@ -165,48 +199,16 @@ export function TeamTab() {
                 </Button>
               </div>
             </div>
+          ))}
 
-            <div className="mt-3 flex flex-wrap gap-2">
-              {member.area && (
-                <Badge variant="secondary" className="text-xs">
-                  {member.area}
-                </Badge>
-              )}
-              {member.seniority && (
-                <Badge variant="outline" className="text-xs">
-                  {member.seniority}
-                </Badge>
-              )}
-              {member.position && (
-                <Badge variant="outline" className="text-xs">
-                  <Briefcase className="mr-1 h-3 w-3" />
-                  {member.position}
-                </Badge>
-              )}
+          {filteredMembers.length === 0 && (
+            <div className="text-center py-12 text-muted-foreground">
+              {searchQuery || areaFilter !== "all" || seniorityFilter !== "all"
+                ? "Nenhum membro encontrado com esses filtros."
+                : "Nenhum membro cadastrado."}
             </div>
-
-            {member.start_date && (
-              <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
-                <Calendar className="h-3 w-3" />
-                Início: {formatDate(member.start_date)}
-              </div>
-            )}
-
-            {member.clients.length > 0 && (
-              <p className="mt-2 text-xs text-muted-foreground truncate">
-                Clientes: {member.clients.map((c) => c.name).join(", ")}
-              </p>
-            )}
-          </div>
-        ))}
-
-        {filteredMembers.length === 0 && (
-          <div className="col-span-full text-center py-12 text-muted-foreground">
-            {searchQuery || areaFilter !== "all" || seniorityFilter !== "all"
-              ? "Nenhum membro encontrado com esses filtros."
-              : "Nenhum membro cadastrado."}
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       <AddTeamMemberDialog
