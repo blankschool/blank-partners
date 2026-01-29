@@ -1,164 +1,123 @@
 
-# Enhanced Calendar View with Content Preview and Day Popup
 
-## Overview
+# Fix Day Content Dialog Display Issues
 
-This plan adds two features to the calendar view on the Contents page:
-1. **Enhanced tooltip preview** showing content name + stage with visual badges
-2. **Click-to-open popup** displaying all contents for the selected day in a scrollable dialog
+## Problem Analysis
 
-## Current State
+Based on the screenshot and data review, I found several issues with the popup:
 
-- Calendar shows colored dots for each content item
-- Simple tooltip with count and client names (first 3)
-- `onDayClick` prop exists but is not connected to anything
+### Issue 1: Title Capitalization
+The date "8 De Janeiro De 2026" incorrectly capitalizes "De" - should be "8 de janeiro de 2026"
 
-## Changes Required
+**Cause**: The `capitalize` CSS class capitalizes the first letter of each word, but Portuguese date format requires lowercase prepositions.
 
-### 1. Enhanced Tooltip Preview (ContentCalendar.tsx)
+### Issue 2: Stage Badges Not Showing
+Content cards are missing stage badges because the status values from the API include emoji prefixes:
+- API returns: `"✅ Publicado"`, `"📝 Escrita"`, `"🔴 Cancelado"`
+- Code expects: `"publicado"`, `"escrita"`, `"cancelado"`
 
-Update the tooltip to show richer content information:
+**Cause**: The `getStageConfig()` function does a lowercase comparison but doesn't strip emoji prefixes.
 
-| Current | Updated |
-|---------|---------|
-| Shows only count + client names | Shows client name + stage badge for each item |
-| Plain text display | Colored badges matching stage configuration |
-| Limited to 3 items preview | Show 4-5 items with stage indicators |
+### Issue 3: Empty/Sparse Cards
+Cards appear empty because:
+- Most items have empty `format` field
+- Stage badges are not rendering (issue 2)
+- Vertical layout creates excessive whitespace
 
-**Tooltip will display:**
-- Total count header
-- Each item with: Client name + Stage badge (colored)
-- "e mais X..." for overflow
+## Solution
 
-### 2. Day Click Popup (New Component + Integration)
+### 1. Fix Title Capitalization
+Remove the `capitalize` class from the DialogTitle - the `format()` function from date-fns already produces the correct lowercase format.
 
-Create a new `DayContentDialog` component that opens when clicking on a calendar day:
+### 2. Fix Status Matching
+Update `getStageConfig()` to strip emoji prefixes and handle variations:
+```text
+"✅ Publicado" → normalize to → "publicado"
+"📝 Escrita" → normalize to → "escrita"
+```
 
-**Dialog Features:**
-- Header showing the selected date (e.g., "29 de janeiro de 2026")
-- Total content count
-- Scrollable list of all contents for that day
-- Each content shows: Client name, Stage badge, Format, Link to Notion
-- Close button
+### 3. Improve Card Layout
+Make the card layout more compact and always show useful information:
+- Horizontal layout with client name + stage badge on same row
+- Show format inline if available
+- Reduce padding for denser display
 
-### 3. State Management (Contents.tsx)
+## Files to Modify
 
-Add state to manage the popup:
-- `selectedDay: Date | null`
-- `selectedDayItems: ContentItem[]`
-- Handler for `onDayClick` callback
-
-## Files to Create/Modify
-
-| File | Action | Changes |
-|------|--------|---------|
-| `src/components/contents/DayContentDialog.tsx` | Create | New dialog component for day content list |
-| `src/components/contents/ContentCalendar.tsx` | Modify | Enhanced tooltip with stage badges |
-| `src/pages/Contents.tsx` | Modify | Add state and handler for day popup |
+| File | Changes |
+|------|---------|
+| `src/components/contents/DayContentDialog.tsx` | Remove `capitalize` class, improve card layout |
+| `src/lib/contentStages.ts` | Update `getStageConfig()` to strip emojis and special characters |
 
 ## Technical Details
 
-### DayContentDialog.tsx (New Component)
+### contentStages.ts - getStageConfig Function
 
 ```text
-Props:
-- open: boolean
-- onOpenChange: (open: boolean) => void
-- date: Date | null
-- items: ContentItem[]
+Current:
+  const normalizedStatus = status.toLowerCase().trim();
+  return CONTENT_STAGES.find(stage => stage.key === normalizedStatus);
 
-Structure:
-+------------------------------------------+
-| Dialog                                    |
-|   DialogContent                           |
-|     DialogHeader                          |
-|       DialogTitle: "29 de janeiro de 2026"|
-|       DialogDescription: "X conteúdo(s)" |
-|     ScrollArea (max-h-96)                 |
-|       For each item:                      |
-|         - Client name                     |
-|         - Stage badge (colored)           |
-|         - Format (if exists)              |
-|         - External link icon              |
-|     DialogFooter: Close button            |
-+------------------------------------------+
+Updated:
+  // Strip emojis and special characters, then normalize
+  const cleanedStatus = status
+    .replace(/[\u{1F300}-\u{1F9FF}]/gu, '') // Remove emojis
+    .replace(/[^\w\sáàâãéèêíïóôõöúçñ]/gi, '') // Keep only letters/numbers
+    .toLowerCase()
+    .trim();
+  return CONTENT_STAGES.find(stage => stage.key === cleanedStatus);
 ```
 
-### ContentCalendar.tsx Updates
+### DayContentDialog.tsx - Layout Changes
 
 ```text
-Enhanced TooltipContent:
-- Show each item with colored stage badge
-- Client name + stage label on same row
-- Better visual hierarchy
+Before:
+  <DialogTitle className="capitalize">{formattedDate}</DialogTitle>
+  ...
+  <div className="flex flex-col gap-2 p-3 ...">
+    <div className="font-medium">{client}</div>
+    <div className="flex items-center gap-2">
+      {stageBadge}
+      {format}
+      {link}
+    </div>
+  </div>
 
-Lines 174-190: Update tooltip content structure
+After:
+  <DialogTitle className="font-serif">{formattedDate}</DialogTitle>
+  ...
+  <div className="flex items-center justify-between gap-3 p-3 ...">
+    <div className="flex items-center gap-2 min-w-0">
+      <span className="font-medium truncate">{client}</span>
+      {stageBadge}
+    </div>
+    <div className="flex items-center gap-2 shrink-0">
+      {format}
+      {link}
+    </div>
+  </div>
 ```
 
-### Contents.tsx Updates
+## Visual Before/After
 
 ```text
-New state (around line 45):
-+ const [selectedDay, setSelectedDay] = useState<Date | null>(null);
-+ const [selectedDayItems, setSelectedDayItems] = useState<ContentItem[]>([]);
+BEFORE (current):
++------------------------------------+
+| Rony Meisler                       |
+|                                    |
+|                            [link]  |
++------------------------------------+
 
-Handler function:
-+ const handleDayClick = (date: Date, items: ContentItem[]) => {
-+   setSelectedDay(date);
-+   setSelectedDayItems(items);
-+ };
-
-Calendar prop (line 196):
-- <ContentCalendar items={filteredItems} />
-+ <ContentCalendar items={filteredItems} onDayClick={handleDayClick} />
-
-Add dialog component after calendar:
-+ <DayContentDialog
-+   open={selectedDay !== null}
-+   onOpenChange={(open) => !open && setSelectedDay(null)}
-+   date={selectedDay}
-+   items={selectedDayItems}
-+ />
-```
-
-## Visual Design
-
-### Enhanced Tooltip
-```text
-+--------------------------------+
-| 5 conteúdo(s)                  |
-| Rony Meisler  [Backlog]        |
-| João Silva    [Publicado]      |
-| Maria Santos  [Escrita]        |
-| e mais 2...                    |
-+--------------------------------+
-```
-
-### Day Content Dialog
-```text
-+----------------------------------------+
-| [X]                                    |
-|                                        |
-| 29 de janeiro de 2026                  |
-| 5 conteúdo(s) agendados                |
-|                                        |
-| +------------------------------------+ |
-| | Rony Meisler                       | |
-| | [Backlog]  Carrossel    [link]     | |
-| +------------------------------------+ |
-| | João Silva                         | |
-| | [Publicado]  Reels      [link]     | |
-| +------------------------------------+ |
-| | ...                                | |
-| +------------------------------------+ |
-|                                        |
-|                        [Fechar]        |
-+----------------------------------------+
+AFTER (fixed):
++------------------------------------+
+| Rony Meisler  [Publicado]   [link] |
++------------------------------------+
 ```
 
 ## Expected Result
 
-1. **Hover on calendar day**: Shows enhanced tooltip with client names and colored stage badges
-2. **Click on calendar day**: Opens dialog showing all contents for that day with full details
-3. **Dialog interaction**: Scrollable content list with links to open each content in Notion
-4. **Visual consistency**: Uses existing stage color configuration for badges
+1. Date title displays as "8 de janeiro de 2026" (proper Portuguese)
+2. Stage badges appear with correct colors (Publicado = green, Backlog = gray, etc.)
+3. Compact single-row layout with client + stage + format + link
+4. Reduced card height for better information density
+
