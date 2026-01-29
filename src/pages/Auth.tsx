@@ -46,7 +46,7 @@ export default function Auth() {
   };
 
   const handleVerifyCode = async () => {
-    if (otp.length !== 6) return;
+    if (otp.length !== 8) return;
 
     setIsLoading(true);
     const { error } = await verifyOtp(email, otp);
@@ -170,7 +170,7 @@ export default function Auth() {
               <div className="mb-8 text-center">
                 <h1 className="font-serif text-3xl font-normal text-foreground">Enter code</h1>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  We sent a 6-digit code to
+                  We sent an 8-digit code to
                 </p>
                 <p className="mt-1 text-sm font-medium text-foreground">{email}</p>
               </div>
@@ -178,24 +178,26 @@ export default function Auth() {
               {/* OTP input */}
               <div className="flex flex-col items-center space-y-6">
                 <InputOTP
-                  maxLength={6}
+                  maxLength={8}
                   value={otp}
                   onChange={(value) => setOtp(value)}
                   disabled={isLoading}
                 >
                   <InputOTPGroup>
-                    <InputOTPSlot index={0} className="h-12 w-12 rounded-xl border-border text-lg" />
-                    <InputOTPSlot index={1} className="h-12 w-12 rounded-xl border-border text-lg" />
-                    <InputOTPSlot index={2} className="h-12 w-12 rounded-xl border-border text-lg" />
-                    <InputOTPSlot index={3} className="h-12 w-12 rounded-xl border-border text-lg" />
-                    <InputOTPSlot index={4} className="h-12 w-12 rounded-xl border-border text-lg" />
-                    <InputOTPSlot index={5} className="h-12 w-12 rounded-xl border-border text-lg" />
+                    <InputOTPSlot index={0} className="h-10 w-10 rounded-xl border-border text-base" />
+                    <InputOTPSlot index={1} className="h-10 w-10 rounded-xl border-border text-base" />
+                    <InputOTPSlot index={2} className="h-10 w-10 rounded-xl border-border text-base" />
+                    <InputOTPSlot index={3} className="h-10 w-10 rounded-xl border-border text-base" />
+                    <InputOTPSlot index={4} className="h-10 w-10 rounded-xl border-border text-base" />
+                    <InputOTPSlot index={5} className="h-10 w-10 rounded-xl border-border text-base" />
+                    <InputOTPSlot index={6} className="h-10 w-10 rounded-xl border-border text-base" />
+                    <InputOTPSlot index={7} className="h-10 w-10 rounded-xl border-border text-base" />
                   </InputOTPGroup>
                 </InputOTP>
 
                 <Button
                   onClick={handleVerifyCode}
-                  disabled={isLoading || otp.length !== 6}
+                  disabled={isLoading || otp.length !== 8}
                   className="w-full gap-2 rounded-full bg-foreground py-6 text-background transition-all duration-300 hover:bg-foreground/90 hover:shadow-lg"
                 >
                   {isLoading ? (
