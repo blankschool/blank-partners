@@ -19,12 +19,12 @@ export function StageStatsPanel({ items, selectedGroup, onGroupClick }: StageSta
   }, {} as Record<string, number>);
 
   return (
-    <div className="flex flex-wrap gap-4">
+    <div className="grid grid-cols-6 gap-4">
       {/* All items stat */}
       <button
         onClick={() => onGroupClick(null)}
         className={cn(
-          "flex flex-col items-start min-w-[120px] p-5 rounded-2xl border transition-all",
+          "flex flex-col items-start w-full p-5 rounded-2xl border transition-all",
           selectedGroup === null
             ? "border-primary bg-primary/10 shadow-sm"
             : "border-border bg-card hover:border-primary/50"
@@ -43,7 +43,7 @@ export function StageStatsPanel({ items, selectedGroup, onGroupClick }: StageSta
             key={group.key}
             onClick={() => onGroupClick(isSelected ? null : group.key)}
             className={cn(
-              "flex flex-col items-start min-w-[120px] p-5 rounded-2xl border transition-all",
+              "flex flex-col items-start w-full p-5 rounded-2xl border transition-all",
               isSelected
                 ? `${group.borderColor} ${group.bgColor} shadow-sm`
                 : "border-border bg-card hover:border-primary/50"
