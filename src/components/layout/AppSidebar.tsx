@@ -14,36 +14,11 @@ import {
 } from "@/components/ui/sidebar";
 
 const navigationItems = [
-  { 
-    title: "Dashboard", 
-    url: "/", 
-    icon: LayoutDashboard,
-    description: "Overview of agency performance and key metrics."
-  },
-  { 
-    title: "Clients", 
-    url: "/clients", 
-    icon: Users,
-    description: "Manage client accounts and relationships."
-  },
-  { 
-    title: "Contents", 
-    url: "/contents", 
-    icon: FileText,
-    description: "Create and organize marketing content and assets."
-  },
-  { 
-    title: "Team", 
-    url: "/team", 
-    icon: UsersRound,
-    description: "View team members and manage assignments."
-  },
-  { 
-    title: "Healthscore", 
-    url: "/healthscore", 
-    icon: HeartPulse,
-    description: "Monitor system health and performance metrics."
-  },
+  { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Clients", url: "/clients", icon: Users },
+  { title: "Contents", url: "/contents", icon: FileText },
+  { title: "Team", url: "/team", icon: UsersRound },
+  { title: "Healthscore", url: "/healthscore", icon: HeartPulse },
 ];
 
 export function AppSidebar() {
@@ -76,18 +51,11 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       end={item.url === "/"}
-                      className="flex flex-col justify-center h-24 px-4 py-3 rounded-lg transition-all duration-300 hover:bg-white/5 [&.active]:bg-white/10"
+                      className="flex items-center gap-3 h-12 px-4 rounded-lg transition-all duration-300 hover:bg-white/10 [&.active]:bg-white/10"
                       activeClassName="bg-white/10"
                     >
-                      <div className="flex items-center gap-2">
-                        <item.icon className="h-4 w-4 shrink-0 text-white/70" />
-                        <p className="text-[15px] font-medium text-white">{item.title}</p>
-                      </div>
-                      {!isCollapsed && (
-                        <p className="text-xs text-white/70 leading-relaxed mt-1 pl-6">
-                          {item.description}
-                        </p>
-                      )}
+                      <item.icon className="h-5 w-5 shrink-0 text-white/70" />
+                      <span className="text-[15px] font-medium text-white">{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
