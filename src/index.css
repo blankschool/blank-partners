@@ -145,4 +145,16 @@
   .font-sans {
     font-family: 'Inter', ui-sans-serif, sans-serif, system-ui;
   }
+
+  .glass {
+    @apply bg-card/80 backdrop-blur-xl border border-white/10 shadow-lg;
+  }
+  
+  .glass-dark {
+    @apply bg-black/40 backdrop-blur-xl border border-white/10 shadow-lg;
+  }
+  
+  .glass-subtle {
+    @apply bg-card/60 backdrop-blur-sm border border-white/5;
+  }
 }

@@ -10,7 +10,7 @@ interface AppHeaderProps {
 
 export function AppHeader({ title = "Dashboard" }: AppHeaderProps) {
   return (
-    <header className="sticky top-0 z-50 flex h-16 items-center justify-between border-b border-border bg-background/80 px-4 backdrop-blur-sm">
+    <header className="sticky top-0 z-50 flex h-16 items-center justify-between border-b border-white/5 bg-background/60 px-4 backdrop-blur-xl">
       <div className="flex items-center gap-4">
         <SidebarTrigger className="text-muted-foreground transition-colors duration-300 hover:text-foreground" />
         <h1 className="font-serif text-xl font-normal text-foreground">{title}</h1>
