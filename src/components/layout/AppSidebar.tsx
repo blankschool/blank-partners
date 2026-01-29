@@ -1,4 +1,5 @@
-import { LayoutDashboard, Users, FileText, UsersRound, HeartPulse, LogOut, UserCog } from "lucide-react";
+import { LayoutDashboard, Users, FileText, UsersRound, HeartPulse, LogOut, UserCog, User } from "lucide-react";
+import { Link } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -92,22 +93,24 @@ export function AppSidebar() {
       <SidebarFooter className="p-5">
         {user && (
           <div className={`flex items-center gap-3 ${isCollapsed ? "justify-center" : ""}`}>
-            <Avatar className="h-9 w-9 ring-2 ring-white/20">
-              <AvatarImage src={user.user_metadata?.avatar_url} alt={userDisplayName} />
-              <AvatarFallback className="bg-white/10 text-white text-xs font-medium">
-                {userInitials}
-              </AvatarFallback>
-            </Avatar>
+            <Link to="/profile">
+              <Avatar className="h-9 w-9 ring-2 ring-white/20 transition-opacity hover:opacity-80">
+                <AvatarImage src={user.user_metadata?.avatar_url} alt={userDisplayName} />
+                <AvatarFallback className="bg-white/10 text-white text-xs font-medium">
+                  {userInitials}
+                </AvatarFallback>
+              </Avatar>
+            </Link>
             {!isCollapsed && (
               <div className="flex flex-1 items-center justify-between">
-                <div className="flex flex-col">
+                <Link to="/profile" className="flex flex-col hover:opacity-80 transition-opacity">
                   <span className="text-sm font-medium text-white truncate max-w-[120px]">
                     {userDisplayName}
                   </span>
                   <span className="text-[10px] text-white/50 truncate max-w-[120px]">
                     {user.email}
                   </span>
-                </div>
+                </Link>
                 <Button
                   variant="ghost"
                   size="icon"
