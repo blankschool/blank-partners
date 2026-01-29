@@ -1,92 +1,121 @@
 
 
-# Create My Profile Page for Logged-In User
+# Implement Notification Dropdown for Bell Button
 
 ## Overview
 
-Build a new "Profile" page at `/profile` where the logged-in user can view and edit their own profile information including photo, name, position, and team.
-
----
-
-## Features
-
-The profile page will allow users to:
-1. View their profile information (photo, name, email, position, team)
-2. Upload/change their profile photo
-3. Edit their name, position, and team
-4. View their role (read-only, admin status is shown but not editable by the user)
+Transform the notification bell button in the header into a functional dropdown that displays real notifications. The design will follow the reference image style - a clean popover with notification items that have title and description.
 
 ---
 
 ## Database Changes
 
-### Storage Bucket for Avatars
-
-Create a new storage bucket for user avatars:
+Create a `notifications` table to store real notifications:
 
 ```sql
--- Create avatars bucket
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('avatars', 'avatars', true);
-
--- RLS policy: Users can upload their own avatar
-CREATE POLICY "Users can upload own avatar"
-ON storage.objects FOR INSERT
-TO authenticated
-WITH CHECK (
-  bucket_id = 'avatars' AND
-  (storage.foldername(name))[1] = auth.uid()::text
+-- Create notifications table
+CREATE TABLE public.notifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  description TEXT,
+  type TEXT NOT NULL DEFAULT 'info',  -- info, success, warning, error
+  read BOOLEAN NOT NULL DEFAULT false,
+  link TEXT,  -- Optional link to navigate to
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- RLS policy: Users can update their own avatar
-CREATE POLICY "Users can update own avatar"
-ON storage.objects FOR UPDATE
+-- Enable RLS
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+
+-- Users can only see their own notifications
+CREATE POLICY "Users can view own notifications"
+ON public.notifications FOR SELECT
 TO authenticated
-USING (
-  bucket_id = 'avatars' AND
-  (storage.foldername(name))[1] = auth.uid()::text
-);
+USING (user_id = auth.uid());
 
--- RLS policy: Users can delete their own avatar
-CREATE POLICY "Users can delete own avatar"
-ON storage.objects FOR DELETE
+-- Users can update (mark as read) their own notifications
+CREATE POLICY "Users can update own notifications"
+ON public.notifications FOR UPDATE
 TO authenticated
-USING (
-  bucket_id = 'avatars' AND
-  (storage.foldername(name))[1] = auth.uid()::text
-);
+USING (user_id = auth.uid());
 
--- RLS policy: Anyone can view avatars (public bucket)
-CREATE POLICY "Anyone can view avatars"
-ON storage.objects FOR SELECT
-TO public
-USING (bucket_id = 'avatars');
-```
-
-### Update Profiles RLS
-
-Add a policy allowing users to update their own profile:
-
-```sql
--- Users can update their own profile
-CREATE POLICY "Users can update own profile"
-ON public.profiles FOR UPDATE
+-- Users can delete their own notifications
+CREATE POLICY "Users can delete own notifications"
+ON public.notifications FOR DELETE
 TO authenticated
-USING (user_id = auth.uid())
-WITH CHECK (user_id = auth.uid());
+USING (user_id = auth.uid());
 ```
 
 ---
 
-## New Files to Create
+## New Files
 
 | File | Purpose |
 |------|---------|
-| `src/pages/Profile.tsx` | Profile page for the logged-in user |
-| `src/hooks/useCurrentProfile.tsx` | Hook to fetch and update current user's profile |
-| `src/components/profile/ProfileHeader.tsx` | Header section with avatar and basic info |
-| `src/components/profile/ProfileForm.tsx` | Form to edit profile details |
-| `src/components/profile/AvatarUpload.tsx` | Component for uploading/changing avatar |
+| `src/components/notifications/NotificationDropdown.tsx` | Popover component with notification list |
+| `src/hooks/useNotifications.tsx` | Hook to fetch and manage notifications |
+
+---
+
+## Component Design
+
+The dropdown will follow the reference design with:
+- Clean popover with smooth animation
+- Notification items with bold title and muted description
+- Badge showing unread count (like the current "3")
+- Mark as read / mark all as read functionality
+- Empty state when no notifications
+
+```text
++----------------------------------+
+| NOTIFICATIONS            Mark all read |
++----------------------------------+
+| Content Approved               |
+| Instagram post for Acme Corp   |
+| was approved by client         |
+|                          2h ago|
++----------------------------------+
+| Deadline Approaching           |
+| Facebook campaign for Brand X  |
+| is due tomorrow                |
+|                          6h ago|
++----------------------------------+
+| New Team Member                |
+| Sarah Johnson joined the team  |
+|                          1d ago|
++----------------------------------+
+|        View all notifications        |
++----------------------------------+
+```
+
+---
+
+## Implementation Details
+
+### NotificationDropdown Component
+
+```tsx
+// Key features:
+- Uses Popover from @radix-ui
+- Styled to match project's design system (rounded-2xl, bg-card)
+- Lists notifications with icon based on type
+- Shows relative time (2h ago, 1d ago)
+- "Mark all as read" button clears badge
+- Click on notification marks it as read
+```
+
+### useNotifications Hook
+
+```tsx
+interface UseNotificationsReturn {
+  notifications: Notification[];
+  unreadCount: number;
+  isLoading: boolean;
+  markAsRead: (id: string) => void;
+  markAllAsRead: () => void;
+}
+```
 
 ---
 
@@ -94,97 +123,28 @@ WITH CHECK (user_id = auth.uid());
 
 | File | Changes |
 |------|---------|
-| `src/App.tsx` | Add `/profile` route |
-| `src/components/layout/AppHeader.tsx` | Make user avatar/name clickable to go to profile |
-| `src/components/layout/AppSidebar.tsx` | Add Profile link or make user section clickable |
+| `src/components/layout/AppHeader.tsx` | Replace static bell button with `NotificationDropdown` component |
 
 ---
 
-## Page Layout
+## Styling (Following Design System)
 
-```text
-+-------------------------------------------------------+
-| TEAM MANAGEMENT (dot + label)                         |
-| My Profile (serif title)                              |
-| Manage your personal information and preferences      |
-+-------------------------------------------------------+
-
-+-------------------------------------------------------+
-| PROFILE DETAILS                                       |
-| +---------------------------------------------------+ |
-| |  [Avatar]  Upload Photo                           | |
-| |  (click to change)                                | |
-| +---------------------------------------------------+ |
-|                                                       |
-| Full Name: [________________]                         |
-|                                                       |
-| Email: pedro@blankschool.com.br (read-only)          |
-|                                                       |
-| Position: [Dropdown________▼]                        |
-|                                                       |
-| Team: [Dropdown________▼]                            |
-|                                                       |
-| Role: [User badge] (read-only)                       |
-|                                                       |
-|                              [Cancel] [Save Changes] |
-+-------------------------------------------------------+
-```
+- Popover: `rounded-2xl bg-card border border-border shadow-lg`
+- Header: Orange accent dot + uppercase label "NOTIFICATIONS"
+- Items: Hover state with subtle background change
+- Title: `font-medium text-foreground`
+- Description: `text-sm text-muted-foreground`
+- Time: `text-xs text-muted-foreground`
+- Icons: Colored based on notification type (success, warning, etc.)
 
 ---
 
-## Implementation Details
+## Badge Count
 
-### useCurrentProfile Hook
-
-```typescript
-// Fetches the current user's profile
-// Provides mutation for updating profile
-// Provides mutation for uploading avatar
-interface UseCurrentProfileReturn {
-  profile: Profile | null;
-  positions: Position[];
-  isLoading: boolean;
-  error: Error | null;
-  updateProfile: (data: UpdateOwnProfileData) => void;
-  uploadAvatar: (file: File) => Promise<string>;
-  isUpdating: boolean;
-}
-```
-
-### Avatar Upload Flow
-
-1. User clicks on avatar or "Upload Photo" button
-2. File picker opens (accept images only, max 2MB)
-3. Image is uploaded to `avatars/{user_id}/avatar.{ext}`
-4. Profile is updated with new `avatar_url`
-5. Avatar displays in real-time
-
-### Form Validation
-
-- Full name: Required, max 100 characters
-- Position: Optional, select from positions table
-- Team: Optional, select from predefined teams
-- Email and role: Displayed but not editable
-
----
-
-## Navigation Access Points
-
-Users can access their profile from:
-1. **Header**: Click on avatar/name in top-right corner
-2. **Sidebar**: Click on avatar/name in footer
-3. **Direct URL**: `/profile`
-
----
-
-## Design Patterns
-
-Following the established template:
-- Orange accent dot + uppercase label for sections
-- Serif font for titles
-- `rounded-2xl` cards with `bg-card border border-border shadow-sm`
-- Icon containers with `bg-secondary rounded-2xl`
-- Consistent spacing and typography
+The badge will show the actual unread count from the database instead of the hardcoded "3":
+- Fetches unread count in real-time
+- Updates when notifications are marked as read
+- Hides when count is 0
 
 ---
 
@@ -192,9 +152,8 @@ Following the established template:
 
 | Component | Count |
 |-----------|-------|
-| Database migrations | 1 (storage bucket + RLS policies) |
-| New pages | 1 (Profile.tsx) |
-| New components | 3 (ProfileHeader, ProfileForm, AvatarUpload) |
-| New hooks | 1 (useCurrentProfile) |
-| Modified files | 3 (App.tsx, AppHeader.tsx, AppSidebar.tsx) |
+| Database migrations | 1 (notifications table + RLS) |
+| New components | 1 (NotificationDropdown) |
+| New hooks | 1 (useNotifications) |
+| Modified files | 1 (AppHeader.tsx) |
 
