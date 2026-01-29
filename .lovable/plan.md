@@ -1,89 +1,155 @@
 
-# Replace Mock Clients with Real Database Data
+# Admin Page Implementation
 
-## Problem
+## Overview
 
-The Clients page (`/clients`) currently displays hardcoded mock data (5 fake clients like "Acme Corporation"). The real clients from the CSV (54 total) are already stored in the `clients` table but aren't being displayed.
+Create a centralized Admin page at `/admin` that allows administrators to manage three core resources: Clients, Team Members, and Users. The page will use tabs for easy navigation between sections and will only be accessible to users with admin role.
 
-## Database Summary
+## Current Architecture
 
-The database contains:
-- **54 clients** in the `clients` table
-- **124 client-team member assignments** in `team_member_clients`
-- Each client has between 1-4 team members assigned
+The project already has:
+- Role-based access via `useCurrentUserRole()` hook and `is_admin()` RLS function
+- Existing hooks: `useUsers()`, `useTeamMembers()`, `useClients()` with CRUD operations
+- Tables: `clients`, `team_members`, `profiles`, `user_roles`
+- RLS policies protecting all admin operations
 
-## Solution
+## Implementation Plan
 
-1. Create a dedicated `useClients` hook to fetch clients from Supabase
-2. Include the count of team members assigned to each client
-3. Update the Clients page to use real data instead of mock data
-4. Simplify the UI since the current schema doesn't include email, phone, status, or platforms
+### Phase 1: Admin Route Protection
 
-## Implementation
+**File: `src/components/AdminRoute.tsx`**
 
-### Phase 1: Create useClients Hook
+Create a wrapper component that:
+- Extends ProtectedRoute functionality
+- Checks if the logged-in user is an admin using `useCurrentUserRole()`
+- Redirects non-admin users to the dashboard with a toast notification
+
+### Phase 2: Admin Page with Tabs
+
+**File: `src/pages/Admin.tsx`**
+
+Create the main admin page with:
+- Header with admin icon and title "Administração"
+- Tab navigation with three sections: Clientes, Equipe, Usuários
+- Each tab contains management functionality
+
+### Phase 3: Client Management Tab
+
+**File: `src/components/admin/ClientsTab.tsx`**
+
+Features:
+- List all 54 clients with search/filter
+- Add new client dialog (name field)
+- Edit client name
+- Delete client (with confirmation)
+- Display member count per client
+
+### Phase 4: Team Management Tab
+
+**File: `src/components/admin/TeamTab.tsx`**
+
+Features:
+- List all 39 team members with filters (area, seniority)
+- Add new team member dialog (full form)
+- Edit team member (all fields including clients)
+- Delete team member (with confirmation)
+- Assign/unassign clients
+
+### Phase 5: Users Management Tab
+
+**File: `src/components/admin/UsersTab.tsx`**
+
+Features:
+- List all profiles with search
+- Edit user (name, position, team)
+- Toggle admin role
+- Delete user profile
+
+### Phase 6: Support Components
+
+Create dialogs for CRUD operations:
+
+| Component | Purpose |
+|-----------|---------|
+| `AddClientDialog.tsx` | Form to create new client |
+| `EditClientDialog.tsx` | Form to edit client name |
+| `AddTeamMemberDialog.tsx` | Full form for new team member |
+| `EditTeamMemberDialog.tsx` | Edit existing team member |
+| `DeleteConfirmDialog.tsx` | Reusable confirmation dialog |
+
+### Phase 7: Update Hooks for Admin Operations
 
 **File: `src/hooks/useClients.tsx`**
 
-```typescript
-interface ClientWithStats {
-  id: string;
-  name: string;
-  created_at: string;
-  member_count: number;
-  members: { id: string; full_name: string }[];
-}
+Add mutations:
+- `createClient(name)` - insert into clients table
+- `updateClient(id, name)` - update client name
+- `deleteClient(id)` - remove client (cascade removes assignments)
 
-// Hook will:
-// 1. Fetch all clients from the clients table
-// 2. Fetch team_member_clients with team member names
-// 3. Merge to get member count and names per client
-```
+### Phase 8: Navigation & Routing
 
-### Phase 2: Update Clients Page
+**File: `src/App.tsx`**
+- Add new route: `/admin` with AdminRoute wrapper
 
-**File: `src/pages/Clients.tsx`**
+**File: `src/components/layout/AppSidebar.tsx`**
+- Add conditional "Admin" menu item (only visible to admins)
+- Use Shield icon from lucide-react
 
-Changes:
-- Remove hardcoded `clientsData` array
-- Import and use the new `useClients` hook
-- Add loading and error states
-- Display real clients with:
-  - Client name
-  - Avatar initials generated from name
-  - Number of team members assigned
-  - List of team member names
-- Remove status/email/phone/platforms (not in schema)
-- Translate UI to Portuguese for consistency
+## File Structure
 
-## UI Changes
-
-| Current (Mock) | New (Real) |
-|----------------|------------|
-| 5 fake clients | 54 real clients from CSV |
-| Email, phone shown | Team members shown |
-| Status badges | Member count |
-| Platforms list | Team member names |
-| English labels | Portuguese labels |
-
-## Files to Create/Modify
-
-| File | Action |
-|------|--------|
-| `src/hooks/useClients.tsx` | Create - new hook for fetching clients |
-| `src/pages/Clients.tsx` | Modify - use real data, update UI |
-
-## Data Display
-
-For each client:
 ```text
-+------------------------------------------+
-| [AV]  Client Name          3 membros     |
-|       João, Maria, Pedro                 |
-|                           [...]          |
-+------------------------------------------+
+src/
+├── components/
+│   ├── AdminRoute.tsx (new)
+│   └── admin/
+│       ├── ClientsTab.tsx (new)
+│       ├── TeamTab.tsx (new)
+│       ├── UsersTab.tsx (new)
+│       ├── AddClientDialog.tsx (new)
+│       ├── EditClientDialog.tsx (new)
+│       ├── AddTeamMemberDialog.tsx (new)
+│       ├── EditTeamMemberDialog.tsx (new)
+│       └── DeleteConfirmDialog.tsx (new)
+├── pages/
+│   └── Admin.tsx (new)
+└── hooks/
+    └── useClients.tsx (modify - add mutations)
 ```
 
-Stats cards will show:
-- Total de Clientes: 54
-- (Since we don't have status, other stat cards can show member distribution)
+## UI Layout
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│  ● Administração                                            │
+│  Gerenciar clientes, equipe e usuários                     │
+├─────────────────────────────────────────────────────────────┤
+│  [ Clientes ]  [ Equipe ]  [ Usuários ]     + Adicionar     │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │ Search bar...                                          │ │
+│  └────────────────────────────────────────────────────────┘ │
+│                                                             │
+│  ┌─────────────────────┐ ┌─────────────────────┐           │
+│  │ Item 1          ... │ │ Item 2          ... │           │
+│  │ Details             │ │ Details             │           │
+│  └─────────────────────┘ └─────────────────────┘           │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Security Considerations
+
+- AdminRoute checks `is_admin()` before rendering
+- All mutations are protected by RLS policies requiring admin role
+- Non-admins cannot see the Admin link in the sidebar
+- Attempting to access `/admin` directly redirects to dashboard
+
+## Technical Notes
+
+1. Reuse existing `EditUserDialog` component for user management
+2. Create new dialogs following the same pattern for clients/team
+3. Use existing `useTeamMembers()` mutations for team CRUD
+4. Add client mutations to `useClients()` hook
+5. Use shadcn Tabs component for section navigation
+6. Follow existing Portuguese translations for UI text
