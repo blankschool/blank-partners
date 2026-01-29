@@ -1,163 +1,117 @@
 
-
-# Remove Orange Accent - Convert to Black/White
+# Sign-In Page Implementation Plan
 
 ## Overview
-Replace all orange accent colors with neutral black/white values that adapt appropriately to light and dark modes, creating a more monochromatic, elegant aesthetic.
+Create a dedicated sign-in page (`/auth`) that follows the existing monochromatic, glassmorphism design aesthetic. The page will feature SSO-only authentication (no email/password signup option) using Supabase Auth.
 
 ---
 
-## Current Orange Usage
+## Design Specifications
 
-| Location | Current Use | New Color Strategy |
-|----------|-------------|-------------------|
-| `--accent-orange` | Buttons, badges, highlights | **Light mode:** Black / **Dark mode:** White |
-| `--chart-1` to `--chart-5` | Chart data colors | Grayscale gradient (different opacity levels) |
-| `--sidebar-ring` | Focus ring in sidebar | Neutral gray |
-| `--sidebar-primary` (dark) | Active sidebar items | White |
-| Gradient background | `from-accent-orange/5` | Neutral gradient |
+### Visual Elements
+- Full-page centered layout with gradient background
+- Glassmorphism card container with backdrop blur and semi-transparent background
+- "B" logo icon with gradient matching the sidebar branding
+- Serif typography for headings (DM Serif Display)
+- Sans-serif typography for body text (Inter)
+- Pill-shaped buttons with subtle hover animations
+- Large border radius (rounded-2xl) consistent with existing components
 
----
-
-## Changes to index.css
-
-### 1. Replace `--accent-orange` Variables
-
-**Light mode (`:root`):**
-```css
-/* Before */
---accent-orange: oklch(0.6500 0.2000 30);
---accent-orange-foreground: oklch(1.0000 0 0);
-
-/* After - Black accent */
---accent-orange: oklch(0.1500 0 0);          /* Near black */
---accent-orange-foreground: oklch(1.0000 0 0); /* White text */
-```
-
-**Dark mode (`.dark`):**
-```css
-/* Before */
---accent-orange: oklch(0.7000 0.2000 30);
---accent-orange-foreground: oklch(1.0000 0 0);
-
-/* After - White accent */
---accent-orange: oklch(0.9500 0 0);          /* Near white */
---accent-orange-foreground: oklch(0.0500 0 0); /* Black text */
-```
-
-### 2. Replace Chart Colors with Grayscale
-
-**Light mode:**
-```css
-/* Before - Orange-tinted */
---chart-1: oklch(0.6500 0.2000 30);
---chart-2: oklch(0.5500 0.1800 35);
---chart-3: oklch(0.7000 0.1600 25);
---chart-4: oklch(0.4500 0.1500 40);
---chart-5: oklch(0.8000 0.1200 20);
-
-/* After - Grayscale */
---chart-1: oklch(0.2000 0 0);  /* Darkest */
---chart-2: oklch(0.3500 0 0);
---chart-3: oklch(0.5000 0 0);
---chart-4: oklch(0.6500 0 0);
---chart-5: oklch(0.8000 0 0);  /* Lightest */
-```
-
-**Dark mode:**
-```css
-/* After - Grayscale (inverted for visibility) */
---chart-1: oklch(0.9500 0 0);  /* Lightest */
---chart-2: oklch(0.8000 0 0);
---chart-3: oklch(0.6500 0 0);
---chart-4: oklch(0.5000 0 0);
---chart-5: oklch(0.3500 0 0);  /* Darkest */
-```
-
-### 3. Update Sidebar Ring Colors
-
-**Light mode:**
-```css
---sidebar-ring: oklch(0.3000 0 0);  /* Dark gray */
-```
-
-**Dark mode:**
-```css
---sidebar-ring: oklch(0.7000 0 0);  /* Light gray */
---sidebar-primary: oklch(0.9500 0 0);  /* White (already correct) */
-```
+### Color Palette
+- Monochromatic black/white scheme
+- Uses existing CSS variables (--foreground, --background, --card, etc.)
+- Subtle accent dot indicator matching Dashboard style
 
 ---
 
-## Summary of Variable Changes
+## Implementation Steps
 
-### Light Mode (`:root`)
-| Variable | Before (Orange) | After (Black/Gray) |
-|----------|-----------------|-------------------|
-| `--accent-orange` | `oklch(0.6500 0.2000 30)` | `oklch(0.1500 0 0)` |
-| `--accent-orange-foreground` | `oklch(1.0000 0 0)` | `oklch(1.0000 0 0)` |
-| `--chart-1` | `oklch(0.6500 0.2000 30)` | `oklch(0.2000 0 0)` |
-| `--chart-2` | `oklch(0.5500 0.1800 35)` | `oklch(0.3500 0 0)` |
-| `--chart-3` | `oklch(0.7000 0.1600 25)` | `oklch(0.5000 0 0)` |
-| `--chart-4` | `oklch(0.4500 0.1500 40)` | `oklch(0.6500 0 0)` |
-| `--chart-5` | `oklch(0.8000 0.1200 20)` | `oklch(0.8000 0 0)` |
-| `--sidebar-ring` | `oklch(0.6500 0.2000 30)` | `oklch(0.3000 0 0)` |
+### 1. Create Auth Page Component
+**File:** `src/pages/Auth.tsx`
 
-### Dark Mode (`.dark`)
-| Variable | Before (Orange) | After (White/Gray) |
-|----------|-----------------|-------------------|
-| `--accent-orange` | `oklch(0.7000 0.2000 30)` | `oklch(0.9500 0 0)` |
-| `--accent-orange-foreground` | `oklch(1.0000 0 0)` | `oklch(0.0500 0 0)` |
-| `--chart-1` | `oklch(0.7000 0.2000 30)` | `oklch(0.9500 0 0)` |
-| `--chart-2` | `oklch(0.6000 0.1800 35)` | `oklch(0.8000 0 0)` |
-| `--chart-3` | `oklch(0.7500 0.1600 25)` | `oklch(0.6500 0 0)` |
-| `--chart-4` | `oklch(0.5000 0.1500 40)` | `oklch(0.5000 0 0)` |
-| `--chart-5` | `oklch(0.8500 0.1200 20)` | `oklch(0.3500 0 0)` |
-| `--sidebar-ring` | `oklch(0.6500 0.2000 30)` | `oklch(0.7000 0 0)` |
-| `--sidebar-primary` | `oklch(0.6500 0.2000 30)` | `oklch(0.9500 0 0)` |
+- Full-height centered layout with gradient background
+- Glassmorphism sign-in card containing:
+  - Brand logo ("B" with gradient) and app name "Blank"
+  - "Agency ERP" subtitle
+  - Welcome heading with serif font
+  - Brief description text
+  - SSO sign-in button (Google initially, extensible for others)
+  - Footer with support/help text
+- Loading state handling during authentication
+- Error handling with toast notifications
+- Redirect to Dashboard on successful authentication
+
+### 2. Create Auth Context/Hook
+**File:** `src/hooks/useAuth.tsx`
+
+- Authentication state management using Supabase
+- Session persistence with proper initialization order
+- Methods: `signInWithGoogle()`, `signOut()`
+- Proper `onAuthStateChange` listener setup
+- Automatic redirect handling for authenticated users
+
+### 3. Update App Router
+**File:** `src/App.tsx`
+
+- Add `/auth` route for the sign-in page
+- Implement protected route wrapper for authenticated pages
+- Redirect unauthenticated users to `/auth`
+- Redirect authenticated users away from `/auth` to Dashboard
+
+### 4. Add Sign-Out Functionality
+**File:** `src/components/layout/AppSidebar.tsx`
+
+- Add user avatar/info in footer when logged in
+- Add sign-out button with proper styling
 
 ---
 
-## Component Updates Required
+## Technical Details
 
-After updating index.css, the following components will automatically inherit the new colors:
-
-1. **AppHeader.tsx** - Notification badge (currently `bg-accent-orange`)
-2. **StatCard.tsx** - Trend indicator dot and hover icon background
-3. **Button.tsx** - The `accent` variant
-4. **Badge.tsx** - The `accent` variant
-5. **AppSidebar.tsx** - Logo gradient (needs manual update from `from-accent-orange to-chart-3` to neutral)
-6. **AppLayout.tsx** - Background gradient (needs manual update)
-
----
-
-## Additional File Updates
-
-### AppSidebar.tsx (line 32)
-```tsx
-/* Before */
-className="... bg-gradient-to-br from-accent-orange to-chart-3"
-
-/* After - Neutral gradient */
-className="... bg-gradient-to-br from-foreground to-muted-foreground"
+### SSO Implementation
+```text
++------------------+     +------------------+     +------------------+
+|   Auth Page      | --> |  Supabase Auth   | --> |    Dashboard     |
+|   (SSO Button)   |     |  (Google OAuth)  |     |  (Protected)     |
++------------------+     +------------------+     +------------------+
 ```
 
-### AppLayout.tsx (line 19)
-```tsx
-/* Before */
-className="... bg-gradient-to-br from-accent-orange/5 via-transparent to-chart-3/5 ..."
+### Authentication Flow
+1. User visits any protected route
+2. If not authenticated, redirect to `/auth`
+3. User clicks "Sign in with Google" button
+4. Supabase handles OAuth flow with Google
+5. On success, user is redirected to Dashboard
+6. Session is persisted in localStorage
 
-/* After - Neutral gradient */
-className="... bg-gradient-to-br from-foreground/5 via-transparent to-muted-foreground/5 ..."
-```
+### Key Security Considerations
+- Proper `emailRedirectTo` configuration for OAuth callbacks
+- Session state managed via `onAuthStateChange` listener
+- No sensitive data logged to console
+- Protected routes check authentication before rendering
 
 ---
 
-## Result
+## Files to Create/Modify
 
-The app will have a clean, monochromatic aesthetic:
-- **Light mode:** Black accents on white/light backgrounds
-- **Dark mode:** White accents on dark backgrounds
-- **Charts:** Grayscale palette with good contrast
-- All existing components using `accent-orange` will automatically update
+| File | Action | Purpose |
+|------|--------|---------|
+| `src/pages/Auth.tsx` | Create | Sign-in page component |
+| `src/hooks/useAuth.tsx` | Create | Authentication hook/context |
+| `src/components/ProtectedRoute.tsx` | Create | Route guard component |
+| `src/App.tsx` | Modify | Add auth route and protected routes |
+| `src/components/layout/AppSidebar.tsx` | Modify | Add sign-out button |
 
+---
+
+## Post-Implementation Notes
+
+After implementation, you will need to configure Google OAuth in your Supabase dashboard:
+1. Go to Authentication > Providers > Google
+2. Enable Google provider
+3. Add your Google OAuth credentials (Client ID and Secret)
+4. Ensure the redirect URL matches your Supabase callback URL
+
+You may also want to:
+- Disable "Confirm email" in Supabase settings for faster testing
+- Add the preview URL to allowed redirect URLs in Supabase
