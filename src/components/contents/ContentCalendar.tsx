@@ -172,17 +172,31 @@ export function ContentCalendar({ items, onDayClick }: ContentCalendarProps) {
                     </button>
                   </TooltipTrigger>
                   {dayItems.length > 0 && (
-                    <TooltipContent side="bottom" className="max-w-[200px]">
-                      <div className="space-y-1">
-                        <p className="font-medium">{dayItems.length} conteúdo(s)</p>
-                        {dayItems.slice(0, 3).map((item, idx) => (
-                          <p key={idx} className="text-xs text-muted-foreground truncate">
-                            {item.client || 'Sem título'}
-                          </p>
-                        ))}
-                        {dayItems.length > 3 && (
+                    <TooltipContent side="bottom" className="max-w-[250px]">
+                      <div className="space-y-2">
+                        <p className="font-medium text-sm">{dayItems.length} conteúdo{dayItems.length !== 1 ? 's' : ''}</p>
+                        {dayItems.slice(0, 4).map((item, idx) => {
+                          const stageConfig = getStageConfig(item.status);
+                          return (
+                            <div key={idx} className="flex items-center justify-between gap-2">
+                              <span className="text-xs truncate max-w-[120px]">
+                                {item.client || 'Sem cliente'}
+                              </span>
+                              {stageConfig && (
+                                <span className={cn(
+                                  "text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0",
+                                  stageConfig.bgColor,
+                                  stageConfig.color
+                                )}>
+                                  {stageConfig.label}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                        {dayItems.length > 4 && (
                           <p className="text-xs text-muted-foreground">
-                            e mais {dayItems.length - 3}...
+                            e mais {dayItems.length - 4}...
                           </p>
                         )}
                       </div>
