@@ -1,132 +1,200 @@
 
-# Fix Users Page Design - Match Dashboard Template
 
-## Problems Identified
+# Create My Profile Page for Logged-In User
 
-Comparing the Users page with the Dashboard template, several design elements don't match the project's design system:
+## Overview
 
-| Element | Current (Users Page) | Expected (Template) |
-|---------|---------------------|---------------------|
-| Page Title | `text-3xl font-semibold` | `font-serif text-3xl font-normal` with accent dot + label above |
-| Section Labels | Missing | Orange dot + `text-[10px] uppercase tracking-widest` |
-| Empty State Card | `border-border/50 bg-card/50` | `rounded-2xl bg-card border border-border shadow-sm` |
-| Empty State Title | `text-lg font-medium` | `font-serif text-2xl font-normal` |
-| Icon Container | Plain icon | Icon in `rounded-2xl bg-secondary` container |
+Build a new "Profile" page at `/profile` where the logged-in user can view and edit their own profile information including photo, name, position, and team.
 
 ---
 
-## Solution
+## Features
 
-Update the Users page to follow the Dashboard's design patterns:
-
-1. Add accent dot + uppercase label pattern for page header
-2. Add section labels before stats and users grid
-3. Update empty state styling to match card template
-4. Use serif font for titles
+The profile page will allow users to:
+1. View their profile information (photo, name, email, position, team)
+2. Upload/change their profile photo
+3. Edit their name, position, and team
+4. View their role (read-only, admin status is shown but not editable by the user)
 
 ---
 
-## Changes Required
+## Database Changes
 
-### File: `src/pages/Users.tsx`
+### Storage Bucket for Avatars
 
-**Header Section (Lines 78-84)**
+Create a new storage bucket for user avatars:
 
-Current:
-```tsx
-<h1 className="text-3xl font-semibold text-foreground">Users</h1>
-<p className="text-muted-foreground mt-1">
-  Manage team members and their roles
-</p>
+```sql
+-- Create avatars bucket
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('avatars', 'avatars', true);
+
+-- RLS policy: Users can upload their own avatar
+CREATE POLICY "Users can upload own avatar"
+ON storage.objects FOR INSERT
+TO authenticated
+WITH CHECK (
+  bucket_id = 'avatars' AND
+  (storage.foldername(name))[1] = auth.uid()::text
+);
+
+-- RLS policy: Users can update their own avatar
+CREATE POLICY "Users can update own avatar"
+ON storage.objects FOR UPDATE
+TO authenticated
+USING (
+  bucket_id = 'avatars' AND
+  (storage.foldername(name))[1] = auth.uid()::text
+);
+
+-- RLS policy: Users can delete their own avatar
+CREATE POLICY "Users can delete own avatar"
+ON storage.objects FOR DELETE
+TO authenticated
+USING (
+  bucket_id = 'avatars' AND
+  (storage.foldername(name))[1] = auth.uid()::text
+);
+
+-- RLS policy: Anyone can view avatars (public bucket)
+CREATE POLICY "Anyone can view avatars"
+ON storage.objects FOR SELECT
+TO public
+USING (bucket_id = 'avatars');
 ```
 
-Updated:
-```tsx
-<div className="flex items-center gap-2 mb-3">
-  <span className="flex h-2 w-2 rounded-full bg-accent-orange" />
-  <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Team Management</span>
-</div>
-<h1 className="font-serif text-3xl font-normal text-foreground">Users</h1>
-<p className="mt-2 text-sm text-muted-foreground">
-  Manage team members and their roles
-</p>
-```
+### Update Profiles RLS
 
-**Stats Section (Lines 97-119)**
+Add a policy allowing users to update their own profile:
 
-Add section label before stats:
-```tsx
-{/* Stats */}
-<div>
-  <div className="flex items-center gap-2 mb-4">
-    <span className="flex h-2 w-2 rounded-full bg-accent-orange" />
-    <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Overview</span>
-  </div>
-  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-    ...StatCards
-  </div>
-</div>
-```
-
-**Empty State Card (Lines 122-131)**
-
-Current:
-```tsx
-<Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-  <CardContent className="flex flex-col items-center justify-center py-16">
-    <UsersIcon className="h-12 w-12 text-muted-foreground/50" />
-    <p className="mt-4 text-lg font-medium text-foreground">No users found</p>
-    <p className="text-sm text-muted-foreground">...</p>
-  </CardContent>
-</Card>
-```
-
-Updated:
-```tsx
-<Card className="rounded-2xl bg-card border border-border shadow-sm">
-  <CardContent className="flex flex-col items-center justify-center py-16">
-    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary">
-      <UsersIcon className="h-8 w-8 text-muted-foreground" />
-    </div>
-    <p className="mt-6 font-serif text-2xl font-normal text-foreground">No users found</p>
-    <p className="mt-2 text-sm text-muted-foreground">...</p>
-  </CardContent>
-</Card>
-```
-
-**Users Grid Section (Lines 132-144)**
-
-Add section label before users grid:
-```tsx
-<div>
-  <div className="flex items-center gap-2 mb-4">
-    <span className="flex h-2 w-2 rounded-full bg-accent-orange" />
-    <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Team Members</span>
-  </div>
-  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-    ...UserCards
-  </div>
-</div>
+```sql
+-- Users can update their own profile
+CREATE POLICY "Users can update own profile"
+ON public.profiles FOR UPDATE
+TO authenticated
+USING (user_id = auth.uid())
+WITH CHECK (user_id = auth.uid());
 ```
 
 ---
 
-## Visual Result
+## New Files to Create
 
-After this change, the Users page will have:
-- Orange accent dot with uppercase "TEAM MANAGEMENT" label above page title
-- Serif font for the "Users" heading
-- "OVERVIEW" section label before stats cards
-- "TEAM MEMBERS" section label before users grid
-- Properly styled empty state with:
-  - Icon in a rounded secondary background container
-  - Serif font for the title
-  - Consistent spacing and shadows
+| File | Purpose |
+|------|---------|
+| `src/pages/Profile.tsx` | Profile page for the logged-in user |
+| `src/hooks/useCurrentProfile.tsx` | Hook to fetch and update current user's profile |
+| `src/components/profile/ProfileHeader.tsx` | Header section with avatar and basic info |
+| `src/components/profile/ProfileForm.tsx` | Form to edit profile details |
+| `src/components/profile/AvatarUpload.tsx` | Component for uploading/changing avatar |
 
 ---
 
 ## Files to Modify
 
-| File | Change |
-|------|--------|
-| `src/pages/Users.tsx` | Update header, add section labels, fix empty state styling |
+| File | Changes |
+|------|---------|
+| `src/App.tsx` | Add `/profile` route |
+| `src/components/layout/AppHeader.tsx` | Make user avatar/name clickable to go to profile |
+| `src/components/layout/AppSidebar.tsx` | Add Profile link or make user section clickable |
+
+---
+
+## Page Layout
+
+```text
++-------------------------------------------------------+
+| TEAM MANAGEMENT (dot + label)                         |
+| My Profile (serif title)                              |
+| Manage your personal information and preferences      |
++-------------------------------------------------------+
+
++-------------------------------------------------------+
+| PROFILE DETAILS                                       |
+| +---------------------------------------------------+ |
+| |  [Avatar]  Upload Photo                           | |
+| |  (click to change)                                | |
+| +---------------------------------------------------+ |
+|                                                       |
+| Full Name: [________________]                         |
+|                                                       |
+| Email: pedro@blankschool.com.br (read-only)          |
+|                                                       |
+| Position: [Dropdown________▼]                        |
+|                                                       |
+| Team: [Dropdown________▼]                            |
+|                                                       |
+| Role: [User badge] (read-only)                       |
+|                                                       |
+|                              [Cancel] [Save Changes] |
++-------------------------------------------------------+
+```
+
+---
+
+## Implementation Details
+
+### useCurrentProfile Hook
+
+```typescript
+// Fetches the current user's profile
+// Provides mutation for updating profile
+// Provides mutation for uploading avatar
+interface UseCurrentProfileReturn {
+  profile: Profile | null;
+  positions: Position[];
+  isLoading: boolean;
+  error: Error | null;
+  updateProfile: (data: UpdateOwnProfileData) => void;
+  uploadAvatar: (file: File) => Promise<string>;
+  isUpdating: boolean;
+}
+```
+
+### Avatar Upload Flow
+
+1. User clicks on avatar or "Upload Photo" button
+2. File picker opens (accept images only, max 2MB)
+3. Image is uploaded to `avatars/{user_id}/avatar.{ext}`
+4. Profile is updated with new `avatar_url`
+5. Avatar displays in real-time
+
+### Form Validation
+
+- Full name: Required, max 100 characters
+- Position: Optional, select from positions table
+- Team: Optional, select from predefined teams
+- Email and role: Displayed but not editable
+
+---
+
+## Navigation Access Points
+
+Users can access their profile from:
+1. **Header**: Click on avatar/name in top-right corner
+2. **Sidebar**: Click on avatar/name in footer
+3. **Direct URL**: `/profile`
+
+---
+
+## Design Patterns
+
+Following the established template:
+- Orange accent dot + uppercase label for sections
+- Serif font for titles
+- `rounded-2xl` cards with `bg-card border border-border shadow-sm`
+- Icon containers with `bg-secondary rounded-2xl`
+- Consistent spacing and typography
+
+---
+
+## Summary
+
+| Component | Count |
+|-----------|-------|
+| Database migrations | 1 (storage bucket + RLS policies) |
+| New pages | 1 (Profile.tsx) |
+| New components | 3 (ProfileHeader, ProfileForm, AvatarUpload) |
+| New hooks | 1 (useCurrentProfile) |
+| Modified files | 3 (App.tsx, AppHeader.tsx, AppSidebar.tsx) |
+
