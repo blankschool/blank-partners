@@ -3,20 +3,26 @@
 
 ## Problems Identified
 
-Looking at the screenshot and comparing with the Dashboard, the Users page stats cards have several design inconsistencies:
+Comparing the Users page with the Dashboard template, several design elements don't match the project's design system:
 
-| Issue | Current (Users Page) | Expected (StatCard Template) |
-|-------|---------------------|------------------------------|
-| Icon Container | Colored backgrounds (`bg-primary/10`, `bg-success/10`) | Neutral `bg-secondary` with hover animation |
-| Number Size | `text-2xl font-semibold` | `font-serif text-5xl font-normal tracking-tight` |
-| Label Style | `text-sm` below number | `text-[10px] uppercase tracking-widest` above number |
-| Layout | Icon on left, content on right | Content on left, icon on right |
+| Element | Current (Users Page) | Expected (Template) |
+|---------|---------------------|---------------------|
+| Page Title | `text-3xl font-semibold` | `font-serif text-3xl font-normal` with accent dot + label above |
+| Section Labels | Missing | Orange dot + `text-[10px] uppercase tracking-widest` |
+| Empty State Card | `border-border/50 bg-card/50` | `rounded-2xl bg-card border border-border shadow-sm` |
+| Empty State Title | `text-lg font-medium` | `font-serif text-2xl font-normal` |
+| Icon Container | Plain icon | Icon in `rounded-2xl bg-secondary` container |
 
 ---
 
 ## Solution
 
-Refactor the Users page to use the existing `StatCard` component from the Dashboard, ensuring visual consistency across the application.
+Update the Users page to follow the Dashboard's design patterns:
+
+1. Add accent dot + uppercase label pattern for page header
+2. Add section labels before stats and users grid
+3. Update empty state styling to match card template
+4. Use serif font for titles
 
 ---
 
@@ -24,62 +30,98 @@ Refactor the Users page to use the existing `StatCard` component from the Dashbo
 
 ### File: `src/pages/Users.tsx`
 
-**Current Implementation (Lines 96-153):**
+**Header Section (Lines 78-84)**
+
+Current:
 ```tsx
-<div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-  <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-    <CardContent className="p-6">
-      <div className="flex items-center gap-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-          <UsersIcon className="h-6 w-6 text-primary" />
-        </div>
-        <div>
-          <p className="text-2xl font-semibold text-foreground">{stats.totalUsers}</p>
-          <p className="text-sm text-muted-foreground">Total Users</p>
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-  ...
+<h1 className="text-3xl font-semibold text-foreground">Users</h1>
+<p className="text-muted-foreground mt-1">
+  Manage team members and their roles
+</p>
+```
+
+Updated:
+```tsx
+<div className="flex items-center gap-2 mb-3">
+  <span className="flex h-2 w-2 rounded-full bg-accent-orange" />
+  <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Team Management</span>
+</div>
+<h1 className="font-serif text-3xl font-normal text-foreground">Users</h1>
+<p className="mt-2 text-sm text-muted-foreground">
+  Manage team members and their roles
+</p>
+```
+
+**Stats Section (Lines 97-119)**
+
+Add section label before stats:
+```tsx
+{/* Stats */}
+<div>
+  <div className="flex items-center gap-2 mb-4">
+    <span className="flex h-2 w-2 rounded-full bg-accent-orange" />
+    <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Overview</span>
+  </div>
+  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    ...StatCards
+  </div>
 </div>
 ```
 
-**Updated Implementation:**
-```tsx
-import { StatCard } from "@/components/dashboard/StatCard";
+**Empty State Card (Lines 122-131)**
 
-<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-  <StatCard
-    title="Total Users"
-    value={stats.totalUsers}
-    icon={UsersIcon}
-  />
-  <StatCard
-    title="Admins"
-    value={stats.admins}
-    icon={Shield}
-  />
-  <StatCard
-    title="Teams"
-    value={stats.teamsCount}
-    icon={Building2}
-  />
-  <StatCard
-    title="New (30 days)"
-    value={stats.recentUsers}
-    icon={UserPlus}
-  />
+Current:
+```tsx
+<Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+  <CardContent className="flex flex-col items-center justify-center py-16">
+    <UsersIcon className="h-12 w-12 text-muted-foreground/50" />
+    <p className="mt-4 text-lg font-medium text-foreground">No users found</p>
+    <p className="text-sm text-muted-foreground">...</p>
+  </CardContent>
+</Card>
+```
+
+Updated:
+```tsx
+<Card className="rounded-2xl bg-card border border-border shadow-sm">
+  <CardContent className="flex flex-col items-center justify-center py-16">
+    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary">
+      <UsersIcon className="h-8 w-8 text-muted-foreground" />
+    </div>
+    <p className="mt-6 font-serif text-2xl font-normal text-foreground">No users found</p>
+    <p className="mt-2 text-sm text-muted-foreground">...</p>
+  </CardContent>
+</Card>
+```
+
+**Users Grid Section (Lines 132-144)**
+
+Add section label before users grid:
+```tsx
+<div>
+  <div className="flex items-center gap-2 mb-4">
+    <span className="flex h-2 w-2 rounded-full bg-accent-orange" />
+    <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Team Members</span>
+  </div>
+  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    ...UserCards
+  </div>
 </div>
 ```
 
 ---
 
-## Benefits
+## Visual Result
 
-1. **Consistency**: Uses the same design language as the Dashboard
-2. **Maintainability**: Single source of truth for stat card styling
-3. **Correct Typography**: Large serif numbers with tiny uppercase labels (matches project style guide)
-4. **Proper Icon Styling**: Neutral background with hover animation effect
+After this change, the Users page will have:
+- Orange accent dot with uppercase "TEAM MANAGEMENT" label above page title
+- Serif font for the "Users" heading
+- "OVERVIEW" section label before stats cards
+- "TEAM MEMBERS" section label before users grid
+- Properly styled empty state with:
+  - Icon in a rounded secondary background container
+  - Serif font for the title
+  - Consistent spacing and shadows
 
 ---
 
@@ -87,14 +129,4 @@ import { StatCard } from "@/components/dashboard/StatCard";
 
 | File | Change |
 |------|--------|
-| `src/pages/Users.tsx` | Import and use `StatCard` component instead of custom card markup |
-
----
-
-## Visual Result
-
-After this change, the Users page stats will display:
-- Large serif numbers (like "24" on Dashboard)
-- Tiny uppercase labels above the numbers
-- Icons in rounded containers on the right side
-- Hover animation that changes icon background to accent color
+| `src/pages/Users.tsx` | Update header, add section labels, fix empty state styling |
