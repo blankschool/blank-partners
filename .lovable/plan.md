@@ -1,57 +1,159 @@
 
 
-# Distribute Stats Panel into 2 Even Rows (4+3)
+# Performance Optimization for Contents Page
 
-## Problem
+## Problem Analysis
 
-Currently there are 7 stat cards using a 6-column grid:
-- Row 1: 6 cards
-- Row 2: 1 lonely card (Cancelado)
+The page is handling **12,342 content items** which causes severe performance issues when:
+1. Changing views (calendar, list, grid)
+2. Applying filters
+3. Rendering the stats panel
 
-You want them distributed more evenly across 2 rows.
+### Root Causes Identified
 
-## Solution
+1. **StageStatsPanel**: Calls `normalizeStatus()` on every item for each of the 6 groups = 74,052 function calls on every render
 
-Change to a **4-column grid** to get:
-- Row 1: 4 cards (Todos, Escrevendo, Criacao, Aprovacao)
-- Row 2: 3 cards (Pronto para postar, Publicado, Cancelado)
+2. **ContentCalendar**: Creates a new `TooltipProvider` for each of the 35-42 calendar days, and calls `getStageConfig()` multiple times per item
 
-```text
-Row 1: +--------+------------+----------+------------+
-       | TODOS  | ESCREVENDO | CRIACAO  | APROVACAO  |
-       | 12342  | 1748       | 494      | 106        |
-       +--------+------------+----------+------------+
+3. **Grid/List views**: Renders all 12,342 items at once with no virtualization or pagination
 
-Row 2: +---------------+------------+------------+
-       | PRONTO PARA.. | PUBLICADO  | CANCELADO  |
-       | 246           | 7780       | 438        |
-       +---------------+------------+------------+
-```
+4. **Missing memoization**: Components and derived data are recalculated on every state change
 
-## Implementation
+5. **Console warning**: `Badge` component receiving refs but not using `forwardRef`
 
-### File: `src/components/contents/StageStatsPanel.tsx`
+## Solution Overview
 
-**Line 22 - Change grid from 6 columns to 4 columns:**
+| Area | Current Issue | Solution |
+|------|---------------|----------|
+| Stats calculation | O(n x groups) per render | Pre-compute once with `useMemo` |
+| View rendering | All items rendered | Add pagination (50 items per page) |
+| Calendar | TooltipProvider per day | Single TooltipProvider wrapper |
+| ContentCard | Badge ref warning | Add forwardRef to Badge |
+| Component updates | Re-render on any state change | Use `React.memo()` on child components |
+| Transition | Immediate render blocks UI | Use `startTransition` for view/filter changes |
 
-| Current | Updated |
-|---------|---------|
-| `grid grid-cols-6 gap-4 w-full` | `grid grid-cols-4 gap-4 w-full` |
+## Implementation Details
+
+### 1. Contents.tsx - Add Pagination and Transitions
+
+**Changes:**
+- Import `startTransition` and `useCallback` from React
+- Add pagination state (`currentPage`, `itemsPerPage = 50`)
+- Wrap filter/view changes in `startTransition` to keep UI responsive
+- Paginate `filteredItems` before rendering
 
 ```tsx
-<div className="grid grid-cols-4 gap-4 w-full">
+// New pagination logic
+const [currentPage, setCurrentPage] = useState(1);
+const ITEMS_PER_PAGE = 50;
+
+const paginatedItems = useMemo(() => {
+  const start = (currentPage - 1) * ITEMS_PER_PAGE;
+  return filteredItems.slice(start, start + ITEMS_PER_PAGE);
+}, [filteredItems, currentPage]);
+
+// Reset page when filters change
+useEffect(() => {
+  setCurrentPage(1);
+}, [searchQuery, selectedPerson, selectedClient, selectedStage, selectedGroupFromPanel, dateRange]);
 ```
+
+### 2. StageStatsPanel.tsx - Optimize Calculations
+
+**Changes:**
+- Pre-normalize all statuses in a single pass with `useMemo`
+- Count items in one loop instead of filtering 6 times
+
+```tsx
+const groupCounts = useMemo(() => {
+  // Pre-normalize all statuses once
+  const normalizedItems = items.map(item => normalizeStatus(item.status));
+  
+  // Count in single pass
+  const counts: Record<string, number> = {};
+  STAGE_GROUPS.forEach(g => counts[g.key] = 0);
+  
+  normalizedItems.forEach(status => {
+    const group = STAGE_GROUPS.find(g => g.stages.includes(status));
+    if (group) counts[group.key]++;
+  });
+  
+  return counts;
+}, [items]);
+```
+
+### 3. ContentCalendar.tsx - Single TooltipProvider
+
+**Changes:**
+- Move `TooltipProvider` to wrap entire grid (not per day)
+- Memoize day items lookup
+- Limit content preview rendering
+
+```tsx
+// Before: <TooltipProvider> per day (35-42 providers!)
+// After: Single wrapper
+<TooltipProvider delayDuration={200}>
+  <div className="grid grid-cols-7 gap-2">
+    {calendarDays.map(day => (
+      <Tooltip key={dateKey}>
+        ...
+      </Tooltip>
+    ))}
+  </div>
+</TooltipProvider>
+```
+
+### 4. ContentCard.tsx - Add React.memo
+
+**Changes:**
+- Wrap component with `React.memo()` to prevent unnecessary re-renders
+- Memoize date formatting
+
+```tsx
+export const ContentCard = React.memo(function ContentCard({ item, variant = "grid" }: ContentCardProps) {
+  // ... existing code
+});
+```
+
+### 5. Badge.tsx - Fix ref warning
+
+**Changes:**
+- Wrap Badge with `React.forwardRef` to eliminate console warnings
+
+### 6. Add Pagination Controls Component
+
+**New file:** `src/components/contents/ContentPagination.tsx`
+
+Simple pagination controls showing:
+- "Showing 1-50 of 12,342"
+- Previous/Next buttons
+- Page number indicator
 
 ## Files to Modify
 
-| File | Change |
-|------|--------|
-| `src/components/contents/StageStatsPanel.tsx` | Change `grid-cols-6` to `grid-cols-4` (line 22) |
+| File | Changes |
+|------|---------|
+| `src/pages/Contents.tsx` | Add pagination, startTransition, useCallback for handlers |
+| `src/components/contents/StageStatsPanel.tsx` | Optimize group counting with single-pass algorithm |
+| `src/components/contents/ContentCalendar.tsx` | Single TooltipProvider, add React.memo |
+| `src/components/contents/ContentCard.tsx` | Add React.memo wrapper |
+| `src/components/ui/badge.tsx` | Add forwardRef |
+| `src/components/contents/ContentPagination.tsx` | New file for pagination UI |
 
-## Expected Result
+## Expected Performance Improvement
 
-1. Row 1: 4 cards evenly distributed (Todos, Escrevendo, Criacao, Aprovacao)
-2. Row 2: 3 cards evenly distributed (Pronto para postar, Publicado, Cancelado)
-3. All cards take 1/4th of the total width
-4. Balanced, professional 2-row layout
+| Metric | Before | After |
+|--------|--------|-------|
+| Stats panel calculations | 74,052 calls | ~12,342 calls (single pass) |
+| Items rendered (grid/list) | 12,342 | 50 per page |
+| TooltipProviders | 35-42 per calendar | 1 |
+| Re-renders on filter change | All children | Only changed components |
+| UI blocking during transitions | Yes | No (concurrent) |
+
+## Technical Notes
+
+- Calendar view will still show all items in their dates (no pagination needed there since it groups by day)
+- Grid/List views will use pagination
+- Pagination resets to page 1 when any filter changes
+- `startTransition` marks view/filter changes as non-urgent, keeping UI responsive
 
