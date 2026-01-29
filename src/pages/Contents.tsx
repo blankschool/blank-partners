@@ -7,6 +7,7 @@ import { StageStatsPanel } from "@/components/contents/StageStatsPanel";
 import { ContentFilters, ViewMode, PeriodType } from "@/components/contents/ContentFilters";
 import { ContentCard } from "@/components/contents/ContentCard";
 import { ContentCalendar } from "@/components/contents/ContentCalendar";
+import { DayContentDialog } from "@/components/contents/DayContentDialog";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { parseISO, isValid, isWithinInterval } from "date-fns";
@@ -43,6 +44,8 @@ const Contents = () => {
   const [viewMode, setViewMode] = useState<ViewMode>("calendar");
   const [periodType, setPeriodType] = useState<PeriodType>("all");
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date } | null>(null);
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+  const [selectedDayItems, setSelectedDayItems] = useState<ContentItem[]>([]);
 
   const items = data?.items || [];
 
@@ -115,6 +118,11 @@ const Contents = () => {
     if (stage) {
       setSelectedStage("all"); // Reset dropdown when selecting from panel
     }
+  };
+
+  const handleDayClick = (date: Date, dayItems: ContentItem[]) => {
+    setSelectedDay(date);
+    setSelectedDayItems(dayItems);
   };
 
   if (isLoading) {
@@ -193,7 +201,15 @@ const Contents = () => {
             </CardContent>
           </Card>
         ) : viewMode === "calendar" ? (
-          <ContentCalendar items={filteredItems} />
+          <>
+            <ContentCalendar items={filteredItems} onDayClick={handleDayClick} />
+            <DayContentDialog
+              open={selectedDay !== null}
+              onOpenChange={(open) => !open && setSelectedDay(null)}
+              date={selectedDay}
+              items={selectedDayItems}
+            />
+          </>
         ) : viewMode === "grid" ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredItems.map((item, index) => (

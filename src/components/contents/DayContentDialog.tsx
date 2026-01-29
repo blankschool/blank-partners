@@ -1,0 +1,105 @@
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { ExternalLink } from "lucide-react";
+import { ContentItem } from "@/hooks/useGoogleSheetsContent";
+import { getStageConfig } from "@/lib/contentStages";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+
+interface DayContentDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  date: Date | null;
+  items: ContentItem[];
+}
+
+export function DayContentDialog({
+  open,
+  onOpenChange,
+  date,
+  items,
+}: DayContentDialogProps) {
+  if (!date) return null;
+
+  const formattedDate = format(date, "d 'de' MMMM 'de' yyyy", { locale: ptBR });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="capitalize">{formattedDate}</DialogTitle>
+          <DialogDescription>
+            {items.length} conteúdo{items.length !== 1 ? "s" : ""} agendado{items.length !== 1 ? "s" : ""}
+          </DialogDescription>
+        </DialogHeader>
+
+        <ScrollArea className="max-h-96">
+          <div className="space-y-3 pr-4">
+            {items.map((item, idx) => {
+              const stageConfig = getStageConfig(item.status);
+              
+              return (
+                <div
+                  key={`${item.id}-${idx}`}
+                  className="flex flex-col gap-2 p-3 rounded-lg bg-muted/50 border border-border/50"
+                >
+                  <div className="font-medium text-sm">
+                    {item.client || "Sem cliente"}
+                  </div>
+                  
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {stageConfig && (
+                      <Badge
+                        variant="secondary"
+                        className={cn(
+                          "text-xs",
+                          stageConfig.bgColor,
+                          stageConfig.color
+                        )}
+                      >
+                        {stageConfig.label}
+                      </Badge>
+                    )}
+                    
+                    {item.format && (
+                      <span className="text-xs text-muted-foreground">
+                        {item.format}
+                      </span>
+                    )}
+                    
+                    {item.url && (
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ml-auto text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </ScrollArea>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Fechar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
