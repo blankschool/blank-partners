@@ -1,80 +1,150 @@
 
+# Group Content Stages into Macro Categories
 
-# Reduce Calendar Cell Size
+## Overview
 
-## Problem
+The StageStatsPanel currently displays 15+ individual stages, making the layout cluttered. This plan groups them into 6 macro categories for the stats panel while preserving the detailed stages for filtering and badges.
 
-The calendar cells use `aspect-square` which makes them as tall as they are wide. On a wide viewport, this results in very large cells (approximately 150-200px tall each), making the calendar take up excessive vertical space and requiring scrolling.
+## New Stage Groups
 
-## Solution
+| Group | Label | Included Stages | Color Theme |
+|-------|-------|-----------------|-------------|
+| 1 | Escrevendo | backlog, rascunho, escrita, aprovacao escrita, em briefing, ajustes escrita | Orange |
+| 2 | Criação | gravacao de video, gravacao de audio, edicao de video, criacao design, ajustes edicao de video, ajustes criacao design | Purple |
+| 3 | Aprovação | aprovacao post | Blue |
+| 4 | Pronto para postar | pronto para postar | Yellow |
+| 5 | Publicado | publicado | Green |
+| 6 | Cancelado | cancelado | Red |
 
-Constrain the calendar grid to a maximum width and adjust the cell aspect ratio for a more compact display:
+## Implementation
 
-1. **Limit calendar grid width** - Add `max-w-4xl` (896px) to contain the calendar
-2. **Reduce cell aspect ratio** - Change from `aspect-square` to a shorter aspect ratio or fixed height
-3. **Center the calendar** - Add `mx-auto` to center the constrained grid
+### File 1: `src/lib/contentStages.ts`
 
-## Implementation Details
+Add a new interface and array for stage groups:
 
-### File: `src/components/contents/ContentCalendar.tsx`
-
-| Element | Current | Updated |
-|---------|---------|---------|
-| Calendar container | `<CardContent className="p-4">` | `<CardContent className="p-4 max-w-4xl mx-auto">` |
-| Day cell | `aspect-square p-1 rounded-lg...` | `aspect-[4/3] p-1 rounded-lg...` or fixed `h-20` |
-
-### Specific Changes
-
-**Option 1 - Constrained aspect ratio (recommended)**:
 ```text
-// Day button class
-BEFORE: "aspect-square p-1 rounded-lg..."
-AFTER:  "aspect-[4/3] p-1 rounded-lg..."
+export interface StageGroup {
+  key: string;
+  label: string;
+  stages: string[];  // Keys of CONTENT_STAGES that belong to this group
+  color: string;
+  bgColor: string;
+  borderColor: string;
+}
 
-// Container
-BEFORE: <CardContent className="p-4">
-AFTER:  <CardContent className="p-4 max-w-5xl mx-auto">
+export const STAGE_GROUPS: StageGroup[] = [
+  {
+    key: 'escrevendo',
+    label: 'Escrevendo',
+    stages: ['backlog', 'rascunho', 'escrita', 'aprovacao escrita', 'em briefing', 'ajustes escrita'],
+    color: 'text-orange-600',
+    bgColor: 'bg-orange-100',
+    borderColor: 'border-orange-200'
+  },
+  {
+    key: 'criacao',
+    label: 'Criação',
+    stages: ['gravacao de video', 'gravacao de audio', 'edicao de video', 'criacao design', 'ajustes edicao de video', 'ajustes criacao design'],
+    color: 'text-purple-600',
+    bgColor: 'bg-purple-100',
+    borderColor: 'border-purple-200'
+  },
+  {
+    key: 'aprovacao',
+    label: 'Aprovação',
+    stages: ['aprovacao post'],
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-100',
+    borderColor: 'border-blue-200'
+  },
+  {
+    key: 'pronto',
+    label: 'Pronto para postar',
+    stages: ['pronto para postar'],
+    color: 'text-yellow-600',
+    bgColor: 'bg-yellow-100',
+    borderColor: 'border-yellow-200'
+  },
+  {
+    key: 'publicado',
+    label: 'Publicado',
+    stages: ['publicado'],
+    color: 'text-green-600',
+    bgColor: 'bg-green-100',
+    borderColor: 'border-green-200'
+  },
+  {
+    key: 'cancelado',
+    label: 'Cancelado',
+    stages: ['cancelado'],
+    color: 'text-red-600',
+    bgColor: 'bg-red-100',
+    borderColor: 'border-red-200'
+  }
+];
 ```
 
-This creates cells that are 4 units wide by 3 units tall - shorter than a square but still proportional.
+Add a helper function to find which group a status belongs to:
 
-**Option 2 - Fixed height**:
 ```text
-// Day button class  
-BEFORE: "aspect-square p-1..."
-AFTER:  "h-20 p-1..."
+export function getStageGroup(status: string): StageGroup | undefined {
+  const normalizedStatus = normalizeStatus(status);
+  return STAGE_GROUPS.find(group => group.stages.includes(normalizedStatus));
+}
 ```
 
-Fixed 80px height cells regardless of width.
+### File 2: `src/components/contents/StageStatsPanel.tsx`
+
+Update to use STAGE_GROUPS instead of individual stages:
+
+- Import `STAGE_GROUPS` instead of `CONTENT_STAGES`
+- Count items per group by checking if normalized status is in the group's stages array
+- Update the selected state to track group keys instead of stage keys
+- Display 6 group buttons instead of 15+ stage buttons
+
+### File 3: `src/pages/Contents.tsx`
+
+Update filtering logic to work with groups:
+
+- When a group is selected from the panel, filter items where the normalized status is in the group's stages array
+- The dropdown filter still uses individual stages for granular filtering
+- Add a new state or modify existing to handle group-based filtering
 
 ## Visual Comparison
 
 ```text
-BEFORE (aspect-square, full width):
-+-------+-------+-------+-------+-------+-------+-------+
-|       |       |       |       |       |       |       |
-|  5    |  6    |  7    |  8    |  9    |  10   |  11   |  ~200px tall
-|       |       |       |       |       |       |       |
-| ●●●●  | ●●●●  | ●●●●  | ●●●●  | ●●●●  | ●●●●  | ●●●●  |
-+-------+-------+-------+-------+-------+-------+-------+
+BEFORE (15+ buttons, horizontal scroll needed):
++-------+-------+-------+-------+-------+-------+-------+-------+...
+| Todos |Backlog|Rascunho|Escrita|Aprov. |Gravação|Edição |Design|
+|  142  |   5   |   3    |   8   | escr. | vídeo  | vídeo |      |
++-------+-------+-------+-------+-------+-------+-------+-------+...
 
-AFTER (aspect-[4/3], max-width constrained):
-+------+------+------+------+------+------+------+
-| 5    | 6    | 7    | 8    | 9    | 10   | 11   |  ~100px tall
-|●●●●  |●●●●  |●●●●  |●●●●  |●●●●  |●●●●  |●●●●  |
-+------+------+------+------+------+------+------+
+AFTER (7 buttons, fits on screen):
++-------+----------+--------+----------+--------+----------+----------+
+| Todos |Escrevendo| Criação| Aprovação| Pronto | Publicado| Cancelado|
+|  142  |    32    |   18   |    4     |   12   |    68    |    8     |
++-------+----------+--------+----------+--------+----------+----------+
 ```
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/components/contents/ContentCalendar.tsx` | Add max-width to container, change aspect ratio on cells |
+| `src/lib/contentStages.ts` | Add `StageGroup` interface, `STAGE_GROUPS` array, and `getStageGroup()` helper |
+| `src/components/contents/StageStatsPanel.tsx` | Update to display and count by groups instead of individual stages |
+| `src/pages/Contents.tsx` | Update filtering logic to handle group selections |
+
+## What Stays the Same
+
+- **ContentFilters dropdown**: Still shows all 15 individual stages for detailed filtering
+- **ContentCard badges**: Still show the specific stage label (e.g., "Edição de vídeo")
+- **DayContentDialog**: Still shows specific stage badges
+- **CONTENT_STAGES array**: Unchanged, still used for individual stage styling
 
 ## Expected Result
 
-1. Calendar cells are approximately 50% shorter
-2. Entire month fits on screen without scrolling
-3. Content dots and day numbers remain visible and properly positioned
-4. Calendar is centered on larger screens
-
+1. StageStatsPanel shows 7 buttons (Todos + 6 groups) instead of 15+
+2. Clicking a group filters to show all items in that group's stages
+3. Group counts aggregate all underlying stages correctly
+4. Dropdown filter still allows selection of specific stages
+5. No horizontal scroll needed on most screens
