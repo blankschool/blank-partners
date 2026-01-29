@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, FileText, UsersRound, HeartPulse, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, FileText, UsersRound, HeartPulse, LogOut, UserCog } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -23,6 +23,7 @@ const navigationItems = [
   { title: "Contents", url: "/contents", icon: FileText },
   { title: "Team", url: "/team", icon: UsersRound },
   { title: "Healthscore", url: "/healthscore", icon: HeartPulse },
+  { title: "Users", url: "/users", icon: UserCog },
 ];
 
 export function AppSidebar() {
