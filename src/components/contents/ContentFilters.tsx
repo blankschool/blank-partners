@@ -84,6 +84,10 @@ export function ContentFilters({
     if (periodType === "week") return "Esta semana";
     if (periodType === "month") return "Este mês";
     if (dateRange) {
+      const isSameDay = dateRange.from.toDateString() === dateRange.to.toDateString();
+      if (isSameDay) {
+        return format(dateRange.from, "dd/MM/yyyy");
+      }
       return `${format(dateRange.from, "dd/MM")} - ${format(dateRange.to, "dd/MM")}`;
     }
     return "Selecionar período";
@@ -183,8 +187,9 @@ export function ContentFilters({
                 mode="range"
                 selected={dateRange ? { from: dateRange.from, to: dateRange.to } : undefined}
                 onSelect={(range) => {
-                  if (range?.from && range?.to) {
-                    onPeriodChange("custom", { from: range.from, to: range.to });
+                  if (range?.from) {
+                    const to = range.to || range.from;
+                    onPeriodChange("custom", { from: range.from, to });
                     setCalendarOpen(false);
                   }
                 }}
