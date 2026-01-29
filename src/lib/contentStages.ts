@@ -57,3 +57,68 @@ export function getPlatformConfig(platform: string) {
   const normalizedPlatform = platform.toLowerCase().trim();
   return SOCIAL_MEDIA_PLATFORMS.find(p => p.key === normalizedPlatform);
 }
+
+export interface StageGroup {
+  key: string;
+  label: string;
+  stages: string[];
+  color: string;
+  bgColor: string;
+  borderColor: string;
+}
+
+export const STAGE_GROUPS: StageGroup[] = [
+  {
+    key: 'escrevendo',
+    label: 'Escrevendo',
+    stages: ['backlog', 'rascunho', 'escrita', 'aprovacao escrita', 'em briefing', 'ajustes escrita'],
+    color: 'text-orange-600',
+    bgColor: 'bg-orange-100',
+    borderColor: 'border-orange-200'
+  },
+  {
+    key: 'criacao',
+    label: 'Criação',
+    stages: ['gravacao de video', 'gravacao de audio', 'edicao de video', 'criacao design', 'ajustes edicao de video', 'ajustes criacao design'],
+    color: 'text-purple-600',
+    bgColor: 'bg-purple-100',
+    borderColor: 'border-purple-200'
+  },
+  {
+    key: 'aprovacao',
+    label: 'Aprovação',
+    stages: ['aprovacao post'],
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-100',
+    borderColor: 'border-blue-200'
+  },
+  {
+    key: 'pronto',
+    label: 'Pronto para postar',
+    stages: ['pronto para postar'],
+    color: 'text-yellow-600',
+    bgColor: 'bg-yellow-100',
+    borderColor: 'border-yellow-200'
+  },
+  {
+    key: 'publicado',
+    label: 'Publicado',
+    stages: ['publicado'],
+    color: 'text-green-600',
+    bgColor: 'bg-green-100',
+    borderColor: 'border-green-200'
+  },
+  {
+    key: 'cancelado',
+    label: 'Cancelado',
+    stages: ['cancelado'],
+    color: 'text-red-600',
+    bgColor: 'bg-red-100',
+    borderColor: 'border-red-200'
+  }
+];
+
+export function getStageGroup(status: string): StageGroup | undefined {
+  const normalizedStatus = normalizeStatus(status);
+  return STAGE_GROUPS.find(group => group.stages.includes(normalizedStatus));
+}
