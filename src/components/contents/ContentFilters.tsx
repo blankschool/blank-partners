@@ -188,9 +188,12 @@ export function ContentFilters({
                 selected={dateRange ? { from: dateRange.from, to: dateRange.to } : undefined}
                 onSelect={(range) => {
                   if (range?.from) {
-                    const to = range.to || range.from;
-                    onPeriodChange("custom", { from: range.from, to });
-                    setCalendarOpen(false);
+                    if (range.to) {
+                      // Complete range selected - apply filter and close
+                      onPeriodChange("custom", { from: range.from, to: range.to });
+                      setCalendarOpen(false);
+                    }
+                    // If only "from" is selected, keep calendar open for second click
                   }
                 }}
                 locale={ptBR}
