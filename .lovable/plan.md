@@ -1,98 +1,126 @@
 
-# Stat Cards Design Consistency Plan
 
-## Issue
-The Team and Clients pages use outdated stat card styling with small sans-serif numbers (`text-2xl font-semibold`), while the Healthscore page uses the refined Giga AI design with large serif numbers (`font-serif text-6xl`).
+# Glassmorphism Sidebar Redesign
+
+## Overview
+Transform the sidebar to match the Giga AI reference with a frosted glass effect featuring backdrop blur, semi-transparent background, and enhanced navigation items with descriptions.
+
+---
+
+## Key Design Elements from Reference
+
+### Glassmorphism Effect
+- Semi-transparent dark background: `rgba(0,0,0,0.4)`
+- Strong backdrop blur: `backdrop-blur-[30px]`
+- Subtle shadow: `shadow-[rgba(0,0,0,0.05)_0px_10px_20px_0px]`
+- Rounded corners: 10px
+
+### Navigation Items
+- Larger clickable areas (h-24 / 96px tall)
+- Title text: 15px medium weight, white
+- Description text: 12px, white at 70% opacity
+- Full-width items with padding
+- Hover state with subtle background change
 
 ---
 
 ## Files to Modify
 
-### 1. src/pages/Clients.tsx
-**Current (lines 104-127):**
-- Labels: `text-sm text-muted-foreground`
-- Numbers: `text-2xl font-semibold`
-- Padding: `p-4`
-- No descriptions
+### 1. src/index.css
+Add new CSS variable for glassmorphism background.
 
-**Updated to match Healthscore:**
-- Labels: `text-[10px] font-medium uppercase tracking-widest text-muted-foreground`
-- Numbers: `font-serif text-5xl font-normal tracking-tight`
-- Color-specific numbers for status (success for Active, warning for Pending)
-- Padding: `p-6`
-- Add muted description text
+### 2. src/components/ui/sidebar.tsx
+Update the inner sidebar container div (line 207-210) to apply glassmorphism styles:
+- Add `backdrop-blur-[30px]`
+- Add `bg-black/40` (semi-transparent black)
+- Adjust border radius
 
-### 2. src/pages/Team.tsx
-**Current (lines 118-153):**
-- Same old styling as Clients
-- 4 stats in a row (may need layout adjustment)
-
-**Updated to match Healthscore:**
-- Labels: `text-[10px] font-medium uppercase tracking-widest text-muted-foreground`
-- Numbers: `font-serif text-5xl font-normal tracking-tight`
-- Color-specific numbers (success for Online, accent-orange for Completion Rate)
-- Padding: `p-6`
-- Add muted description text
+### 3. src/components/layout/AppSidebar.tsx
+Major redesign:
+- Add descriptions to navigation items
+- Update navigation item styling to be taller with title + description layout
+- Increase padding and spacing
+- Apply glassmorphism-compatible text styles
 
 ---
 
-## Specific Changes
+## Detailed Changes
 
-### Clients Page Stats (3 cards)
-```text
-Card 1: Total Clients
-- Label: "TOTAL CLIENTS" (uppercase, tiny, tracking-widest)
-- Number: "5" (serif, text-5xl, foreground color)
-- Description: "Registered in system"
-
-Card 2: Active
-- Label: "ACTIVE" 
-- Number: "3" (serif, text-5xl, text-success color)
-- Description: "Currently active clients"
-
-Card 3: Pending Onboarding
-- Label: "PENDING ONBOARDING"
-- Number: "1" (serif, text-5xl, text-warning color)
-- Description: "Awaiting setup"
+### Navigation Items Data Structure
+```typescript
+const navigationItems = [
+  { 
+    title: "Dashboard", 
+    url: "/", 
+    icon: LayoutDashboard,
+    description: "Overview of agency performance and key metrics."
+  },
+  { 
+    title: "Clients", 
+    url: "/clients", 
+    icon: Users,
+    description: "Manage client accounts and relationships."
+  },
+  { 
+    title: "Contents", 
+    url: "/contents", 
+    icon: FileText,
+    description: "Create and organize marketing content and assets."
+  },
+  { 
+    title: "Team", 
+    url: "/team", 
+    icon: UsersRound,
+    description: "View team members and manage assignments."
+  },
+  { 
+    title: "Healthscore", 
+    url: "/healthscore", 
+    icon: HeartPulse,
+    description: "Monitor system health and performance metrics."
+  },
+];
 ```
 
-### Team Page Stats (4 cards)
-```text
-Card 1: Team Members
-- Label: "TEAM MEMBERS"
-- Number: "5" (serif, text-5xl, foreground)
-- Description: "Total headcount"
+### Navigation Item Layout
+Each item will have:
+- Taller height (~80-96px)
+- Flex column layout with title and description
+- Title: `text-[15px] font-medium text-white`
+- Description: `text-xs text-white/70 leading-relaxed`
 
-Card 2: Online Now
-- Label: "ONLINE NOW"
-- Number: "3" (serif, text-5xl, text-success)
-- Description: "Currently available"
-
-Card 3: Total Tasks
-- Label: "TOTAL TASKS"
-- Number: "117" (serif, text-5xl, foreground)
-- Description: "Assigned this period"
-
-Card 4: Completion Rate
-- Label: "COMPLETION RATE"
-- Number: "85%" (serif, text-5xl, text-accent-orange)
-- Description: "Tasks completed"
+### Sidebar Container Styling
+```css
+/* Glassmorphism effect */
+backdrop-blur-[30px]
+bg-black/40
+shadow-[rgba(0,0,0,0.05)_0px_10px_20px_0px]
+rounded-xl
+border border-white/10
 ```
 
 ---
 
 ## Visual Comparison
 
-| Property | Current | Updated |
-|----------|---------|---------|
-| Number font | Sans-serif, semibold | DM Serif Display, normal |
-| Number size | text-2xl (~24px) | text-5xl (~48px) |
-| Label style | text-sm | text-[10px] uppercase tracking-widest |
-| Card padding | p-4 | p-6 |
-| Descriptions | None | Added below numbers |
+| Element | Current | Updated |
+|---------|---------|---------|
+| Background | Solid dark (`oklch(0.08)`) | Semi-transparent + blur |
+| Nav item height | ~40px | ~80px |
+| Nav item content | Icon + title only | Icon + title + description |
+| Title styling | text-sm | text-[15px] font-medium |
+| Description | None | text-xs text-white/70 |
+| Border radius | rounded-xl | rounded-xl with blur |
+| Shadow | None | Subtle 10px spread |
 
 ---
 
-## Implementation Summary
+## Implementation Order
 
-Both pages will receive updated stat card markup to match the Healthscore page pattern, ensuring visual consistency across the entire ERP panel with the refined Giga AI design system.
+1. Update sidebar.tsx with glassmorphism container styles
+2. Modify AppSidebar.tsx with new navigation data structure and layout
+3. Add descriptions to each navigation item
+4. Update text styling for glassmorphism compatibility
+5. Refine footer section to match new style
+6. Test in light and dark modes
+
