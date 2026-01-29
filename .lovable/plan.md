@@ -1,64 +1,44 @@
 
-# Distribute Stats Panel in 2 Rows with Full Width
+
+# Fix Stats Panel to Fill Full Container Width
 
 ## Problem
 
-Currently the stat cards use `flex flex-wrap gap-4` which:
-- Does not fill the full width of the container
-- Cards wrap naturally based on their content width
-- Last card (Cancelado) sits alone on the second row, not filling space
+Looking at the screenshot, the grid IS working (6 cards on row 1, 1 on row 2), but the cards are NOT stretching to fill the full container width. The grid container needs explicit full-width styling.
+
+## Current Issue
+
+The grid container has `grid grid-cols-6 gap-4` but is NOT filling the full width of its parent container.
 
 ## Solution
 
-Use a **CSS Grid layout** to:
-1. First row: 6 cards (Todos + first 5 groups) distributed evenly across full width
-2. Second row: 1 card (Cancelado) on the left
+Add `w-full` to the grid container to ensure it stretches to the full width of the parent.
 
-The grid should have 6 columns with equal width (`grid-cols-6`) so all cards on the first row are the same size. The last card (Cancelado) will naturally fall to the second row and take 1 column width.
-
-## Visual Layout
-
-```text
-+-------+----------+--------+----------+------------+----------+
-| TODOS | ESCREV.  | CRIAÇÃO| APROVAÇÃO| PRONTO P.. | PUBLICADO|
-| 12342 | 1749     | 493    | 106      | 247        | 7779     |
-+-------+----------+--------+----------+------------+----------+
-| CANCELADO |
-| 437       |
-+------------+
-```
-
-## Implementation Details
+## Implementation
 
 ### File: `src/components/contents/StageStatsPanel.tsx`
 
-**Change container from flex to grid (line 22):**
+**Line 22 - Add `w-full` to container:**
 
-| Property | Current | Updated |
-|----------|---------|---------|
-| Layout | `flex flex-wrap gap-4` | `grid grid-cols-6 gap-4` |
+| Current | Updated |
+|---------|---------|
+| `grid grid-cols-6 gap-4` | `grid grid-cols-6 gap-4 w-full` |
 
-**Update button styling:**
-
-| Property | Current | Updated |
-|----------|---------|---------|
-| Min width | `min-w-[120px]` | Remove (grid handles width) |
-| Width | (none) | `w-full` (fill grid cell) |
-
-The grid will ensure:
-- 6 equal columns on the first row
-- Cards stretch to fill their grid cell
-- Last card (7th item - Cancelado) wraps to second row, taking 1 column
+```tsx
+// Line 22
+<div className="grid grid-cols-6 gap-4 w-full">
+```
 
 ## Files to Modify
 
-| File | Changes |
-|------|---------|
-| `src/components/contents/StageStatsPanel.tsx` | Change to 6-column grid layout, remove min-width, add w-full to buttons |
+| File | Change |
+|------|--------|
+| `src/components/contents/StageStatsPanel.tsx` | Add `w-full` to the grid container (line 22) |
 
 ## Expected Result
 
-1. First row: 6 cards evenly distributed across full width (Todos, Escrevendo, Criação, Aprovação, Pronto para postar, Publicado)
-2. Second row: Cancelado card on the left
-3. All cards have equal width within their row
-4. Clean, organized layout matching the visual hierarchy
+1. Grid container stretches to full width of parent
+2. 6 columns distribute evenly across the full width
+3. Each card takes 1/6th of the total width
+4. Cancelado card on second row takes same 1/6th width
+
