@@ -1,87 +1,78 @@
 
 
-# Update Content Stats Panel to Match Team Page Design
+# Fix Typography in StageStatsPanel
 
 ## Problem
 
-The StageStatsPanel on the Contents page uses a different visual style than the Team page stats:
-- Numbers are small (`text-2xl` vs `text-5xl`)
-- Layout is centered with number on top, label on bottom
-- Missing the hierarchical layout (label > number > description)
+The numbers in the StageStatsPanel are using the wrong typography. Looking at the screenshot and comparing with the Team page code, the numbers should use:
 
-## Solution
+- **Font**: `font-serif` (DM Serif Display) - NOT sans-serif
+- **Weight**: `font-normal` - NOT `font-semibold`
 
-Redesign the StageStatsPanel to follow the Team page pattern:
-1. Label at TOP (uppercase, small, tracking-widest)
-2. Number in MIDDLE (serif, large 5xl, tabular-nums)
-3. Keep as interactive buttons for filtering
+The current code uses `font-semibold tabular-nums` which creates a bold sans-serif look instead of the elegant serif typography seen on the Team page.
 
 ## Visual Comparison
 
 ```text
-CURRENT (Contents):
+CURRENT (wrong):
 +-------------+
-|    12340    |  <- small number (2xl)
-|    TODOS    |  <- label below
+| TODOS       |
+| 12342       |  <- Bold sans-serif (Inter semibold)
 +-------------+
 
-TARGET (Team style):
+CORRECT (Team page style):
 +-------------+
-| TODOS       |  <- label on top (uppercase tracking)
-| 12340       |  <- large number (5xl serif)
+| TODOS       |
+| 12342       |  <- Elegant serif (DM Serif Display normal)
 +-------------+
 ```
 
-## Implementation Details
+## Code Reference from Team Page
+
+Looking at `src/pages/Team.tsx` line 122:
+```tsx
+<p className="mt-2 font-serif text-5xl font-normal tracking-tight text-foreground">
+  {teamData.length}
+</p>
+```
+
+## Implementation
 
 ### File: `src/components/contents/StageStatsPanel.tsx`
 
-**Update button layout and typography:**
+**Update number typography (lines 30-31 and 51-53):**
 
-| Property | Current | Updated |
-|----------|---------|---------|
-| Button layout | `items-center justify-center` | `items-start` (left-aligned) |
-| Number size | `text-2xl` | `text-4xl` or `text-5xl` |
-| Number font | `font-serif` | `font-sans text-5xl font-semibold tabular-nums tracking-tight` |
-| Label position | Below number | Above number |
-| Padding | `p-4` | `p-5` |
-| Min width | `min-w-[100px]` | `min-w-[120px]` |
+| Property | Current (Wrong) | Correct |
+|----------|-----------------|---------|
+| Font family | (missing - defaults to sans) | `font-serif` |
+| Font weight | `font-semibold` | `font-normal` |
+| Numeric style | `tabular-nums` | (remove - serif uses proportional) |
 
-**New structure for each stat button:**
-
+**For the "Todos" count (line 30-31):**
 ```text
-<button className="flex flex-col items-start min-w-[120px] p-5 rounded-2xl border ...">
-  <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-    {label}
-  </span>
-  <span className="mt-2 font-sans text-5xl font-semibold tabular-nums tracking-tight text-foreground">
-    {count}
-  </span>
-</button>
+// Current
+<span className="mt-2 text-5xl font-semibold tabular-nums tracking-tight text-foreground">
+
+// Fix
+<span className="mt-2 font-serif text-5xl font-normal tracking-tight text-foreground">
 ```
 
-**Apply to both "Todos" button and group buttons:**
+**For the group counts (line 51-53):**
+```text
+// Current
+<span className={cn("mt-2 text-5xl font-semibold tabular-nums tracking-tight", ...)}>
 
-The same pattern applies to the "All items" stat and each stage group button, maintaining the interactive click-to-filter behavior.
-
-## Typography Alignment with Memory
-
-Per the project's typography memory:
-- Use `font-sans` (Inter) with `tabular-nums` for numerical metrics
-- Use `text-5xl font-semibold tracking-tight` for large numbers
-- Reserve `font-serif` for textual headings, not numbers
+// Fix
+<span className={cn("mt-2 font-serif text-5xl font-normal tracking-tight", ...)}>
+```
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/components/contents/StageStatsPanel.tsx` | Update layout, typography, and spacing to match Team page pattern |
+| `src/components/contents/StageStatsPanel.tsx` | Update number typography to use `font-serif font-normal` instead of `font-semibold tabular-nums` |
 
 ## Expected Result
 
-1. Numbers display as large `text-5xl` with Inter font and tabular-nums
-2. Labels appear ABOVE the numbers in small uppercase style
-3. Layout is left-aligned like Team page cards
-4. Interactive filtering behavior is preserved
-5. Selected state styling continues to work
+Numbers in the StageStatsPanel will display with the elegant DM Serif Display font, matching the Team page typography exactly.
 
