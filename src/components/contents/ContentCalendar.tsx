@@ -123,7 +123,7 @@ export function ContentCalendar({ items, onDayClick }: ContentCalendarProps) {
         </div>
 
         {/* Calendar grid */}
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-2">
           {calendarDays.map(day => {
             const dateKey = format(day, 'yyyy-MM-dd');
             const dayItems = itemsByDate.get(dateKey) || [];
@@ -137,19 +137,21 @@ export function ContentCalendar({ items, onDayClick }: ContentCalendarProps) {
                     <button
                       onClick={() => onDayClick?.(day, dayItems)}
                       className={cn(
-                        "min-h-[80px] p-1 rounded-lg text-sm transition-colors relative",
-                        "hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring",
-                        !isCurrentMonth && "text-muted-foreground/50",
+                        "min-h-[100px] p-2 rounded-xl text-sm transition-colors relative",
+                        "bg-card border border-border",
+                        "hover:bg-muted hover:border-muted-foreground/20",
+                        "focus:outline-none focus:ring-2 focus:ring-ring",
+                        !isCurrentMonth && "text-muted-foreground/50 opacity-50",
                         isToday && "ring-2 ring-primary"
                       )}
                     >
-                      <span className="absolute top-1 left-2 text-xs">
+                      <span className="absolute top-2 left-2 text-xs font-medium text-foreground">
                         {format(day, 'd')}
                       </span>
                       
                       {/* Content preview - show up to 2 items */}
                       {dayItems.length > 0 && (
-                        <div className="absolute bottom-1 left-1 right-1 space-y-0.5 overflow-hidden">
+                        <div className="absolute bottom-2 left-2 right-2 space-y-1 overflow-hidden">
                           {dayItems.slice(0, 2).map((item, idx) => {
                             const stageConfig = getStageConfig(item.status);
                             return (
