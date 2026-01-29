@@ -1,94 +1,75 @@
 
 
-# Email OTP Authentication Implementation Plan
+# Fix OTP Login - Enable 6-Digit Code for Email
 
-## Overview
-Replace the current Google OAuth SSO with Supabase's Email OTP (One-Time Password) authentication. Users will enter their email address, receive a 6-digit verification code from Supabase, and enter that code to sign in.
+## Problem Identified
+Supabase's `signInWithOtp` for email sends a **magic link** (clickable URL) by default, not a 6-digit code. The auth logs confirm:
+- Successful login at 02:58:05 was via clicking the magic link (GET /verify, status 303)
+- Error "token has expired or is invalid" occurred when manually entering the token
+
+## Solution
+Configure Supabase to send 6-digit codes instead of magic links for email authentication.
 
 ---
 
-## Authentication Flow
+## Implementation Steps
 
-```text
-+------------------+     +------------------+     +------------------+     +------------------+
-|   Enter Email    | --> |  Supabase sends  | --> |   Enter 6-digit  | --> |    Dashboard     |
-|   (Auth Page)    |     |   OTP to email   |     |   code (verify)  |     |   (Protected)    |
-+------------------+     +------------------+     +------------------+     +------------------+
+### 1. Update Supabase Email Template (Dashboard Action - Required)
+
+You must modify the "Magic Link" email template in Supabase Dashboard:
+
+**Path:** Authentication > Email Templates > Magic Link
+
+**Replace the template with this:**
+```html
+<h2>Your verification code</h2>
+
+<p>Enter the following code to sign in:</p>
+
+<h1 style="font-size: 32px; letter-spacing: 4px; font-family: monospace;">{{ .Token }}</h1>
+
+<p>This code will expire in 1 hour.</p>
+
+<p>If you didn't request this code, you can safely ignore this email.</p>
 ```
 
----
+This template uses `{{ .Token }}` which is the 6-digit OTP code that Supabase generates automatically.
 
-## Changes Required
+### 2. No Code Changes Required
 
-### 1. Update Auth Page (`src/pages/Auth.tsx`)
-**Two-step flow:**
+The current implementation in `src/hooks/useAuth.tsx` and `src/pages/Auth.tsx` is correct:
+- `signInWithOtp(email)` correctly sends the OTP request
+- `verifyOtp(email, token)` with `type: "email"` correctly verifies the 6-digit code
 
-**Step 1 - Email Entry:**
-- Email input field with monochromatic styling
-- "Send Code" button
-- Loading state while sending
-
-**Step 2 - Code Verification:**
-- Display which email the code was sent to
-- 6-digit OTP input using the existing `InputOTP` component
-- "Verify" button to complete sign-in
-- "Resend code" and "Use different email" options
-
-### 2. Update Auth Hook (`src/hooks/useAuth.tsx`)
-Replace Google OAuth methods with:
-
-| Method | Purpose |
-|--------|---------|
-| `signInWithOtp(email)` | Send 6-digit code to email |
-| `verifyOtp(email, token)` | Verify code and complete sign-in |
-| `signOut()` | Sign out (unchanged) |
-
-### 3. Design Consistency
-- Same glassmorphism card design
-- Same monochromatic color scheme
-- Same typography (serif headings, sans-serif body)
-- Pill-shaped inputs and buttons with rounded-full styling
+The code is already set up to handle 6-digit codes - only the Supabase email template needs to be updated.
 
 ---
 
-## Technical Implementation
+## Why This Works
 
-### Supabase OTP Methods
-```typescript
-// Send OTP to email
-await supabase.auth.signInWithOtp({
-  email: userEmail,
-  options: {
-    shouldCreateUser: false, // No signup - login only
-  }
-});
+Supabase always generates both:
+1. A **magic link** URL with a token hash
+2. A **6-digit numeric code** (`{{ .Token }}`)
 
-// Verify OTP code
-await supabase.auth.verifyOtp({
-  email: userEmail,
-  token: sixDigitCode,
-  type: 'email'
-});
-```
-
-### State Management
-- `step`: 'email' | 'verify' - tracks which form to show
-- `email`: string - stores email for verification step
-- `otp`: string - the 6-digit code entered by user
-- `isLoading`: boolean - loading states for API calls
+The default email template only shows the magic link. By updating the template to show `{{ .Token }}`, users will receive the 6-digit code they can manually enter.
 
 ---
 
-## Files to Modify
+## Post-Implementation Verification
 
-| File | Changes |
-|------|---------|
-| `src/pages/Auth.tsx` | Replace Google button with email/OTP two-step flow |
-| `src/hooks/useAuth.tsx` | Replace `signInWithGoogle` with `signInWithOtp` and `verifyOtp` |
+After updating the email template:
+1. Go to the Auth page and enter your email
+2. Check your email - you should now see a 6-digit code
+3. Enter the code in the OTP input fields
+4. You should be signed in successfully
 
 ---
 
-## Post-Implementation Notes
+## Summary
 
-Since `shouldCreateUser: false` is set, only existing users in Supabase Auth can sign in. New users must be added manually via the Supabase dashboard (Authentication > Users > Add user).
+| Component | Status | Action Required |
+|-----------|--------|-----------------|
+| `src/hooks/useAuth.tsx` | Correct | None |
+| `src/pages/Auth.tsx` | Correct | None |
+| Supabase Email Template | Needs Update | Update "Magic Link" template in Dashboard |
 
