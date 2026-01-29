@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { ContentItem } from "@/hooks/useGoogleSheetsContent";
 import { STAGE_GROUPS, normalizeStatus } from "@/lib/contentStages";
 import { cn } from "@/lib/utils";
@@ -9,14 +10,23 @@ interface StageStatsPanelProps {
 }
 
 export function StageStatsPanel({ items, selectedGroup, onGroupClick }: StageStatsPanelProps) {
-  // Count items per group
-  const groupCounts = STAGE_GROUPS.reduce((acc, group) => {
-    acc[group.key] = items.filter(item => {
+  // Optimized: Single-pass counting with pre-normalized statuses
+  const groupCounts = useMemo(() => {
+    // Initialize counts
+    const counts: Record<string, number> = {};
+    STAGE_GROUPS.forEach(g => counts[g.key] = 0);
+    
+    // Single pass through items
+    items.forEach(item => {
       const normalizedStatus = normalizeStatus(item.status);
-      return group.stages.includes(normalizedStatus);
-    }).length;
-    return acc;
-  }, {} as Record<string, number>);
+      const group = STAGE_GROUPS.find(g => g.stages.includes(normalizedStatus));
+      if (group) {
+        counts[group.key]++;
+      }
+    });
+    
+    return counts;
+  }, [items]);
 
   return (
     <div className="grid grid-cols-4 gap-4 w-full">

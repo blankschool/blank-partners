@@ -1,3 +1,4 @@
+import React, { useMemo } from "react";
 import { ContentItem } from "@/hooks/useGoogleSheetsContent";
 import { getStageConfig, getPlatformConfig } from "@/lib/contentStages";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,9 +13,10 @@ interface ContentCardProps {
   variant?: "grid" | "list";
 }
 
-export function ContentCard({ item, variant = "grid" }: ContentCardProps) {
-  const stageConfig = getStageConfig(item.status);
-  const platformConfig = getPlatformConfig(item.socialMedia);
+export const ContentCard = React.memo(function ContentCard({ item, variant = "grid" }: ContentCardProps) {
+  const stageConfig = useMemo(() => getStageConfig(item.status), [item.status]);
+  const platformConfig = useMemo(() => getPlatformConfig(item.socialMedia), [item.socialMedia]);
+  
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return null;
@@ -146,4 +148,4 @@ export function ContentCard({ item, variant = "grid" }: ContentCardProps) {
       </CardContent>
     </Card>
   );
-}
+});

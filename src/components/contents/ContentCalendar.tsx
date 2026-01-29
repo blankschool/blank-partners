@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import { ContentItem } from "@/hooks/useGoogleSheetsContent";
-import { getStageConfig, getPlatformConfig } from "@/lib/contentStages";
+import { getStageConfig } from "@/lib/contentStages";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -21,7 +21,6 @@ import {
   subMonths,
   parseISO,
   isValid,
-  getDay,
   startOfWeek,
   endOfWeek,
 } from "date-fns";
@@ -55,7 +54,7 @@ function parseDate(dateStr: string): Date | null {
   return null;
 }
 
-export function ContentCalendar({ items, onDayClick }: ContentCalendarProps) {
+export const ContentCalendar = React.memo(function ContentCalendar({ items, onDayClick }: ContentCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   const monthStart = startOfMonth(currentMonth);
@@ -122,17 +121,17 @@ export function ContentCalendar({ items, onDayClick }: ContentCalendarProps) {
           ))}
         </div>
 
-        {/* Calendar grid */}
-        <div className="grid grid-cols-7 gap-2">
-          {calendarDays.map(day => {
-            const dateKey = format(day, 'yyyy-MM-dd');
-            const dayItems = itemsByDate.get(dateKey) || [];
-            const isCurrentMonth = isSameMonth(day, currentMonth);
-            const isToday = isSameDay(day, new Date());
+        {/* Calendar grid - Single TooltipProvider for performance */}
+        <TooltipProvider delayDuration={200}>
+          <div className="grid grid-cols-7 gap-2">
+            {calendarDays.map(day => {
+              const dateKey = format(day, 'yyyy-MM-dd');
+              const dayItems = itemsByDate.get(dateKey) || [];
+              const isCurrentMonth = isSameMonth(day, currentMonth);
+              const isToday = isSameDay(day, new Date());
 
-            return (
-              <TooltipProvider key={dateKey}>
-                <Tooltip>
+              return (
+                <Tooltip key={dateKey}>
                   <TooltipTrigger asChild>
                     <button
                       onClick={() => onDayClick?.(day, dayItems)}
@@ -208,11 +207,11 @@ export function ContentCalendar({ items, onDayClick }: ContentCalendarProps) {
                     </TooltipContent>
                   )}
                 </Tooltip>
-              </TooltipProvider>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        </TooltipProvider>
       </CardContent>
     </Card>
   );
-}
+});
