@@ -10,6 +10,7 @@ import Clients from "./pages/Clients";
 import Contents from "./pages/Contents";
 import Team from "./pages/Team";
 import Healthscore from "./pages/Healthscore";
+import Users from "./pages/Users";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -61,6 +62,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Healthscore />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/users"
+              element={
+                <ProtectedRoute>
+                  <Users />
                 </ProtectedRoute>
               }
             />
