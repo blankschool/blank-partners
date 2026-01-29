@@ -72,6 +72,41 @@ const Contents = () => {
     return Array.from(uniquePersons).sort();
   }, [items]);
 
+  // Items filtered by date, person, client, and search (for stats panel)
+  const itemsForStats = useMemo(() => {
+    return items.filter(item => {
+      // Search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesSearch = 
+          item.id.toLowerCase().includes(query) ||
+          item.client.toLowerCase().includes(query) ||
+          item.status.toLowerCase().includes(query);
+        if (!matchesSearch) return false;
+      }
+
+      // Person (SM) filter
+      if (selectedPerson !== "all") {
+        if (item.socialMedia !== selectedPerson) return false;
+      }
+
+      // Client filter
+      if (selectedClient !== "all") {
+        if (item.client !== selectedClient) return false;
+      }
+
+      // Date range filter
+      if (dateRange) {
+        const itemDate = parseDate(item.date);
+        if (!itemDate || !isWithinInterval(itemDate, { start: dateRange.from, end: dateRange.to })) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [items, searchQuery, selectedPerson, selectedClient, dateRange]);
+
   // Apply all filters
   const filteredItems = useMemo(() => {
     return items.filter(item => {
@@ -232,7 +267,7 @@ const Contents = () => {
       <div className="space-y-6">
         {/* Stage Stats Panel */}
         <StageStatsPanel
-          items={items}
+          items={itemsForStats}
           selectedGroup={selectedGroupFromPanel}
           onGroupClick={handleGroupFromPanel}
         />
