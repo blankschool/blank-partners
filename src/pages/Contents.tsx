@@ -11,7 +11,7 @@ import { DayContentDialog } from "@/components/contents/DayContentDialog";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { parseISO, isValid, isWithinInterval } from "date-fns";
-import { normalizeStatus } from "@/lib/contentStages";
+import { normalizeStatus, STAGE_GROUPS } from "@/lib/contentStages";
 
 function parseDate(dateStr: string): Date | null {
   if (!dateStr) return null;
@@ -41,7 +41,7 @@ const Contents = () => {
   const [selectedPerson, setSelectedPerson] = useState("all");
   const [selectedClient, setSelectedClient] = useState("all");
   const [selectedStage, setSelectedStage] = useState("all");
-  const [stageFromPanel, setStageFromPanel] = useState<string | null>(null);
+  const [selectedGroupFromPanel, setSelectedGroupFromPanel] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("calendar");
   const [periodType, setPeriodType] = useState<PeriodType>("all");
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date } | null>(null);
@@ -91,10 +91,18 @@ const Contents = () => {
         if (item.client !== selectedClient) return false;
       }
 
-      // Stage filter (from dropdown or panel)
-      const activeStage = stageFromPanel || (selectedStage !== "all" ? selectedStage : null);
-      if (activeStage) {
-        if (normalizeStatus(item.status) !== activeStage) return false;
+      // Stage filter (from dropdown)
+      if (selectedStage !== "all") {
+        if (normalizeStatus(item.status) !== selectedStage) return false;
+      }
+
+      // Group filter (from panel)
+      if (selectedGroupFromPanel) {
+        const group = STAGE_GROUPS.find(g => g.key === selectedGroupFromPanel);
+        if (group) {
+          const normalizedStatus = normalizeStatus(item.status);
+          if (!group.stages.includes(normalizedStatus)) return false;
+        }
       }
 
       // Date range filter
@@ -107,16 +115,16 @@ const Contents = () => {
 
       return true;
     });
-  }, [items, searchQuery, selectedPerson, selectedClient, selectedStage, stageFromPanel, dateRange]);
+  }, [items, searchQuery, selectedPerson, selectedClient, selectedStage, selectedGroupFromPanel, dateRange]);
 
   const handlePeriodChange = (type: PeriodType, range?: { from: Date; to: Date }) => {
     setPeriodType(type);
     setDateRange(range || null);
   };
 
-  const handleStageFromPanel = (stage: string | null) => {
-    setStageFromPanel(stage);
-    if (stage) {
+  const handleGroupFromPanel = (group: string | null) => {
+    setSelectedGroupFromPanel(group);
+    if (group) {
       setSelectedStage("all"); // Reset dropdown when selecting from panel
     }
   };
@@ -168,8 +176,8 @@ const Contents = () => {
         {/* Stage Stats Panel */}
         <StageStatsPanel
           items={items}
-          selectedStage={stageFromPanel}
-          onStageClick={handleStageFromPanel}
+          selectedGroup={selectedGroupFromPanel}
+          onGroupClick={handleGroupFromPanel}
         />
 
         {/* Filters */}
@@ -183,7 +191,7 @@ const Contents = () => {
           selectedStage={selectedStage}
           onStageChange={(stage) => {
             setSelectedStage(stage);
-            setStageFromPanel(null); // Reset panel selection when using dropdown
+            setSelectedGroupFromPanel(null); // Reset panel selection when using dropdown
           }}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
