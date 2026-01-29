@@ -21,16 +21,18 @@ function parseCSV(csvText: string): ContentItem[] {
 
   const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
   
-  // Find column indices
-  const idIndex = headers.findIndex(h => h.includes('content') && h.includes('id'));
-  const statusIndex = headers.findIndex(h => h === 'status' || h.includes('status'));
+  // Find column indices based on the actual Google Sheets structure
+  // Headers: Cliente, ID do conteúdo, Status, Data, Formato, Url, SM
+  const clientIndex = headers.findIndex(h => h === 'cliente' || h.includes('client'));
+  const idIndex = headers.findIndex(h => h.includes('id') && h.includes('conteúdo') || h.includes('content'));
+  const statusIndex = headers.findIndex(h => h === 'status');
   const dateIndex = headers.findIndex(h => h === 'data' || h === 'date');
-  const formatIndex = headers.findIndex(h => h === 'format' || h.includes('format'));
-  const urlIndex = headers.findIndex(h => h === 'url' || h.includes('url'));
-  const smIndex = headers.findIndex(h => h === 'sm' || h.includes('social') || h.includes('mídia'));
+  const formatIndex = headers.findIndex(h => h === 'formato' || h === 'format');
+  const urlIndex = headers.findIndex(h => h === 'url');
+  const smIndex = headers.findIndex(h => h === 'sm');
 
   console.log('Found headers:', headers);
-  console.log('Column indices:', { idIndex, statusIndex, dateIndex, formatIndex, urlIndex, smIndex });
+  console.log('Column indices:', { clientIndex, idIndex, statusIndex, dateIndex, formatIndex, urlIndex, smIndex });
 
   const items: ContentItem[] = [];
 
@@ -55,6 +57,7 @@ function parseCSV(csvText: string): ContentItem[] {
     }
     values.push(current.trim());
 
+    const client = clientIndex >= 0 ? values[clientIndex] || '' : '';
     const id = idIndex >= 0 ? values[idIndex] || '' : '';
     const status = statusIndex >= 0 ? values[statusIndex] || '' : '';
     const date = dateIndex >= 0 ? values[dateIndex] || '' : '';
@@ -62,15 +65,7 @@ function parseCSV(csvText: string): ContentItem[] {
     const url = urlIndex >= 0 ? values[urlIndex] || '' : '';
     const socialMedia = smIndex >= 0 ? values[smIndex] || '' : '';
 
-    // Extract client from ID (format: "ClientName - ContentTitle" or similar)
-    let client = '';
-    if (id.includes(' - ')) {
-      client = id.split(' - ')[0].trim();
-    } else if (id.includes('_')) {
-      client = id.split('_')[0].trim();
-    }
-
-    if (id || status || date) {
+    if (id || status || client) {
       items.push({
         id,
         status,
