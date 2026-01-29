@@ -34,7 +34,7 @@ export function AppSidebar() {
           </div>
           {!isCollapsed && (
             <div className="flex flex-col">
-              <span className="font-serif text-base font-normal text-white">MediaFlow</span>
+              <span className="font-serif text-base font-normal text-white">Blank</span>
               <span className="text-[10px] uppercase tracking-widest text-white/50">Agency ERP</span>
             </div>
           )}
