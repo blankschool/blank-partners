@@ -1,78 +1,64 @@
 
-
-# Fix Typography in StageStatsPanel
+# Distribute Stats Panel in 2 Rows with Full Width
 
 ## Problem
 
-The numbers in the StageStatsPanel are using the wrong typography. Looking at the screenshot and comparing with the Team page code, the numbers should use:
+Currently the stat cards use `flex flex-wrap gap-4` which:
+- Does not fill the full width of the container
+- Cards wrap naturally based on their content width
+- Last card (Cancelado) sits alone on the second row, not filling space
 
-- **Font**: `font-serif` (DM Serif Display) - NOT sans-serif
-- **Weight**: `font-normal` - NOT `font-semibold`
+## Solution
 
-The current code uses `font-semibold tabular-nums` which creates a bold sans-serif look instead of the elegant serif typography seen on the Team page.
+Use a **CSS Grid layout** to:
+1. First row: 6 cards (Todos + first 5 groups) distributed evenly across full width
+2. Second row: 1 card (Cancelado) on the left
 
-## Visual Comparison
+The grid should have 6 columns with equal width (`grid-cols-6`) so all cards on the first row are the same size. The last card (Cancelado) will naturally fall to the second row and take 1 column width.
+
+## Visual Layout
 
 ```text
-CURRENT (wrong):
-+-------------+
-| TODOS       |
-| 12342       |  <- Bold sans-serif (Inter semibold)
-+-------------+
-
-CORRECT (Team page style):
-+-------------+
-| TODOS       |
-| 12342       |  <- Elegant serif (DM Serif Display normal)
-+-------------+
++-------+----------+--------+----------+------------+----------+
+| TODOS | ESCREV.  | CRIAÇÃO| APROVAÇÃO| PRONTO P.. | PUBLICADO|
+| 12342 | 1749     | 493    | 106      | 247        | 7779     |
++-------+----------+--------+----------+------------+----------+
+| CANCELADO |
+| 437       |
++------------+
 ```
 
-## Code Reference from Team Page
-
-Looking at `src/pages/Team.tsx` line 122:
-```tsx
-<p className="mt-2 font-serif text-5xl font-normal tracking-tight text-foreground">
-  {teamData.length}
-</p>
-```
-
-## Implementation
+## Implementation Details
 
 ### File: `src/components/contents/StageStatsPanel.tsx`
 
-**Update number typography (lines 30-31 and 51-53):**
+**Change container from flex to grid (line 22):**
 
-| Property | Current (Wrong) | Correct |
-|----------|-----------------|---------|
-| Font family | (missing - defaults to sans) | `font-serif` |
-| Font weight | `font-semibold` | `font-normal` |
-| Numeric style | `tabular-nums` | (remove - serif uses proportional) |
+| Property | Current | Updated |
+|----------|---------|---------|
+| Layout | `flex flex-wrap gap-4` | `grid grid-cols-6 gap-4` |
 
-**For the "Todos" count (line 30-31):**
-```text
-// Current
-<span className="mt-2 text-5xl font-semibold tabular-nums tracking-tight text-foreground">
+**Update button styling:**
 
-// Fix
-<span className="mt-2 font-serif text-5xl font-normal tracking-tight text-foreground">
-```
+| Property | Current | Updated |
+|----------|---------|---------|
+| Min width | `min-w-[120px]` | Remove (grid handles width) |
+| Width | (none) | `w-full` (fill grid cell) |
 
-**For the group counts (line 51-53):**
-```text
-// Current
-<span className={cn("mt-2 text-5xl font-semibold tabular-nums tracking-tight", ...)}>
-
-// Fix
-<span className={cn("mt-2 font-serif text-5xl font-normal tracking-tight", ...)}>
-```
+The grid will ensure:
+- 6 equal columns on the first row
+- Cards stretch to fill their grid cell
+- Last card (7th item - Cancelado) wraps to second row, taking 1 column
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/components/contents/StageStatsPanel.tsx` | Update number typography to use `font-serif font-normal` instead of `font-semibold tabular-nums` |
+| `src/components/contents/StageStatsPanel.tsx` | Change to 6-column grid layout, remove min-width, add w-full to buttons |
 
 ## Expected Result
 
-Numbers in the StageStatsPanel will display with the elegant DM Serif Display font, matching the Team page typography exactly.
-
+1. First row: 6 cards evenly distributed across full width (Todos, Escrevendo, Criação, Aprovação, Pronto para postar, Publicado)
+2. Second row: Cancelado card on the left
+3. All cards have equal width within their row
+4. Clean, organized layout matching the visual hierarchy
