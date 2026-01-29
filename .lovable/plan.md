@@ -1,89 +1,80 @@
 
 
-# Fix OTP Login - Correct Token Type
+# Fix OTP Length Mismatch - 8 Digits in Email vs 6 in App
 
 ## Problem Identified
 
-After thorough investigation of the auth logs and Supabase documentation, I found the root cause:
+The Supabase project is configured to send **8-digit OTP codes** via email, but the application's UI only accepts **6 digits**. This mismatch causes all verification attempts to fail.
 
-**The `verifyOtp` function is using the wrong `type` parameter.**
-
-When calling `signInWithOtp` for an existing user (with `shouldCreateUser: false`), Supabase logs show:
-```
-"action":"user_recovery_requested"
-```
-
-This means Supabase internally treats this as a "recovery" flow, and the generated token is a **magic link/recovery token** - not a standard email OTP token.
-
-The current code uses:
-```typescript
-type: "email"  // Wrong for this flow
+Looking at the auth logs, the verification request shows:
+```json
+{"token":"202800","type":"magiclink"}  // 6 digits entered
+{"token":"280036","type":"magiclink"}  // 6 digits entered
 ```
 
-But it should use:
-```typescript
-type: "magiclink"  // Correct for signInWithOtp flow
-```
+But the email is sending 8-digit codes, so the user can only enter the first 6 digits, which doesn't match the full token.
 
 ---
 
-## Solution
+## Solution Options
 
-Update the `verifyOtp` function in `src/hooks/useAuth.tsx` to use `type: "magiclink"` instead of `type: "email"`.
+### Option A: Change Supabase to Send 6-Digit Codes (Recommended)
 
-### Current Code (Line 52-58)
-```typescript
-const verifyOtp = async (email: string, token: string) => {
-  const { error } = await supabase.auth.verifyOtp({
-    email,
-    token,
-    type: "email",  // <-- WRONG
-  });
-  return { error };
-};
-```
+**Dashboard Action Required:**
 
-### Fixed Code
-```typescript
-const verifyOtp = async (email: string, token: string) => {
-  const { error } = await supabase.auth.verifyOtp({
-    email,
-    token,
-    type: "magiclink",  // <-- CORRECT
-  });
-  return { error };
-};
-```
+1. Go to [Authentication > Providers > Email](https://supabase.com/dashboard/project/okrxrccvvztawynoavqd/auth/providers?provider=Email)
+2. Find the **"OTP Length"** setting
+3. Change it from **8** to **6**
+4. Save the configuration
+
+This is the simpler fix and requires no code changes.
 
 ---
 
-## Why This Works
+### Option B: Update App to Accept 8-Digit Codes
 
-According to Supabase documentation and GitHub discussions:
+If you prefer to keep 8-digit codes for security, update the UI:
 
-| Token Type | Use Case |
-|------------|----------|
-| `"email"` | For numeric OTP codes sent during **signup** flow |
-| `"magiclink"` | For tokens sent via `signInWithOtp()` for existing users |
-| `"recovery"` | For password reset flows |
+**Files to Modify:**
 
-Since we're using `signInWithOtp` with `shouldCreateUser: false` (login-only for existing users), the correct type is `"magiclink"`.
+| File | Changes |
+|------|---------|
+| `src/pages/Auth.tsx` | Change `maxLength={6}` to `maxLength={8}`, add 2 more `InputOTPSlot` components, update validation from `otp.length !== 6` to `otp.length !== 8`, update text from "6-digit code" to "8-digit code" |
+
+**Specific Changes in `src/pages/Auth.tsx`:**
+
+1. **Line 49**: Change `if (otp.length !== 6)` to `if (otp.length !== 8)`
+2. **Line 173**: Change "We sent a 6-digit code to" to "We sent an 8-digit code to"
+3. **Lines 180-194**: Update InputOTP:
+   - Change `maxLength={6}` to `maxLength={8}`
+   - Add two more InputOTPSlot components (index 6 and 7)
+4. **Line 198**: Change `otp.length !== 6` to `otp.length !== 8`
 
 ---
 
-## Files to Modify
+## Recommended Approach
 
-| File | Change |
-|------|--------|
-| `src/hooks/useAuth.tsx` | Change `type: "email"` to `type: "magiclink"` on line 56 |
+**Option A is recommended** because:
+- No code changes required
+- 6-digit codes are standard for OTP (used by Google, Microsoft, etc.)
+- Faster to implement
 
 ---
 
 ## Verification Steps
 
-After applying this fix:
+After applying either fix:
 1. Go to the Auth page and enter your email
-2. Check your email for the 6-digit code (from your updated template)
-3. Enter the code in the OTP input fields
-4. You should now be signed in successfully
+2. Click "Send Code"
+3. Check your email for the code (verify it matches the expected length)
+4. Enter the complete code in the OTP input fields
+5. You should now be signed in successfully
+
+---
+
+## Summary
+
+| Issue | Root Cause | Fix |
+|-------|------------|-----|
+| OTP code length mismatch | Supabase sends 8 digits, app expects 6 | Either change Supabase setting to 6, OR update app UI to accept 8 |
 
