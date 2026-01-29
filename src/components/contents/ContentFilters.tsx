@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -59,6 +59,14 @@ export function ContentFilters({
   persons,
 }: ContentFiltersProps) {
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [pendingRange, setPendingRange] = useState<{ from: Date; to?: Date } | undefined>(undefined);
+
+  // Sync pendingRange when popover closes or external dateRange changes
+  useEffect(() => {
+    if (!calendarOpen) {
+      setPendingRange(dateRange ? { from: dateRange.from, to: dateRange.to } : undefined);
+    }
+  }, [calendarOpen, dateRange]);
 
   const handlePeriodSelect = (type: PeriodType) => {
     const now = new Date();
@@ -185,16 +193,15 @@ export function ContentFilters({
               </div>
               <Calendar
                 mode="range"
-                selected={dateRange ? { from: dateRange.from, to: dateRange.to } : undefined}
+                selected={pendingRange}
                 onSelect={(range) => {
-                  if (range?.from) {
-                    if (range.to) {
-                      // Complete range selected - apply filter and close
-                      onPeriodChange("custom", { from: range.from, to: range.to });
-                      setCalendarOpen(false);
-                    }
-                    // If only "from" is selected, keep calendar open for second click
+                  setPendingRange(range || undefined);
+                  if (range?.from && range?.to) {
+                    // Complete range selected - apply filter and close
+                    onPeriodChange("custom", { from: range.from, to: range.to });
+                    setCalendarOpen(false);
                   }
+                  // If only "from" is selected, keep calendar open for second click
                 }}
                 locale={ptBR}
                 className={cn("p-3 pointer-events-auto")}
