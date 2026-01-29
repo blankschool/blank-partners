@@ -31,7 +31,7 @@ export function StageStatsPanel({ items, selectedGroup, onGroupClick }: StageSta
         )}
       >
         <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Todos</span>
-        <span className="mt-2 text-5xl font-semibold tabular-nums tracking-tight text-foreground">{items.length}</span>
+        <span className="mt-2 font-serif text-5xl font-normal tracking-tight text-foreground">{items.length}</span>
       </button>
 
       {STAGE_GROUPS.map(group => {
@@ -52,7 +52,7 @@ export function StageStatsPanel({ items, selectedGroup, onGroupClick }: StageSta
             <span className={cn("text-[10px] font-medium uppercase tracking-widest truncate max-w-[100px]", isSelected ? group.color : "text-muted-foreground")}>
               {group.label}
             </span>
-            <span className={cn("mt-2 text-5xl font-semibold tabular-nums tracking-tight", isSelected ? group.color : "text-foreground")}>
+            <span className={cn("mt-2 font-serif text-5xl font-normal tracking-tight", isSelected ? group.color : "text-foreground")}>
               {count}
             </span>
           </button>
