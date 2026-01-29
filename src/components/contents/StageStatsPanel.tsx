@@ -19,19 +19,19 @@ export function StageStatsPanel({ items, selectedGroup, onGroupClick }: StageSta
   }, {} as Record<string, number>);
 
   return (
-    <div className="flex flex-wrap gap-3">
+    <div className="flex flex-wrap gap-4">
       {/* All items stat */}
       <button
         onClick={() => onGroupClick(null)}
         className={cn(
-          "flex flex-col items-center justify-center min-w-[100px] p-4 rounded-xl border transition-all",
+          "flex flex-col items-start min-w-[120px] p-5 rounded-2xl border transition-all",
           selectedGroup === null
             ? "border-primary bg-primary/10 shadow-sm"
             : "border-border bg-card hover:border-primary/50"
         )}
       >
-        <span className="text-2xl font-serif">{items.length}</span>
-        <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Todos</span>
+        <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Todos</span>
+        <span className="mt-2 text-5xl font-semibold tabular-nums tracking-tight text-foreground">{items.length}</span>
       </button>
 
       {STAGE_GROUPS.map(group => {
@@ -43,17 +43,17 @@ export function StageStatsPanel({ items, selectedGroup, onGroupClick }: StageSta
             key={group.key}
             onClick={() => onGroupClick(isSelected ? null : group.key)}
             className={cn(
-              "flex flex-col items-center justify-center min-w-[100px] p-4 rounded-xl border transition-all",
+              "flex flex-col items-start min-w-[120px] p-5 rounded-2xl border transition-all",
               isSelected
                 ? `${group.borderColor} ${group.bgColor} shadow-sm`
                 : "border-border bg-card hover:border-primary/50"
             )}
           >
-            <span className={cn("text-2xl font-serif", isSelected ? group.color : "")}>
-              {count}
-            </span>
-            <span className={cn("text-[10px] uppercase tracking-widest truncate max-w-[80px]", isSelected ? group.color : "text-muted-foreground")}>
+            <span className={cn("text-[10px] font-medium uppercase tracking-widest truncate max-w-[100px]", isSelected ? group.color : "text-muted-foreground")}>
               {group.label}
+            </span>
+            <span className={cn("mt-2 text-5xl font-semibold tabular-nums tracking-tight", isSelected ? group.color : "text-foreground")}>
+              {count}
             </span>
           </button>
         );
