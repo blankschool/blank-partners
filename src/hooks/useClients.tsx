@@ -1,5 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface TeamMemberInfo {
   id: string;
@@ -15,7 +16,10 @@ export interface ClientWithStats {
 }
 
 export const useClients = () => {
-  return useQuery({
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
     queryKey: ["clients-with-members"],
     queryFn: async (): Promise<ClientWithStats[]> => {
       // Fetch clients
@@ -67,4 +71,94 @@ export const useClients = () => {
       }));
     },
   });
+
+  const createClientMutation = useMutation({
+    mutationFn: async (name: string) => {
+      const { data, error } = await supabase
+        .from("clients")
+        .insert({ name })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clients-with-members"] });
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      toast({
+        title: "Cliente criado",
+        description: "O cliente foi criado com sucesso.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao criar cliente",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateClientMutation = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const { error } = await supabase
+        .from("clients")
+        .update({ name })
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clients-with-members"] });
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      toast({
+        title: "Cliente atualizado",
+        description: "O cliente foi atualizado com sucesso.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao atualizar cliente",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteClientMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("clients")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clients-with-members"] });
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      toast({
+        title: "Cliente excluído",
+        description: "O cliente foi excluído com sucesso.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao excluir cliente",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  return {
+    ...query,
+    createClient: createClientMutation.mutate,
+    updateClient: updateClientMutation.mutate,
+    deleteClient: deleteClientMutation.mutate,
+    isCreating: createClientMutation.isPending,
+    isUpdating: updateClientMutation.isPending,
+    isDeleting: deleteClientMutation.isPending,
+  };
 };

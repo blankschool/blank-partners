@@ -1,7 +1,8 @@
-import { LayoutDashboard, Users, FileText, UsersRound, HeartPulse, LogOut, UserCog, User } from "lucide-react";
+import { LayoutDashboard, Users, FileText, UsersRound, HeartPulse, LogOut, UserCog, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
+import { useCurrentUserRole } from "@/hooks/useCurrentUserRole";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -27,9 +28,14 @@ const navigationItems = [
   { title: "Users", url: "/users", icon: UserCog },
 ];
 
+const adminNavigationItems = [
+  { title: "Admin", url: "/admin", icon: Shield },
+];
+
 export function AppSidebar() {
   const { state } = useSidebar();
   const { user, signOut } = useAuth();
+  const { isAdmin } = useCurrentUserRole();
   const { toast } = useToast();
   const isCollapsed = state === "collapsed";
 
@@ -76,6 +82,20 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       end={item.url === "/"}
+                      className="flex items-center gap-3 h-12 px-4 rounded-lg transition-all duration-300 hover:bg-white/10 [&.active]:bg-white/10"
+                      activeClassName="bg-white/10"
+                    >
+                      <item.icon className="h-5 w-5 shrink-0 text-white/70" />
+                      <span className="text-[15px] font-medium text-white">{item.title}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+              {isAdmin && adminNavigationItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild tooltip={item.title}>
+                    <NavLink
+                      to={item.url}
                       className="flex items-center gap-3 h-12 px-4 rounded-lg transition-all duration-300 hover:bg-white/10 [&.active]:bg-white/10"
                       activeClassName="bg-white/10"
                     >
