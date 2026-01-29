@@ -21,15 +21,15 @@ export function StatCard({ title, value, description, icon: Icon, trend, classNa
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">{title}</p>
-            <p className="mt-2 font-serif text-5xl font-normal tracking-tight text-foreground">{value}</p>
+            <p className="mt-2 font-sans text-5xl font-semibold tabular-nums tracking-tight text-foreground">{value}</p>
             {description && (
-              <p className="mt-3 text-sm text-muted-foreground">{description}</p>
+              <p className="mt-3 font-sans text-sm text-muted-foreground">{description}</p>
             )}
             {trend && (
               <div className="mt-4 flex items-center gap-2">
                 <span className="flex h-2 w-2 rounded-full bg-accent-orange" />
                 <p className={cn(
-                  "text-xs font-medium",
+                  "font-sans text-xs font-medium",
                   trend.isPositive ? "text-success" : "text-destructive"
                 )}>
                   {trend.isPositive ? "+" : ""}{trend.value}% from last month

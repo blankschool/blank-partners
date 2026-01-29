@@ -157,4 +157,8 @@
   .glass-subtle {
     @apply bg-card/60 backdrop-blur-sm border border-white/5;
   }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
 }
