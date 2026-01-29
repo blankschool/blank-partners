@@ -1,44 +1,57 @@
 
 
-# Fix Stats Panel to Fill Full Container Width
+# Distribute Stats Panel into 2 Even Rows (4+3)
 
 ## Problem
 
-Looking at the screenshot, the grid IS working (6 cards on row 1, 1 on row 2), but the cards are NOT stretching to fill the full container width. The grid container needs explicit full-width styling.
+Currently there are 7 stat cards using a 6-column grid:
+- Row 1: 6 cards
+- Row 2: 1 lonely card (Cancelado)
 
-## Current Issue
-
-The grid container has `grid grid-cols-6 gap-4` but is NOT filling the full width of its parent container.
+You want them distributed more evenly across 2 rows.
 
 ## Solution
 
-Add `w-full` to the grid container to ensure it stretches to the full width of the parent.
+Change to a **4-column grid** to get:
+- Row 1: 4 cards (Todos, Escrevendo, Criacao, Aprovacao)
+- Row 2: 3 cards (Pronto para postar, Publicado, Cancelado)
+
+```text
+Row 1: +--------+------------+----------+------------+
+       | TODOS  | ESCREVENDO | CRIACAO  | APROVACAO  |
+       | 12342  | 1748       | 494      | 106        |
+       +--------+------------+----------+------------+
+
+Row 2: +---------------+------------+------------+
+       | PRONTO PARA.. | PUBLICADO  | CANCELADO  |
+       | 246           | 7780       | 438        |
+       +---------------+------------+------------+
+```
 
 ## Implementation
 
 ### File: `src/components/contents/StageStatsPanel.tsx`
 
-**Line 22 - Add `w-full` to container:**
+**Line 22 - Change grid from 6 columns to 4 columns:**
 
 | Current | Updated |
 |---------|---------|
-| `grid grid-cols-6 gap-4` | `grid grid-cols-6 gap-4 w-full` |
+| `grid grid-cols-6 gap-4 w-full` | `grid grid-cols-4 gap-4 w-full` |
 
 ```tsx
-// Line 22
-<div className="grid grid-cols-6 gap-4 w-full">
+<div className="grid grid-cols-4 gap-4 w-full">
 ```
 
 ## Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/components/contents/StageStatsPanel.tsx` | Add `w-full` to the grid container (line 22) |
+| `src/components/contents/StageStatsPanel.tsx` | Change `grid-cols-6` to `grid-cols-4` (line 22) |
 
 ## Expected Result
 
-1. Grid container stretches to full width of parent
-2. 6 columns distribute evenly across the full width
-3. Each card takes 1/6th of the total width
-4. Cancelado card on second row takes same 1/6th width
+1. Row 1: 4 cards evenly distributed (Todos, Escrevendo, Criacao, Aprovacao)
+2. Row 2: 3 cards evenly distributed (Pronto para postar, Publicado, Cancelado)
+3. All cards take 1/4th of the total width
+4. Balanced, professional 2-row layout
 
