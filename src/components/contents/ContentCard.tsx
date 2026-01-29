@@ -3,7 +3,7 @@ import { getStageConfig, getPlatformConfig } from "@/lib/contentStages";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { ExternalLink, Calendar, User } from "lucide-react";
+import { ExternalLink, Calendar } from "lucide-react";
 import { format, parseISO, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -49,11 +49,10 @@ export function ContentCard({ item, variant = "grid" }: ContentCardProps) {
     return (
       <div className="flex items-center gap-4 p-4 transition-colors duration-200 hover:bg-muted/30 cursor-pointer">
         <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-foreground truncate">{item.id || "Sem título"}</h3>
-          {item.client && (
-            <p className="text-sm text-muted-foreground flex items-center gap-1">
-              <User className="h-3 w-3" />
-              {item.client}
+          <h3 className="font-medium text-foreground truncate">{item.client || "Sem título"}</h3>
+          {item.format && (
+            <p className="text-sm text-muted-foreground">
+              {item.format}
             </p>
           )}
         </div>
@@ -109,13 +108,12 @@ export function ContentCard({ item, variant = "grid" }: ContentCardProps) {
         </div>
         
         <h3 className="mt-4 font-medium text-foreground line-clamp-2">
-          {item.id || "Sem título"}
+          {item.client || "Sem título"}
         </h3>
         
-        {item.client && (
-          <p className="mt-1 text-sm text-muted-foreground flex items-center gap-1">
-            <User className="h-3 w-3" />
-            {item.client}
+        {item.format && (
+          <p className="mt-1 text-sm text-muted-foreground">
+            {item.format}
           </p>
         )}
         
