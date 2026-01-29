@@ -30,13 +30,13 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-orange">
-            <span className="font-serif text-lg font-normal text-accent-orange-foreground">M</span>
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-accent-orange to-chart-3">
+            <span className="font-serif text-lg font-normal text-white">M</span>
           </div>
           {!isCollapsed && (
             <div className="flex flex-col">
               <span className="font-serif text-base font-normal text-sidebar-foreground">MediaFlow</span>
-              <span className="text-xs text-sidebar-muted-foreground">Agency ERP</span>
+              <span className="text-[10px] uppercase tracking-widest text-sidebar-muted-foreground">Agency ERP</span>
             </div>
           )}
         </div>
@@ -60,10 +60,10 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       end={item.url === "/"}
-                      className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sidebar-foreground transition-all duration-300 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                      className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sidebar-foreground transition-all duration-300 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground [&.active]:bg-sidebar-accent [&.active]:text-accent-orange"
                       activeClassName="bg-sidebar-accent text-accent-orange font-medium"
                     >
-                      <item.icon className="h-5 w-5 shrink-0" />
+                      <item.icon className="h-5 w-5 shrink-0 transition-colors duration-300" />
                       {!isCollapsed && <span className="text-sm">{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
@@ -78,7 +78,7 @@ export function AppSidebar() {
         {!isCollapsed && (
           <div className="rounded-xl bg-sidebar-accent p-4">
             <p className="text-xs font-medium text-sidebar-foreground">Need help?</p>
-            <p className="mt-1 text-xs text-sidebar-muted-foreground">Contact support for assistance</p>
+            <p className="mt-1 text-[10px] text-sidebar-muted-foreground">Contact support for assistance</p>
           </div>
         )}
       </SidebarFooter>
