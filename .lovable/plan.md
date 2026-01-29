@@ -1,96 +1,87 @@
 
 
-# Fix Calendar Day Number Overlap
+# Update Content Stats Panel to Match Team Page Design
 
 ## Problem
 
-The content cards in the calendar day cells are overlapping and covering the day numbers (1, 2, 3, etc.) as shown in the screenshot. The current layout uses absolute positioning for both:
-- Day number: `absolute top-2 left-2`
-- Content cards: `absolute bottom-2 left-2 right-2`
-
-When there are many items, the content area grows upward and covers the day number.
+The StageStatsPanel on the Contents page uses a different visual style than the Team page stats:
+- Numbers are small (`text-2xl` vs `text-5xl`)
+- Layout is centered with number on top, label on bottom
+- Missing the hierarchical layout (label > number > description)
 
 ## Solution
 
-Change the day cell layout from fully absolute positioning to a **flex column layout** with:
-1. A fixed header area for the day number (always visible)
-2. A content area below that grows to show the cards
-
-This ensures the day number has dedicated space that cannot be overlapped.
+Redesign the StageStatsPanel to follow the Team page pattern:
+1. Label at TOP (uppercase, small, tracking-widest)
+2. Number in MIDDLE (serif, large 5xl, tabular-nums)
+3. Keep as interactive buttons for filtering
 
 ## Visual Comparison
 
 ```text
-BEFORE (overlapping):
-+---------------+
-| [Rony Meisler]| <- covers the "30"
-| [Rony Meisler]|
-| +49 mais      |
-+---------------+
+CURRENT (Contents):
++-------------+
+|    12340    |  <- small number (2xl)
+|    TODOS    |  <- label below
++-------------+
 
-AFTER (proper layout):
-+---------------+
-| 30            | <- day number always visible
-| [Rony Meisler]|
-| [Rony Meisler]|
-| +49 mais      |
-+---------------+
+TARGET (Team style):
++-------------+
+| TODOS       |  <- label on top (uppercase tracking)
+| 12340       |  <- large number (5xl serif)
++-------------+
 ```
 
 ## Implementation Details
 
-### File: `src/components/contents/ContentCalendar.tsx`
+### File: `src/components/contents/StageStatsPanel.tsx`
 
-**Change day cell from absolute positioning to flex column (lines 137-176):**
+**Update button layout and typography:**
 
-| Element | Current | Updated |
-|---------|---------|---------|
-| Button layout | Relative with absolute children | `flex flex-col` |
-| Day number | `absolute top-2 left-2` | Static, in header area with margin-bottom |
-| Content area | `absolute bottom-2` | `flex-1` to fill remaining space, positioned at bottom with `mt-auto` |
+| Property | Current | Updated |
+|----------|---------|---------|
+| Button layout | `items-center justify-center` | `items-start` (left-aligned) |
+| Number size | `text-2xl` | `text-4xl` or `text-5xl` |
+| Number font | `font-serif` | `font-sans text-5xl font-semibold tabular-nums tracking-tight` |
+| Label position | Below number | Above number |
+| Padding | `p-4` | `p-5` |
+| Min width | `min-w-[100px]` | `min-w-[120px]` |
+
+**New structure for each stat button:**
 
 ```text
-// Before
-<button className="min-h-[100px] p-2 rounded-xl ... relative">
-  <span className="absolute top-2 left-2">30</span>
-  <div className="absolute bottom-2 left-2 right-2">
-    [content cards]
-  </div>
-</button>
-
-// After
-<button className="min-h-[100px] p-2 rounded-xl ... flex flex-col">
-  <span className="text-xs font-medium text-foreground mb-1">30</span>
-  <div className="mt-auto space-y-1 overflow-hidden">
-    [content cards]
-  </div>
+<button className="flex flex-col items-start min-w-[120px] p-5 rounded-2xl border ...">
+  <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+    {label}
+  </span>
+  <span className="mt-2 font-sans text-5xl font-semibold tabular-nums tracking-tight text-foreground">
+    {count}
+  </span>
 </button>
 ```
 
-## Specific Code Changes
+**Apply to both "Todos" button and group buttons:**
 
-**Button className (line 139-146):**
-- Remove `relative`
-- Add `flex flex-col`
+The same pattern applies to the "All items" stat and each stage group button, maintaining the interactive click-to-filter behavior.
 
-**Day number span (line 148-150):**
-- Remove `absolute top-2 left-2`
-- Add `mb-1` for spacing below
+## Typography Alignment with Memory
 
-**Content preview div (line 154):**
-- Remove `absolute bottom-2 left-2 right-2`
-- Add `mt-auto` to push content to the bottom of the flex container
+Per the project's typography memory:
+- Use `font-sans` (Inter) with `tabular-nums` for numerical metrics
+- Use `text-5xl font-semibold tracking-tight` for large numbers
+- Reserve `font-serif` for textual headings, not numbers
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/components/contents/ContentCalendar.tsx` | Change day cell from absolute positioning to flex column layout |
+| `src/components/contents/StageStatsPanel.tsx` | Update layout, typography, and spacing to match Team page pattern |
 
 ## Expected Result
 
-1. Day numbers (1-31) are always visible at the top of each cell
-2. Content cards appear below the day number, pushed to the bottom
-3. No overlap between day number and content cards
-4. Layout remains clean and organized with proper spacing
+1. Numbers display as large `text-5xl` with Inter font and tabular-nums
+2. Labels appear ABOVE the numbers in small uppercase style
+3. Layout is left-aligned like Team page cards
+4. Interactive filtering behavior is preserved
+5. Selected state styling continues to work
 
