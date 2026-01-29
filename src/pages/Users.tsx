@@ -77,8 +77,12 @@ export default function Users() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-semibold text-foreground">Users</h1>
-            <p className="text-muted-foreground mt-1">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="flex h-2 w-2 rounded-full bg-accent-orange" />
+              <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Team Management</span>
+            </div>
+            <h1 className="font-serif text-3xl font-normal text-foreground">Users</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
               Manage team members and their roles
             </p>
           </div>
@@ -95,7 +99,12 @@ export default function Users() {
         </div>
 
         {/* Stats */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <span className="flex h-2 w-2 rounded-full bg-accent-orange" />
+            <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Overview</span>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             title="Total Users"
             value={stats.totalUsers}
@@ -111,35 +120,44 @@ export default function Users() {
             value={stats.teamsCount}
             icon={Building2}
           />
-          <StatCard
-            title="New (30 days)"
-            value={stats.recentUsers}
-            icon={UserPlus}
-          />
+            <StatCard
+              title="New (30 days)"
+              value={stats.recentUsers}
+              icon={UserPlus}
+            />
+          </div>
         </div>
 
         {/* Users Grid */}
         {filteredProfiles.length === 0 ? (
-          <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+          <Card className="rounded-2xl bg-card border border-border shadow-sm">
             <CardContent className="flex flex-col items-center justify-center py-16">
-              <UsersIcon className="h-12 w-12 text-muted-foreground/50" />
-              <p className="mt-4 text-lg font-medium text-foreground">No users found</p>
-              <p className="text-sm text-muted-foreground">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary">
+                <UsersIcon className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <p className="mt-6 font-serif text-2xl font-normal text-foreground">No users found</p>
+              <p className="mt-2 text-sm text-muted-foreground">
                 {searchQuery ? "Try adjusting your search query" : "Users will appear here once they sign up"}
               </p>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredProfiles.map((profile) => (
-              <UserCard
-                key={profile.id}
-                profile={profile}
-                isAdmin={isAdmin}
-                onEdit={setEditingProfile}
-                onDelete={setDeletingProfileId}
-              />
-            ))}
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <span className="flex h-2 w-2 rounded-full bg-accent-orange" />
+              <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Team Members</span>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {filteredProfiles.map((profile) => (
+                <UserCard
+                  key={profile.id}
+                  profile={profile}
+                  isAdmin={isAdmin}
+                  onEdit={setEditingProfile}
+                  onDelete={setDeletingProfileId}
+                />
+              ))}
+            </div>
           </div>
         )}
       </div>
