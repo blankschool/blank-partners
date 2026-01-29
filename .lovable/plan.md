@@ -1,47 +1,80 @@
 
 
-# Fix Calendar Range Selection Behavior
+# Fix Calendar Date Selection Visual Feedback
 
 ## Problem
 
-Currently, the calendar closes immediately when clicking the first date. The user wants to:
-1. Click first date → Select it, keep calendar **open**
-2. Click second date → Complete the range, **then** close and filter
+When clicking a date in the calendar, nothing visually changes because:
+
+1. The Calendar uses **controlled mode** with `selected={dateRange}`
+2. When clicking the first date, `onSelect` receives `{ from: date, to: undefined }`
+3. Since `to` is undefined, we don't update `dateRange` via `onPeriodChange`
+4. The Calendar re-renders with the **same old** `selected` value
+5. Result: The first click appears to do nothing
 
 ## Solution
 
-Only close the popover when both `from` and `to` dates are selected (a complete range). If only `from` is selected, keep the calendar open so the user can select the end date.
+Add **local state** in `ContentFilters` to track the intermediate selection while the user picks dates. Only propagate to the parent when a complete range is selected.
 
 ## Implementation
 
 ### File: `src/components/contents/ContentFilters.tsx`
 
-**Lines 189-195** - Update the `onSelect` handler:
+**1. Add local state for intermediate selection (around line 61)**
 
 ```tsx
-onSelect={(range) => {
-  if (range?.from) {
-    if (range.to) {
+const [calendarOpen, setCalendarOpen] = useState(false);
+const [pendingRange, setPendingRange] = useState<{ from: Date; to?: Date } | undefined>(undefined);
+```
+
+**2. Sync pendingRange when dateRange prop changes or popover closes (add useEffect)**
+
+```tsx
+// Reset pending range when popover closes or external dateRange changes
+React.useEffect(() => {
+  if (!calendarOpen) {
+    setPendingRange(dateRange ? { from: dateRange.from, to: dateRange.to } : undefined);
+  }
+}, [calendarOpen, dateRange]);
+```
+
+**3. Update Calendar to use pendingRange for display (line 187-188)**
+
+```tsx
+<Calendar
+  mode="range"
+  selected={pendingRange}
+  onSelect={(range) => {
+    setPendingRange(range || undefined);
+    if (range?.from && range?.to) {
       // Complete range selected - apply filter and close
       onPeriodChange("custom", { from: range.from, to: range.to });
       setCalendarOpen(false);
     }
     // If only "from" is selected, keep calendar open for second click
-  }
-}}
+  }}
+  locale={ptBR}
+  className={cn("p-3 pointer-events-auto")}
+/>
 ```
 
-## User Experience
+**4. Add React import for useEffect (line 1)**
 
-| Action | Result |
-|--------|--------|
-| Click first date | Date is highlighted, calendar stays open |
-| Click second date | Range is selected, calendar closes, filter applied |
-| Click preset (Tudo/Semana/Mês) | Applies immediately and closes |
+```tsx
+import { useState, useEffect } from "react";
+```
+
+## How It Works
+
+| Step | Action | pendingRange | dateRange | Visual |
+|------|--------|--------------|-----------|--------|
+| 1 | Open popover | syncs from dateRange | unchanged | Shows current selection |
+| 2 | Click first date | `{ from: Jan 15 }` | unchanged | First date highlighted |
+| 3 | Click second date | `{ from: Jan 15, to: Jan 20 }` | updated to range | Range highlighted, popover closes |
 
 ## Files to Modify
 
-| File | Change |
-|------|--------|
-| `src/components/contents/ContentFilters.tsx` | Only close calendar when both dates are selected |
+| File | Changes |
+|------|---------|
+| `src/components/contents/ContentFilters.tsx` | Add `pendingRange` state, useEffect to sync, update Calendar to use local state |
 
