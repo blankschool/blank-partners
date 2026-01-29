@@ -110,73 +110,82 @@ export function EditTeamMemberDialog({
   // Filter out the current member from leaders list
   const availableLeaders = leaders.filter((l) => l.id !== member?.id);
 
+  const inputClassName = "bg-white border-gray-300 text-gray-900 placeholder:text-gray-400";
+  const labelClassName = "text-gray-700";
+  const selectTriggerClassName = "bg-white border-gray-300 text-gray-900";
+  const selectContentClassName = "bg-white border-gray-200 text-gray-900 z-50";
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh]">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] bg-white text-gray-900 border-gray-200">
         <DialogHeader>
-          <DialogTitle>Editar Membro da Equipe</DialogTitle>
+          <DialogTitle className="text-gray-900">Editar Membro da Equipe</DialogTitle>
         </DialogHeader>
 
         <ScrollArea className="max-h-[60vh] pr-4">
           <div className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="fullName">Nome Completo *</Label>
+                <Label htmlFor="fullName" className={labelClassName}>Nome Completo *</Label>
                 <Input
                   id="fullName"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="Nome completo"
+                  className={inputClassName}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email *</Label>
+                <Label htmlFor="email" className={labelClassName}>Email *</Label>
                 <Input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="email@exemplo.com"
+                  className={inputClassName}
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="birthDate">Data de Nascimento</Label>
+                <Label htmlFor="birthDate" className={labelClassName}>Data de Nascimento</Label>
                 <Input
                   id="birthDate"
                   type="date"
                   value={birthDate}
                   onChange={(e) => setBirthDate(e.target.value)}
+                  className={inputClassName}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="startDate">Data de Início</Label>
+                <Label htmlFor="startDate" className={labelClassName}>Data de Início</Label>
                 <Input
                   id="startDate"
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
+                  className={inputClassName}
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="area">Área</Label>
+                <Label htmlFor="area" className={labelClassName}>Área</Label>
                 <Select
                   value={area ?? "none"}
                   onValueChange={(value) =>
                     setArea(value === "none" ? null : (value as TeamType))
                   }
                 >
-                  <SelectTrigger className="bg-background">
+                  <SelectTrigger className={selectTriggerClassName}>
                     <SelectValue placeholder="Selecionar área" />
                   </SelectTrigger>
-                  <SelectContent className="bg-popover border-border z-50">
+                  <SelectContent className={selectContentClassName}>
                     <SelectItem value="none">Nenhuma</SelectItem>
                     {TEAMS.map((t) => (
                       <SelectItem key={t} value={t}>
@@ -188,17 +197,17 @@ export function EditTeamMemberDialog({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="seniority">Senioridade</Label>
+                <Label htmlFor="seniority" className={labelClassName}>Senioridade</Label>
                 <Select
                   value={seniority ?? "none"}
                   onValueChange={(value) =>
                     setSeniority(value === "none" ? null : (value as SeniorityLevel))
                   }
                 >
-                  <SelectTrigger className="bg-background">
+                  <SelectTrigger className={selectTriggerClassName}>
                     <SelectValue placeholder="Selecionar senioridade" />
                   </SelectTrigger>
-                  <SelectContent className="bg-popover border-border z-50">
+                  <SelectContent className={selectContentClassName}>
                     <SelectItem value="none">Nenhuma</SelectItem>
                     {SENIORITY_LEVELS.map((s) => (
                       <SelectItem key={s} value={s}>
@@ -212,38 +221,40 @@ export function EditTeamMemberDialog({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="position">Cargo</Label>
+                <Label htmlFor="position" className={labelClassName}>Cargo</Label>
                 <Input
                   id="position"
                   value={position}
                   onChange={(e) => setPosition(e.target.value)}
                   placeholder="Ex: Designer, Desenvolvedor"
+                  className={inputClassName}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="squad">Squad</Label>
+                <Label htmlFor="squad" className={labelClassName}>Squad</Label>
                 <Input
                   id="squad"
                   value={squad}
                   onChange={(e) => setSquad(e.target.value)}
                   placeholder="Nome do squad"
+                  className={inputClassName}
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="leader">Líder</Label>
+              <Label htmlFor="leader" className={labelClassName}>Líder</Label>
               <Select
                 value={leaderId ?? "none"}
                 onValueChange={(value) =>
                   setLeaderId(value === "none" ? null : value)
                 }
               >
-                <SelectTrigger className="bg-background">
+                <SelectTrigger className={selectTriggerClassName}>
                   <SelectValue placeholder="Selecionar líder" />
                 </SelectTrigger>
-                <SelectContent className="bg-popover border-border z-50">
+                <SelectContent className={selectContentClassName}>
                   <SelectItem value="none">Nenhum</SelectItem>
                   {availableLeaders.map((leader) => (
                     <SelectItem key={leader.id} value={leader.id}>
@@ -255,10 +266,10 @@ export function EditTeamMemberDialog({
             </div>
 
             <div className="space-y-2">
-              <Label>Clientes</Label>
-              <div className="rounded-lg border border-border p-3 max-h-40 overflow-y-auto">
+              <Label className={labelClassName}>Clientes</Label>
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 max-h-40 overflow-y-auto">
                 {clients.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Nenhum cliente disponível</p>
+                  <p className="text-sm text-gray-500">Nenhum cliente disponível</p>
                 ) : (
                   <div className="space-y-2">
                     {clients.map((client) => (
@@ -270,7 +281,7 @@ export function EditTeamMemberDialog({
                         />
                         <label
                           htmlFor={`edit-client-${client.id}`}
-                          className="text-sm cursor-pointer"
+                          className="text-sm text-gray-700 cursor-pointer"
                         >
                           {client.name}
                         </label>
@@ -284,12 +295,17 @@ export function EditTeamMemberDialog({
         </ScrollArea>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)}
+            className="border-gray-300 text-gray-700 hover:bg-gray-100"
+          >
             Cancelar
           </Button>
           <Button
             onClick={handleSave}
             disabled={isLoading || !fullName.trim() || !email.trim()}
+            className="bg-gray-900 text-white hover:bg-gray-800"
           >
             {isLoading ? "Salvando..." : "Salvar"}
           </Button>
