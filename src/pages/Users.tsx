@@ -3,6 +3,7 @@ import { Search, Users as UsersIcon, Shield, Building2, UserPlus } from "lucide-
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { StatCard } from "@/components/dashboard/StatCard";
 import { UserCard } from "@/components/users/UserCard";
 import { EditUserDialog } from "@/components/users/EditUserDialog";
 import { useUsers, type Profile } from "@/hooks/useUsers";
@@ -94,62 +95,27 @@ export default function Users() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                  <UsersIcon className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <p className="text-2xl font-semibold text-foreground">{stats.totalUsers}</p>
-                  <p className="text-sm text-muted-foreground">Total Users</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent-orange/10">
-                  <Shield className="h-6 w-6 text-accent-orange" />
-                </div>
-                <div>
-                  <p className="text-2xl font-semibold text-foreground">{stats.admins}</p>
-                  <p className="text-sm text-muted-foreground">Admins</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-success/10">
-                  <Building2 className="h-6 w-6 text-success" />
-                </div>
-                <div>
-                  <p className="text-2xl font-semibold text-foreground">{stats.teamsCount}</p>
-                  <p className="text-sm text-muted-foreground">Teams</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary/50">
-                  <UserPlus className="h-6 w-6 text-secondary-foreground" />
-                </div>
-                <div>
-                  <p className="text-2xl font-semibold text-foreground">{stats.recentUsers}</p>
-                  <p className="text-sm text-muted-foreground">New (30 days)</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            title="Total Users"
+            value={stats.totalUsers}
+            icon={UsersIcon}
+          />
+          <StatCard
+            title="Admins"
+            value={stats.admins}
+            icon={Shield}
+          />
+          <StatCard
+            title="Teams"
+            value={stats.teamsCount}
+            icon={Building2}
+          />
+          <StatCard
+            title="New (30 days)"
+            value={stats.recentUsers}
+            icon={UserPlus}
+          />
         </div>
 
         {/* Users Grid */}
