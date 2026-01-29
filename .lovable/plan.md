@@ -1,28 +1,65 @@
 
-
-# Update Google Sheets URL Secret
+# Typography and Default View Fixes for Contents Page
 
 ## Overview
-Update the `GOOGLE_SHEETS_URL` Supabase secret with the correct CSV export URL provided by the user.
+Apply the project's typography standards to the Contents page and change the default view to calendar.
 
 ## Changes Required
 
-| Component | Action |
-|-----------|--------|
-| `GOOGLE_SHEETS_URL` secret | Update to CSV format URL |
+### 1. StageStatsPanel.tsx - Fix Numbers and Labels Typography
 
-## New Secret Value
-```
-https://docs.google.com/spreadsheets/d/e/2PACX-1vQkr0h2ejrWd_kK71GjUJmEJvK9EeFGEnQp6SNqbffKS2xqazypcbmEioQ7YKQYG5SD_YQpbbi-2B4o/pub?gid=0&single=true&output=csv
-```
+**Numbers (metrics)**
+- Add `font-serif` class to display numbers in DM Serif Display
+- Current: `text-2xl font-semibold`
+- Updated: `text-2xl font-serif`
 
-## No Code Changes Needed
-The edge function and frontend components are already correctly implemented. Only the secret value needs to be updated.
+**Labels**
+- Add uppercase and tracking-widest for the tiny label style
+- Current: `text-xs text-muted-foreground`
+- Updated: `text-[10px] uppercase tracking-widest text-muted-foreground`
+
+### 2. Contents.tsx - Change Default View to Calendar
+
+**viewMode initial state**
+- Current: `useState<ViewMode>("grid")`
+- Updated: `useState<ViewMode>("calendar")`
+
+### 3. ContentFilters.tsx - Ensure Sans-Serif Typography
+
+**Add explicit font-sans** to filter labels and select triggers for consistency with the Inter font family used for body/UI text.
+
+## Files to Modify
+
+| File | Change |
+|------|--------|
+| `src/components/contents/StageStatsPanel.tsx` | Apply `font-serif` to numbers, `uppercase tracking-widest` to labels |
+| `src/pages/Contents.tsx` | Change default `viewMode` from `"grid"` to `"calendar"` |
+| `src/components/contents/ContentFilters.tsx` | Add `font-sans` to select triggers and filter text |
+
+## Technical Details
+
+```text
+StageStatsPanel.tsx changes:
++------------------------------------------+
+| Numbers: text-2xl font-serif             |
+| Labels:  text-[10px] uppercase           |
+|          tracking-widest                 |
++------------------------------------------+
+
+Contents.tsx changes:
++------------------------------------------+
+| viewMode: useState("calendar")           |
++------------------------------------------+
+
+ContentFilters.tsx changes:
++------------------------------------------+
+| SelectTrigger: font-sans                 |
+| Button labels: font-sans                 |
++------------------------------------------+
+```
 
 ## Expected Result
-After updating the secret, the Contents page will:
-1. Successfully fetch CSV data from Google Sheets
-2. Display the stage stats panel with content counts
-3. Show content items in grid, list, or calendar view
-4. Enable filtering by platform, client, stage, and date period
-
+- Stage stat numbers display in DM Serif Display font
+- Stage labels appear as tiny uppercase text with wide letter spacing
+- Calendar view loads by default when visiting the Contents page
+- All filter elements use consistent Inter font
