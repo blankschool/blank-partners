@@ -39,8 +39,13 @@ export const SOCIAL_MEDIA_PLATFORMS = [
 ];
 
 export function getStageConfig(status: string): ContentStage | undefined {
-  const normalizedStatus = status.toLowerCase().trim();
-  return CONTENT_STAGES.find(stage => stage.key === normalizedStatus);
+  // Strip emojis and special characters, then normalize
+  const cleanedStatus = status
+    .replace(/[\u{1F300}-\u{1F9FF}]/gu, '') // Remove emojis
+    .replace(/[^\w\sáàâãéèêíïóôõöúçñ]/gi, '') // Keep only letters/numbers/accents
+    .toLowerCase()
+    .trim();
+  return CONTENT_STAGES.find(stage => stage.key === cleanedStatus);
 }
 
 export function getPlatformConfig(platform: string) {
