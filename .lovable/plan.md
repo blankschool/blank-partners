@@ -1,141 +1,131 @@
 
 
-# Adicionar Filtros na Página de Clientes
+# Adicionar Colunas de Equipe na Tabela de Clientes (Admin)
 
 ## Objetivo
 
-Adicionar dois novos filtros à página de Clientes:
-1. **Filtro por Pessoa** - Filtrar clientes por membro da equipe associado
-2. **Filtro por Alocação de Social Media** - Mostrar clientes com ou sem Social Media alocado
+Substituir a coluna genérica "Responsáveis" por três colunas específicas:
+1. **Social Media** - Membro responsável pelo Social Media do cliente
+2. **Editor** - Membro responsável pela edição de vídeo
+3. **Designer** - Membro responsável pelo design
 
 ## Análise Técnica
 
-### Dados Disponíveis
+### Dados Atuais
 
-Os clientes já possuem a lista de membros associados (`members`) através do hook `useClients`:
-- `client.members` → Array de `{id, full_name}`
-- `client.member_count` → Número total de membros
+O hook `useClients` já busca os membros de cada cliente, mas apenas com `area`. Para identificar o cargo específico, é necessário também buscar o campo `position` de cada membro.
 
-Os membros da equipe têm uma propriedade `area` que identifica se são "Social Media".
+Cargos relevantes no banco:
+- **Social Media**: `Social Media`, `Líder de Social Media`, `Coordenador de Social Media`
+- **Editor**: `Editor de Vídeos`
+- **Designer**: `Designer`, `Líder de Design`
 
-### Lógica do Filtro de Social Media
+### Lógica de Exibição
 
-Um cliente **tem Social Media alocado** quando pelo menos um de seus membros pertence à área "Social Media". Para isso, será necessário:
-
-1. Buscar informações de área dos team_members
-2. Verificar se algum membro do cliente é da área "Social Media"
+Para cada cliente, mostrar o **primeiro nome** do membro que ocupa cada função:
+- Se não houver ninguém atribuído, mostrar "—"
+- Priorizar cargos "base" sobre líderes/coordenadores (opcional)
 
 ## Implementação
 
-### Arquivos a Criar
-
-1. **`src/components/clients/ClientFilters.tsx`** - Componente de filtros seguindo o padrão de `TeamFilters.tsx`
-
 ### Arquivos a Modificar
 
-1. **`src/hooks/useClients.tsx`** - Incluir a área do membro na estrutura de dados
-2. **`src/pages/Clients.tsx`** - Adicionar os estados de filtro e lógica de filtragem
-
-### Estrutura do Componente ClientFilters
-
-```text
-┌─────────────────────────────────────────────────────────────────────┐
-│  [🔍 Buscar clientes...]  [Pessoa ▼]  [Alocação SM ▼]               │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-### Opções dos Filtros
-
-**Filtro "Pessoa":**
-- Todos os responsáveis (default)
-- Lista de membros únicos que estão alocados em algum cliente
-
-**Filtro "Alocação SM":**
-- Todos
-- Com Social Media
-- Sem Social Media
-
-## Detalhes Técnicos
+1. **`src/hooks/useClients.tsx`** - Adicionar `position` ao `TeamMemberInfo`
+2. **`src/components/admin/ClientsTab.tsx`** - Reorganizar colunas da tabela
 
 ### Passo 1: Atualizar useClients.tsx
 
-Adicionar a propriedade `area` à interface `TeamMemberInfo`:
+Adicionar o campo `position` à interface e à query:
 
 ```typescript
 interface TeamMemberInfo {
   id: string;
   full_name: string;
-  area: string | null;  // Nova propriedade
+  area: string | null;
+  position: string | null;  // Novo campo
 }
 ```
 
-Buscar a área do membro na query:
+Atualizar a query para incluir `position`:
 
 ```typescript
-const { data: assignments } = await supabase
-  .from("team_member_clients")
-  .select(`
-    client_id,
-    team_members (
-      id,
-      full_name,
-      area
-    )
-  `);
+.select(`
+  client_id,
+  team_members (
+    id,
+    full_name,
+    area,
+    position
+  )
+`)
 ```
 
-### Passo 2: Criar ClientFilters.tsx
+### Passo 2: Atualizar ClientsTab.tsx
 
-Componente que recebe:
-- `searchQuery` / `onSearchChange`
-- `selectedMember` / `onMemberChange` 
-- `selectedAllocation` / `onAllocationChange`
-- `members` - Lista de membros únicos para o dropdown
-
-### Passo 3: Atualizar Clients.tsx
-
-Adicionar estados:
-- `selectedMember: string` → "all" ou ID do membro
-- `selectedAllocation: string` → "all" | "with-sm" | "without-sm"
-
-Adicionar lógica de filtragem:
+Criar helper functions para extrair membros por cargo:
 
 ```typescript
-const filteredClients = useMemo(() => {
-  return clients?.filter((client) => {
-    // Filtro de busca (existente)
-    if (searchQuery && !client.name.toLowerCase().includes(searchQuery.toLowerCase())) {
-      return false;
-    }
+const getMemberByPosition = (members: TeamMemberInfo[], positions: string[]) => {
+  const member = members.find(m => 
+    m.position && positions.includes(m.position)
+  );
+  return member ? member.full_name.split(" ")[0] : null;
+};
 
-    // Filtro por pessoa
-    if (selectedMember !== "all") {
-      if (!client.members.some(m => m.id === selectedMember)) {
-        return false;
-      }
-    }
+const getSocialMedia = (members: TeamMemberInfo[]) => 
+  getMemberByPosition(members, ["Social Media", "Líder de Social Media", "Coordenador de Social Media"]);
 
-    // Filtro por alocação de SM
-    if (selectedAllocation !== "all") {
-      const hasSocialMedia = client.members.some(m => m.area === "Social Media");
-      if (selectedAllocation === "with-sm" && !hasSocialMedia) return false;
-      if (selectedAllocation === "without-sm" && hasSocialMedia) return false;
-    }
+const getEditor = (members: TeamMemberInfo[]) => 
+  getMemberByPosition(members, ["Editor de Vídeos"]);
 
-    return true;
-  }) || [];
-}, [clients, searchQuery, selectedMember, selectedAllocation]);
+const getDesigner = (members: TeamMemberInfo[]) => 
+  getMemberByPosition(members, ["Designer", "Líder de Design"]);
 ```
+
+Reorganizar as colunas da tabela:
+
+```text
+| Avatar | Cliente | Membros | Escopo | SM | Editor | Designer | Ações |
+```
+
+### Nova Estrutura do Header
+
+```typescript
+<span className="w-8"></span>           {/* Avatar */}
+<span className="flex-1 min-w-0">Cliente</span>
+<span className="w-20 text-center">Membros</span>
+<span className="w-44 hidden lg:block">Escopo</span>
+<span className="w-24 hidden md:block">SM</span>
+<span className="w-24 hidden md:block">Editor</span>
+<span className="w-24 hidden md:block">Designer</span>
+<span className="w-20 text-right">Ações</span>
+```
+
+### Nova Estrutura das Linhas
+
+Para cada cliente, exibir:
+- Nome do Social Media (primeiro nome apenas)
+- Nome do Editor de Vídeo (primeiro nome apenas)
+- Nome do Designer (primeiro nome apenas)
+
+Se o campo estiver vazio, mostrar "—" em cor mais suave.
 
 ## Resultado Visual
 
-A seção de filtros ficará assim:
-
 ```text
-┌──────────────────────────────────────────────────────────────────────────┐
-│ [🔍 Buscar clientes...]   [Responsável ▼]   [Alocação SM ▼]   [+ Adicionar Cliente]
-└──────────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│     │ Cliente        │ Membros │ Escopo              │ SM      │ Editor  │ Designer │ Ações │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│ RB  │ Reinaldo Boess │    3    │ IG: 30              │ Giovana │ Luiz    │ Henrique │ ⋮     │
+│ SC  │ Sandra Chayo   │    2    │ IG: 30              │ Maria   │ Daniel  │ —        │ ⋮     │
+│ FM  │ Fábio Müller   │    3    │ IG: 12 | LI: 8      │ Paulo   │ Willian │ Lucas    │ ⋮     │
+└────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-Os cards de estatísticas e a lista de clientes serão atualizados conforme os filtros aplicados.
+## Resumo das Alterações
+
+| Arquivo | Alteração |
+|---------|-----------|
+| `src/hooks/useClients.tsx` | Adicionar `position` ao `TeamMemberInfo` e à query Supabase |
+| `src/components/admin/ClientsTab.tsx` | Substituir coluna "Responsáveis" por 3 colunas: SM, Editor, Designer |
 
