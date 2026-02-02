@@ -36,13 +36,10 @@ export function EditClientDialog({
       setName(client.name);
       if (client.scope) {
         setScope({
-          instagram_posts: client.scope.instagram_posts,
-          instagram_reels: client.scope.instagram_reels,
-          instagram_stories: client.scope.instagram_stories,
+          instagram: client.scope.instagram,
           tiktok_posts: client.scope.tiktok_posts,
           linkedin_posts: client.scope.linkedin_posts,
-          youtube_videos: client.scope.youtube_videos,
-          youtube_shorts: client.scope.youtube_shorts,
+          youtube: client.scope.youtube,
           recordings: client.scope.recordings,
         });
       } else {
