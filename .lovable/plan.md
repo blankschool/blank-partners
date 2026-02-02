@@ -1,118 +1,141 @@
 
 
-# Importar Escopos de Clientes via CSV (Atualizado)
+# Adicionar Filtros na Página de Clientes
 
-## Resumo da Análise
+## Objetivo
 
-O CSV contém **44 clientes** que serão processados da seguinte forma:
+Adicionar dois novos filtros à página de Clientes:
+1. **Filtro por Pessoa** - Filtrar clientes por membro da equipe associado
+2. **Filtro por Alocação de Social Media** - Mostrar clientes com ou sem Social Media alocado
 
-| Tipo | Quantidade |
-|------|------------|
-| Match exato | 36 clientes |
-| Match com ajuste de acentuação | 4 clientes |
-| Mapeamento especial | 1 cliente (Alexandre → Ale Frankel) |
-| Novos clientes a criar | 4 clientes |
-| **Total** | **45 operações** |
+## Análise Técnica
 
-## Mapeamentos de Nomes
+### Dados Disponíveis
 
-| Nome no CSV | Nome no Banco |
-|-------------|---------------|
-| Fabio Müller | Fábio Müller |
-| Nemora | Nêmora |
-| Bruno Oliveira | Bruno de Oliveira |
-| Marcio Zarzur | Márcio Zarzur |
-| Alexandre | Ale Frankel |
+Os clientes já possuem a lista de membros associados (`members`) através do hook `useClients`:
+- `client.members` → Array de `{id, full_name}`
+- `client.member_count` → Número total de membros
 
-## Novos Clientes a Criar
+Os membros da equipe têm uma propriedade `area` que identifica se são "Social Media".
 
-1. O Corpo Explica
-2. Josef Rubin
-3. Rogério Melzi
-4. Luiz Ramalho
+### Lógica do Filtro de Social Media
 
-## Execução
+Um cliente **tem Social Media alocado** quando pelo menos um de seus membros pertence à área "Social Media". Para isso, será necessário:
 
-### Passo 1: Criar os 4 novos clientes
+1. Buscar informações de área dos team_members
+2. Verificar se algum membro do cliente é da área "Social Media"
 
-```sql
-INSERT INTO clients (name) VALUES 
-  ('O Corpo Explica'),
-  ('Josef Rubin'),
-  ('Rogério Melzi'),
-  ('Luiz Ramalho');
+## Implementação
+
+### Arquivos a Criar
+
+1. **`src/components/clients/ClientFilters.tsx`** - Componente de filtros seguindo o padrão de `TeamFilters.tsx`
+
+### Arquivos a Modificar
+
+1. **`src/hooks/useClients.tsx`** - Incluir a área do membro na estrutura de dados
+2. **`src/pages/Clients.tsx`** - Adicionar os estados de filtro e lógica de filtragem
+
+### Estrutura do Componente ClientFilters
+
+```text
+┌─────────────────────────────────────────────────────────────────────┐
+│  [🔍 Buscar clientes...]  [Pessoa ▼]  [Alocação SM ▼]               │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
-### Passo 2: Inserir/Atualizar escopos
+### Opções dos Filtros
 
-Executar upserts para todos os 44 clientes usando os nomes corretos do banco de dados.
+**Filtro "Pessoa":**
+- Todos os responsáveis (default)
+- Lista de membros únicos que estão alocados em algum cliente
 
-### Exemplo de Upsert
+**Filtro "Alocação SM":**
+- Todos
+- Com Social Media
+- Sem Social Media
 
-```sql
-INSERT INTO client_scopes (client_id, instagram, linkedin_posts, youtube, tiktok_posts, recordings)
-SELECT id, 30, 0, 0, 0, 0
-FROM clients WHERE name = 'Reinaldo Boesso'
-ON CONFLICT (client_id) DO UPDATE SET
-  instagram = EXCLUDED.instagram,
-  linkedin_posts = EXCLUDED.linkedin_posts,
-  youtube = EXCLUDED.youtube,
-  tiktok_posts = EXCLUDED.tiktok_posts,
-  recordings = EXCLUDED.recordings;
+## Detalhes Técnicos
+
+### Passo 1: Atualizar useClients.tsx
+
+Adicionar a propriedade `area` à interface `TeamMemberInfo`:
+
+```typescript
+interface TeamMemberInfo {
+  id: string;
+  full_name: string;
+  area: string | null;  // Nova propriedade
+}
 ```
 
-## Dados a Importar (44 clientes)
+Buscar a área do membro na query:
 
-| Cliente (Nome Banco) | Instagram | LinkedIn | YouTube | TikTok | Gravações |
-|---------------------|-----------|----------|---------|--------|-----------|
-| Reinaldo Boesso | 30 | 0 | 0 | 0 | 0 |
-| Sandra Chayo | 30 | 0 | 0 | 0 | 0 |
-| Fábio Müller | 12 | 8 | 0 | 0 | 0 |
-| Tony Bernardini | 30 | 0 | 0 | 0 | 0 |
-| O Corpo Explica | 30 | 0 | 0 | 0 | 0 |
-| Signal 55 | 30 | 0 | 0 | 0 | 0 |
-| Nêmora | 30 | 0 | 0 | 0 | 0 |
-| Rony Meisler | 30 | 0 | 0 | 0 | 0 |
-| Anny Meisler | 30 | 0 | 0 | 0 | 0 |
-| Ouro Câmbio | 30 | 0 | 0 | 0 | 0 |
-| Renata Pocztaruk | 30 | 0 | 0 | 0 | 0 |
-| Agroadvance | 45 | 0 | 0 | 0 | 0 |
-| Peguei Bode | 30 | 0 | 0 | 0 | 2 |
-| Luis Wulff | 30 | 8 | 0 | 0 | 2 |
-| Raphael Soares | 30 | 0 | 0 | 0 | 0 |
-| Bruno de Oliveira | 30 | 8 | 0 | 0 | 4 |
-| Ale Frankel | 30 | 0 | 0 | 0 | 0 |
-| Housi | 30 | 0 | 0 | 0 | 0 |
-| Renato Torres | 30 | 0 | 0 | 0 | 0 |
-| Jacque Boesso | 30 | 0 | 0 | 0 | 0 |
-| A Grande Mesa | 30 | 0 | 0 | 0 | 0 |
-| Nelson Lins | 15 | 4 | 0 | 0 | 0 |
-| Natalia Beauty | 60 | 0 | 4 | 30 | 0 |
-| Mara Cakes | 30 | 0 | 0 | 0 | 2 |
-| Lincoln Fracari | 30 | 8 | 0 | 0 | 2 |
-| Lucas André | 30 | 2 | 0 | 0 | 2 |
-| Rubens Inácio | 30 | 8 | 0 | 0 | 2 |
-| Cubo Itaú | 60 | 21 | 0 | 0 | 0 |
-| Ariane Abdallah | 0 | 0 | 0 | 0 | 2 |
-| Ekoa | 20 | 0 | 0 | 0 | 0 |
-| Lazo | 20 | 0 | 0 | 0 | 0 |
-| Felipe Pacheco | 30 | 0 | 0 | 0 | 0 |
-| Dennis Wang | 12 | 4 | 0 | 0 | 1 |
-| Giovanni Colacicco | 12 | 4 | 0 | 0 | 1 |
-| Henri Zylberstajn | 12 | 4 | 0 | 0 | 1 |
-| Danielle de Jesus | 16 | 0 | 0 | 0 | 0 |
-| Hendel Favarin | 30 | 8 | 0 | 0 | 0 |
-| Gustavo Martins | 12 | 4 | 0 | 0 | 1 |
-| Josef Rubin | 30 | 8 | 0 | 0 | 0 |
-| Rogério Melzi | 12 | 4 | 0 | 0 | 1 |
-| Luiz Ramalho | 16 | 8 | 0 | 0 | 2 |
-| Efeito Empreendedor | 30 | 8 | 4 | 0 | 4 |
-| Alex Moro | 30 | 8 | 4 | 0 | 4 |
-| Márcio Zarzur | 30 | 0 | 0 | 0 | 0 |
+```typescript
+const { data: assignments } = await supabase
+  .from("team_member_clients")
+  .select(`
+    client_id,
+    team_members (
+      id,
+      full_name,
+      area
+    )
+  `);
+```
 
-## Resultado Esperado
+### Passo 2: Criar ClientFilters.tsx
 
-- **4 novos clientes** serão criados no sistema
-- **44 escopos** serão inseridos/atualizados
-- Os escopos aparecerão automaticamente na aba Clientes no Admin
+Componente que recebe:
+- `searchQuery` / `onSearchChange`
+- `selectedMember` / `onMemberChange` 
+- `selectedAllocation` / `onAllocationChange`
+- `members` - Lista de membros únicos para o dropdown
+
+### Passo 3: Atualizar Clients.tsx
+
+Adicionar estados:
+- `selectedMember: string` → "all" ou ID do membro
+- `selectedAllocation: string` → "all" | "with-sm" | "without-sm"
+
+Adicionar lógica de filtragem:
+
+```typescript
+const filteredClients = useMemo(() => {
+  return clients?.filter((client) => {
+    // Filtro de busca (existente)
+    if (searchQuery && !client.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+      return false;
+    }
+
+    // Filtro por pessoa
+    if (selectedMember !== "all") {
+      if (!client.members.some(m => m.id === selectedMember)) {
+        return false;
+      }
+    }
+
+    // Filtro por alocação de SM
+    if (selectedAllocation !== "all") {
+      const hasSocialMedia = client.members.some(m => m.area === "Social Media");
+      if (selectedAllocation === "with-sm" && !hasSocialMedia) return false;
+      if (selectedAllocation === "without-sm" && hasSocialMedia) return false;
+    }
+
+    return true;
+  }) || [];
+}, [clients, searchQuery, selectedMember, selectedAllocation]);
+```
+
+## Resultado Visual
+
+A seção de filtros ficará assim:
+
+```text
+┌──────────────────────────────────────────────────────────────────────────┐
+│ [🔍 Buscar clientes...]   [Responsável ▼]   [Alocação SM ▼]   [+ Adicionar Cliente]
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+Os cards de estatísticas e a lista de clientes serão atualizados conforme os filtros aplicados.
 
