@@ -7,6 +7,7 @@ interface TeamMemberInfo {
   id: string;
   full_name: string;
   area: string | null;
+  position: string | null;
 }
 
 export interface ClientScope {
@@ -51,7 +52,8 @@ export const useClients = () => {
           team_members (
             id,
             full_name,
-            area
+            area,
+            position
           )
         `);
 
@@ -85,6 +87,7 @@ export const useClients = () => {
             id: member.id,
             full_name: member.full_name,
             area: member.area,
+            position: member.position,
           });
         }
       });

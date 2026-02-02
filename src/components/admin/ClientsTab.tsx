@@ -3,12 +3,38 @@ import { Search, Plus, Pencil, Trash2, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useClients } from "@/hooks/useClients";
+import { useClients, type ClientWithStats } from "@/hooks/useClients";
 import { AddClientDialog } from "./AddClientDialog";
 import { EditClientDialog } from "./EditClientDialog";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
-import type { ClientWithStats } from "@/hooks/useClients";
 import type { ClientScopeData } from "./ClientScopeInput";
+
+interface TeamMemberInfo {
+  id: string;
+  full_name: string;
+  area: string | null;
+  position: string | null;
+}
+
+const getMemberByPosition = (members: TeamMemberInfo[], positions: string[]) => {
+  const member = members.find(
+    (m) => m.position && positions.includes(m.position)
+  );
+  return member ? member.full_name.split(" ")[0] : null;
+};
+
+const getSocialMedia = (members: TeamMemberInfo[]) =>
+  getMemberByPosition(members, [
+    "Social Media",
+    "Líder de Social Media",
+    "Coordenador de Social Media",
+  ]);
+
+const getEditor = (members: TeamMemberInfo[]) =>
+  getMemberByPosition(members, ["Editor de Vídeos"]);
+
+const getDesigner = (members: TeamMemberInfo[]) =>
+  getMemberByPosition(members, ["Designer", "Líder de Design"]);
 
 export function ClientsTab() {
   const {
@@ -91,13 +117,14 @@ export function ClientsTab() {
       </div>
 
       <div className="rounded-xl border border-border bg-card overflow-hidden">
-        {/* List header */}
         <div className="flex items-center gap-4 px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider border-b border-border bg-muted/30">
           <span className="w-8"></span>
           <span className="flex-1 min-w-0">Cliente</span>
-          <span className="w-24 text-center hidden sm:block">Membros</span>
-          <span className="w-48 hidden lg:block">Escopo</span>
-          <span className="flex-1 min-w-0 hidden md:block">Responsáveis</span>
+          <span className="w-20 text-center hidden sm:block">Membros</span>
+          <span className="w-44 hidden lg:block">Escopo</span>
+          <span className="w-24 hidden md:block">SM</span>
+          <span className="w-24 hidden md:block">Editor</span>
+          <span className="w-24 hidden md:block">Designer</span>
           <span className="w-20 text-right">Ações</span>
         </div>
 
@@ -116,17 +143,27 @@ export function ClientsTab() {
               <span className="flex-1 min-w-0 font-medium text-foreground truncate">
                 {client.name}
               </span>
-              <span className="w-24 text-center text-sm text-muted-foreground hidden sm:flex items-center justify-center gap-1">
+              <span className="w-20 text-center text-sm text-muted-foreground hidden sm:flex items-center justify-center gap-1">
                 <Users className="h-3 w-3" />
                 {client.member_count}
               </span>
-              <span className="w-48 text-xs text-muted-foreground hidden lg:block truncate">
+              <span className="w-44 text-xs text-muted-foreground hidden lg:block truncate">
                 {client.scope ? formatScope(client.scope) : "—"}
               </span>
-              <span className="flex-1 min-w-0 text-sm text-muted-foreground truncate hidden md:block">
-                {client.members.length > 0
-                  ? client.members.map((m) => m.full_name).join(", ")
-                  : "—"}
+              <span className="w-24 text-sm hidden md:block truncate">
+                {getSocialMedia(client.members as TeamMemberInfo[]) || (
+                  <span className="text-muted-foreground">—</span>
+                )}
+              </span>
+              <span className="w-24 text-sm hidden md:block truncate">
+                {getEditor(client.members as TeamMemberInfo[]) || (
+                  <span className="text-muted-foreground">—</span>
+                )}
+              </span>
+              <span className="w-24 text-sm hidden md:block truncate">
+                {getDesigner(client.members as TeamMemberInfo[]) || (
+                  <span className="text-muted-foreground">—</span>
+                )}
               </span>
               <div className="w-20 flex justify-end gap-1">
                 <Button
