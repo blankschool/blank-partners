@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { ClientScopeData } from "@/components/admin/ClientScopeInput";
+import type { ClientStatus } from "@/lib/clientStatus";
 
 interface TeamMemberInfo {
   id: string;
@@ -23,6 +24,7 @@ export interface ClientScope {
 export interface ClientWithStats {
   id: string;
   name: string;
+  status: ClientStatus | null;
   created_at: string;
   member_count: number;
   members: TeamMemberInfo[];
@@ -39,7 +41,7 @@ export const useClients = () => {
       // Fetch clients
       const { data: clients, error: clientsError } = await supabase
         .from("clients")
-        .select("id, name, created_at")
+        .select("id, name, status, created_at")
         .order("name");
 
       if (clientsError) throw clientsError;
@@ -96,6 +98,7 @@ export const useClients = () => {
       return (clients || []).map((client) => ({
         id: client.id,
         name: client.name,
+        status: client.status as ClientStatus | null,
         created_at: client.created_at,
         members: membersByClient.get(client.id) || [],
         member_count: membersByClient.get(client.id)?.length || 0,
@@ -105,10 +108,10 @@ export const useClients = () => {
   });
 
   const createClientMutation = useMutation({
-    mutationFn: async ({ name, scope }: { name: string; scope?: ClientScopeData }) => {
+    mutationFn: async ({ name, status, scope }: { name: string; status?: ClientStatus; scope?: ClientScopeData }) => {
       const { data, error } = await supabase
         .from("clients")
-        .insert({ name })
+        .insert({ name, status: status || "kickoff" })
         .select()
         .single();
 
@@ -143,10 +146,10 @@ export const useClients = () => {
   });
 
   const updateClientMutation = useMutation({
-    mutationFn: async ({ id, name, scope }: { id: string; name: string; scope?: ClientScopeData }) => {
+    mutationFn: async ({ id, name, status, scope }: { id: string; name: string; status?: ClientStatus; scope?: ClientScopeData }) => {
       const { error } = await supabase
         .from("clients")
-        .update({ name })
+        .update({ name, status })
         .eq("id", id);
 
       if (error) throw error;

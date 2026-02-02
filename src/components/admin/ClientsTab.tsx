@@ -8,6 +8,7 @@ import { AddClientDialog } from "./AddClientDialog";
 import { EditClientDialog } from "./EditClientDialog";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import type { ClientScopeData } from "./ClientScopeInput";
+import { getStatusConfig, type ClientStatus } from "@/lib/clientStatus";
 
 interface TeamMemberInfo {
   id: string;
@@ -66,12 +67,12 @@ export function ClientsTab() {
   };
 
 
-  const handleCreate = (name: string, scope: ClientScopeData) => {
-    createClient({ name, scope });
+  const handleCreate = (name: string, status: ClientStatus, scope: ClientScopeData) => {
+    createClient({ name, status, scope });
   };
 
-  const handleUpdate = (id: string, name: string, scope: ClientScopeData) => {
-    updateClient({ id, name, scope });
+  const handleUpdate = (id: string, name: string, status: ClientStatus, scope: ClientScopeData) => {
+    updateClient({ id, name, status, scope });
   };
 
   const handleDelete = () => {
@@ -111,6 +112,7 @@ export function ClientsTab() {
         <div className="flex items-center gap-4 px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider border-b border-border bg-muted/30">
           <span className="w-8"></span>
           <span className="flex-1 min-w-0">Cliente</span>
+          <span className="w-28 hidden md:block">Status</span>
           <span className="w-16 text-center hidden sm:block">Membros</span>
           <span className="w-10 text-center hidden lg:flex items-center justify-center" title="Instagram">
             <Instagram className="h-3.5 w-3.5 text-pink-500" />
@@ -147,6 +149,10 @@ export function ClientsTab() {
               </Avatar>
               <span className="flex-1 min-w-0 font-medium text-foreground truncate">
                 {client.name}
+              </span>
+              <span className="w-28 hidden md:flex items-center gap-1.5">
+                <span className={`h-2 w-2 rounded-full ${getStatusConfig(client.status).color}`} />
+                <span className="text-sm truncate">{getStatusConfig(client.status).label}</span>
               </span>
               <span className="w-16 text-center text-sm text-muted-foreground hidden sm:flex items-center justify-center gap-1">
                 <Users className="h-3 w-3" />
