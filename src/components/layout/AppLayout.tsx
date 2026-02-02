@@ -14,7 +14,7 @@ export function AppLayout({ children, title }: AppLayoutProps) {
         <AppSidebar />
         <SidebarInset className="flex flex-col flex-1">
           <AppHeader title={title} />
-          <main className="flex-1 overflow-auto p-6 bg-muted/30 relative">
+          <main className="flex-1 overflow-auto p-6 bg-muted/30 relative z-0">
             {/* Gradient background for glassmorphism */}
             <div className="absolute inset-0 bg-gradient-to-br from-foreground/5 via-transparent to-muted-foreground/5 pointer-events-none" />
             <div className="relative z-10">
