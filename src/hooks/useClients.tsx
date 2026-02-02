@@ -26,6 +26,7 @@ export interface ClientWithStats {
   name: string;
   status: ClientStatus | null;
   created_at: string;
+  contract_start_date: string | null;
   member_count: number;
   members: TeamMemberInfo[];
   scope?: ClientScope;
@@ -41,7 +42,7 @@ export const useClients = () => {
       // Fetch clients
       const { data: clients, error: clientsError } = await supabase
         .from("clients")
-        .select("id, name, status, created_at")
+        .select("id, name, status, created_at, contract_start_date")
         .order("name");
 
       if (clientsError) throw clientsError;
@@ -100,6 +101,7 @@ export const useClients = () => {
         name: client.name,
         status: client.status as ClientStatus | null,
         created_at: client.created_at,
+        contract_start_date: client.contract_start_date,
         members: membersByClient.get(client.id) || [],
         member_count: membersByClient.get(client.id)?.length || 0,
         scope: scopesByClient.get(client.id),
@@ -108,10 +110,10 @@ export const useClients = () => {
   });
 
   const createClientMutation = useMutation({
-    mutationFn: async ({ name, status, scope }: { name: string; status?: ClientStatus; scope?: ClientScopeData }) => {
+    mutationFn: async ({ name, status, scope, contract_start_date }: { name: string; status?: ClientStatus; scope?: ClientScopeData; contract_start_date?: string | null }) => {
       const { data, error } = await supabase
         .from("clients")
-        .insert({ name, status: status || "kickoff" })
+        .insert({ name, status: status || "kickoff", contract_start_date })
         .select()
         .single();
 
@@ -146,10 +148,10 @@ export const useClients = () => {
   });
 
   const updateClientMutation = useMutation({
-    mutationFn: async ({ id, name, status, scope }: { id: string; name: string; status?: ClientStatus; scope?: ClientScopeData }) => {
+    mutationFn: async ({ id, name, status, scope, contract_start_date }: { id: string; name: string; status?: ClientStatus; scope?: ClientScopeData; contract_start_date?: string | null }) => {
       const { error } = await supabase
         .from("clients")
-        .update({ name, status })
+        .update({ name, status, contract_start_date })
         .eq("id", id);
 
       if (error) throw error;

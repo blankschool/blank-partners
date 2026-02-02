@@ -1,0 +1,1 @@
+ALTER TABLE clients ADD COLUMN contract_start_date date;

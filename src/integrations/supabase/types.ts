@@ -60,18 +60,21 @@ export type Database = {
       }
       clients: {
         Row: {
+          contract_start_date: string | null
           created_at: string
           id: string
           name: string
           status: Database["public"]["Enums"]["client_status"] | null
         }
         Insert: {
+          contract_start_date?: string | null
           created_at?: string
           id?: string
           name: string
           status?: Database["public"]["Enums"]["client_status"] | null
         }
         Update: {
+          contract_start_date?: string | null
           created_at?: string
           id?: string
           name?: string
