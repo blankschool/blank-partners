@@ -3,24 +3,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export interface ClientScopeData {
-  instagram_posts: number;
-  instagram_reels: number;
-  instagram_stories: number;
+  instagram: number;
   tiktok_posts: number;
   linkedin_posts: number;
-  youtube_videos: number;
-  youtube_shorts: number;
+  youtube: number;
   recordings: number;
 }
 
 export const defaultScopeData: ClientScopeData = {
-  instagram_posts: 0,
-  instagram_reels: 0,
-  instagram_stories: 0,
+  instagram: 0,
   tiktok_posts: 0,
   linkedin_posts: 0,
-  youtube_videos: 0,
-  youtube_shorts: 0,
+  youtube: 0,
   recordings: 0,
 };
 
@@ -43,51 +37,44 @@ export function ClientScopeInput({ value, onChange }: ClientScopeInputProps) {
         <span className="h-px flex-1 bg-border" />
       </div>
 
-      {/* Instagram */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 text-sm font-medium">
-          <Instagram className="h-4 w-4 text-pink-500" />
-          <span>Instagram</span>
-        </div>
-        <div className="grid grid-cols-3 gap-2">
+      {/* Row 1: Instagram + TikTok */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Instagram className="h-4 w-4 text-pink-500" />
+            <span>Instagram</span>
+          </div>
           <div className="space-y-1">
-            <Label htmlFor="instagram_posts" className="text-xs text-muted-foreground">
+            <Label htmlFor="instagram" className="text-xs text-muted-foreground">
+              Conteúdos
+            </Label>
+            <Input
+              id="instagram"
+              type="number"
+              min="0"
+              value={value.instagram || ""}
+              onChange={(e) => handleChange("instagram", e.target.value)}
+              placeholder="0"
+              className="h-9"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Video className="h-4 w-4" />
+            <span>TikTok</span>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="tiktok_posts" className="text-xs text-muted-foreground">
               Posts
             </Label>
             <Input
-              id="instagram_posts"
+              id="tiktok_posts"
               type="number"
               min="0"
-              value={value.instagram_posts || ""}
-              onChange={(e) => handleChange("instagram_posts", e.target.value)}
-              placeholder="0"
-              className="h-9"
-            />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="instagram_reels" className="text-xs text-muted-foreground">
-              Reels
-            </Label>
-            <Input
-              id="instagram_reels"
-              type="number"
-              min="0"
-              value={value.instagram_reels || ""}
-              onChange={(e) => handleChange("instagram_reels", e.target.value)}
-              placeholder="0"
-              className="h-9"
-            />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="instagram_stories" className="text-xs text-muted-foreground">
-              Stories
-            </Label>
-            <Input
-              id="instagram_stories"
-              type="number"
-              min="0"
-              value={value.instagram_stories || ""}
-              onChange={(e) => handleChange("instagram_stories", e.target.value)}
+              value={value.tiktok_posts || ""}
+              onChange={(e) => handleChange("tiktok_posts", e.target.value)}
               placeholder="0"
               className="h-9"
             />
@@ -95,81 +82,44 @@ export function ClientScopeInput({ value, onChange }: ClientScopeInputProps) {
         </div>
       </div>
 
-      {/* TikTok */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 text-sm font-medium">
-          <Video className="h-4 w-4" />
-          <span>TikTok</span>
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="tiktok_posts" className="text-xs text-muted-foreground">
-            Posts
-          </Label>
-          <Input
-            id="tiktok_posts"
-            type="number"
-            min="0"
-            value={value.tiktok_posts || ""}
-            onChange={(e) => handleChange("tiktok_posts", e.target.value)}
-            placeholder="0"
-            className="h-9"
-          />
-        </div>
-      </div>
-
-      {/* LinkedIn */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 text-sm font-medium">
-          <Linkedin className="h-4 w-4 text-blue-600" />
-          <span>LinkedIn</span>
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="linkedin_posts" className="text-xs text-muted-foreground">
-            Posts
-          </Label>
-          <Input
-            id="linkedin_posts"
-            type="number"
-            min="0"
-            value={value.linkedin_posts || ""}
-            onChange={(e) => handleChange("linkedin_posts", e.target.value)}
-            placeholder="0"
-            className="h-9"
-          />
-        </div>
-      </div>
-
-      {/* YouTube */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 text-sm font-medium">
-          <Youtube className="h-4 w-4 text-red-500" />
-          <span>YouTube</span>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
+      {/* Row 2: LinkedIn + YouTube */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Linkedin className="h-4 w-4 text-blue-600" />
+            <span>LinkedIn</span>
+          </div>
           <div className="space-y-1">
-            <Label htmlFor="youtube_videos" className="text-xs text-muted-foreground">
-              Vídeos
+            <Label htmlFor="linkedin_posts" className="text-xs text-muted-foreground">
+              Posts
             </Label>
             <Input
-              id="youtube_videos"
+              id="linkedin_posts"
               type="number"
               min="0"
-              value={value.youtube_videos || ""}
-              onChange={(e) => handleChange("youtube_videos", e.target.value)}
+              value={value.linkedin_posts || ""}
+              onChange={(e) => handleChange("linkedin_posts", e.target.value)}
               placeholder="0"
               className="h-9"
             />
           </div>
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Youtube className="h-4 w-4 text-red-500" />
+            <span>YouTube</span>
+          </div>
           <div className="space-y-1">
-            <Label htmlFor="youtube_shorts" className="text-xs text-muted-foreground">
-              Shorts
+            <Label htmlFor="youtube" className="text-xs text-muted-foreground">
+              Conteúdos
             </Label>
             <Input
-              id="youtube_shorts"
+              id="youtube"
               type="number"
               min="0"
-              value={value.youtube_shorts || ""}
-              onChange={(e) => handleChange("youtube_shorts", e.target.value)}
+              value={value.youtube || ""}
+              onChange={(e) => handleChange("youtube", e.target.value)}
               placeholder="0"
               className="h-9"
             />
@@ -177,7 +127,7 @@ export function ClientScopeInput({ value, onChange }: ClientScopeInputProps) {
         </div>
       </div>
 
-      {/* Gravações */}
+      {/* Row 3: Gravações */}
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-sm font-medium">
           <Camera className="h-4 w-4 text-purple-500" />

@@ -8,9 +8,14 @@ interface TeamMemberInfo {
   full_name: string;
 }
 
-export interface ClientScope extends ClientScopeData {
+export interface ClientScope {
   id: string;
   client_id: string;
+  instagram: number;
+  tiktok_posts: number;
+  linkedin_posts: number;
+  youtube: number;
+  recordings: number;
 }
 
 export interface ClientWithStats {

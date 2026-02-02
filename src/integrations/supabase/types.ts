@@ -19,43 +19,34 @@ export type Database = {
           client_id: string
           created_at: string
           id: string
-          instagram_posts: number | null
-          instagram_reels: number | null
-          instagram_stories: number | null
+          instagram: number | null
           linkedin_posts: number | null
           recordings: number | null
           tiktok_posts: number | null
           updated_at: string
-          youtube_shorts: number | null
-          youtube_videos: number | null
+          youtube: number | null
         }
         Insert: {
           client_id: string
           created_at?: string
           id?: string
-          instagram_posts?: number | null
-          instagram_reels?: number | null
-          instagram_stories?: number | null
+          instagram?: number | null
           linkedin_posts?: number | null
           recordings?: number | null
           tiktok_posts?: number | null
           updated_at?: string
-          youtube_shorts?: number | null
-          youtube_videos?: number | null
+          youtube?: number | null
         }
         Update: {
           client_id?: string
           created_at?: string
           id?: string
-          instagram_posts?: number | null
-          instagram_reels?: number | null
-          instagram_stories?: number | null
+          instagram?: number | null
           linkedin_posts?: number | null
           recordings?: number | null
           tiktok_posts?: number | null
           updated_at?: string
-          youtube_shorts?: number | null
-          youtube_videos?: number | null
+          youtube?: number | null
         }
         Relationships: [
           {

@@ -41,12 +41,10 @@ export function ClientsTab() {
 
   const formatScope = (scope: ClientScopeData) => {
     const parts: string[] = [];
-    const igTotal = scope.instagram_posts + scope.instagram_reels + scope.instagram_stories;
-    if (igTotal > 0) parts.push(`IG: ${igTotal}`);
+    if (scope.instagram > 0) parts.push(`IG: ${scope.instagram}`);
     if (scope.tiktok_posts > 0) parts.push(`TT: ${scope.tiktok_posts}`);
     if (scope.linkedin_posts > 0) parts.push(`LI: ${scope.linkedin_posts}`);
-    const ytTotal = scope.youtube_videos + scope.youtube_shorts;
-    if (ytTotal > 0) parts.push(`YT: ${ytTotal}`);
+    if (scope.youtube > 0) parts.push(`YT: ${scope.youtube}`);
     if (scope.recordings > 0) parts.push(`Grav: ${scope.recordings}`);
     return parts.length > 0 ? parts.join(" | ") : "—";
   };
