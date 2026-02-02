@@ -14,6 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      client_scopes: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          instagram_posts: number | null
+          instagram_reels: number | null
+          instagram_stories: number | null
+          linkedin_posts: number | null
+          recordings: number | null
+          tiktok_posts: number | null
+          updated_at: string
+          youtube_shorts: number | null
+          youtube_videos: number | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          instagram_posts?: number | null
+          instagram_reels?: number | null
+          instagram_stories?: number | null
+          linkedin_posts?: number | null
+          recordings?: number | null
+          tiktok_posts?: number | null
+          updated_at?: string
+          youtube_shorts?: number | null
+          youtube_videos?: number | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          instagram_posts?: number | null
+          instagram_reels?: number | null
+          instagram_stories?: number | null
+          linkedin_posts?: number | null
+          recordings?: number | null
+          tiktok_posts?: number | null
+          updated_at?: string
+          youtube_shorts?: number | null
+          youtube_videos?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_scopes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           created_at: string
@@ -62,6 +115,42 @@ export type Database = {
           title?: string
           type?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      painel_de_conteudos: {
+        Row: {
+          cliente: string
+          created_at: string | null
+          data: string | null
+          formato: string | null
+          "id do conteúdo": string
+          sm: string | null
+          status: string | null
+          updated_at: string | null
+          url: string | null
+        }
+        Insert: {
+          cliente: string
+          created_at?: string | null
+          data?: string | null
+          formato?: string | null
+          "id do conteúdo": string
+          sm?: string | null
+          status?: string | null
+          updated_at?: string | null
+          url?: string | null
+        }
+        Update: {
+          cliente?: string
+          created_at?: string | null
+          data?: string | null
+          formato?: string | null
+          "id do conteúdo"?: string
+          sm?: string | null
+          status?: string | null
+          updated_at?: string | null
+          url?: string | null
         }
         Relationships: []
       }
