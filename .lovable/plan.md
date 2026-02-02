@@ -1,167 +1,117 @@
 
-# Adicionar Escopo de Clientes
+# Simplificar Escopo de Clientes
 
-## Problema
+## Alterações Solicitadas
 
-Atualmente, os clientes só possuem o campo "nome". Você precisa registrar o escopo de entregas de cada cliente, incluindo:
-1. **Quantidade de conteúdos por rede social** (Instagram, TikTok, LinkedIn, YouTube, etc.)
-2. **Gravações por cliente** (número de gravações contratadas)
+1. **Instagram**: Remover divisão (Posts, Reels, Stories) → Um único campo "Conteúdos"
+2. **YouTube**: Remover divisão (Vídeos, Shorts) → Um único campo "Conteúdos"  
+3. **Gravações**: Verificar se está aparecendo corretamente (o código já tem, pode ser problema de scroll)
 
 ## Solução
 
-Criar uma nova tabela `client_scopes` para armazenar o escopo de cada cliente, permitindo definir quantidades por rede social e o número de gravações.
+Simplificar tanto o banco de dados quanto a interface, consolidando os campos.
 
-## Estrutura do Banco de Dados
+## Estrutura Simplificada
 
-### Nova Tabela: `client_scopes`
+### Antes (Atual)
+| Campo | Descrição |
+|-------|-----------|
+| instagram_posts | Posts do Instagram |
+| instagram_reels | Reels do Instagram |
+| instagram_stories | Stories do Instagram |
+| youtube_videos | Vídeos do YouTube |
+| youtube_shorts | Shorts do YouTube |
 
-| Coluna | Tipo | Descrição |
-|--------|------|-----------|
-| id | uuid | Chave primária |
-| client_id | uuid | FK para clients |
-| instagram_posts | integer | Qtd de posts no Instagram |
-| instagram_reels | integer | Qtd de reels no Instagram |
-| instagram_stories | integer | Qtd de stories no Instagram |
-| tiktok_posts | integer | Qtd de posts no TikTok |
-| linkedin_posts | integer | Qtd de posts no LinkedIn |
-| youtube_videos | integer | Qtd de vídeos no YouTube |
-| youtube_shorts | integer | Qtd de shorts no YouTube |
-| recordings | integer | Qtd de gravações |
-| created_at | timestamp | Data de criação |
-| updated_at | timestamp | Data de atualização |
+### Depois (Simplificado)
+| Campo | Descrição |
+|-------|-----------|
+| instagram | Total de conteúdos Instagram |
+| youtube | Total de conteúdos YouTube |
 
-### Por que uma tabela separada?
-
-- Permite adicionar novas redes sociais sem alterar a tabela principal
-- Mantém histórico de alterações
-- Separação de responsabilidades (dados do cliente vs escopo)
-
-## Alterações de Interface
-
-### 1. Dialog de Adicionar/Editar Cliente
-
-Expandir os dialogs para incluir uma seção "Escopo de Entregas":
+## Layout da Interface Simplificada
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
-│ Adicionar Cliente                                       │
+│ Editar Cliente                                          │
 ├─────────────────────────────────────────────────────────┤
-│ Nome do Cliente: [________________________]             │
+│ Nome do Cliente: [Ale Frankel________________]          │
 │                                                         │
-│ ─── Escopo de Entregas ───────────────────────────────  │
+│ ─── Escopo de Entregas ─────────────────────────────── │
 │                                                         │
-│ 📸 Instagram                                            │
-│   Posts: [__]    Reels: [__]    Stories: [__]          │
+│ 📸 Instagram                TikTok 🎵                   │
+│    Conteúdos: [__]            Posts: [__]              │
 │                                                         │
-│ 🎵 TikTok                                               │
-│   Posts: [__]                                           │
-│                                                         │
-│ 💼 LinkedIn                                             │
-│   Posts: [__]                                           │
-│                                                         │
-│ 🎬 YouTube                                              │
-│   Vídeos: [__]    Shorts: [__]                         │
+│ 💼 LinkedIn                 YouTube 🎬                  │
+│    Posts: [__]                Conteúdos: [__]          │
 │                                                         │
 │ 🎥 Gravações                                            │
-│   Quantidade: [__]                                      │
+│    Quantidade: [__]                                     │
 │                                                         │
-│                        [Cancelar]  [Adicionar]          │
+│                        [Cancelar]  [Salvar]             │
 └─────────────────────────────────────────────────────────┘
 ```
 
-### 2. Lista de Clientes
+## Arquivos a Modificar
 
-Adicionar coluna de escopo resumido na lista:
+| Arquivo | Alteração |
+|---------|-----------|
+| `supabase/migrations/` | Nova migração para consolidar colunas |
+| `src/integrations/supabase/types.ts` | Atualizar tipos gerados |
+| `src/components/admin/ClientScopeInput.tsx` | Simplificar para campos únicos |
+| `src/hooks/useClients.tsx` | Atualizar interface ClientScopeData |
+| `src/components/admin/EditClientDialog.tsx` | Ajustar mapeamento de escopo |
+| `src/components/admin/ClientsTab.tsx` | Atualizar resumo do escopo |
 
-```text
-│ Cliente        │ Membros │ Escopo                    │ Ações │
-├────────────────┼─────────┼───────────────────────────┼───────┤
-│ [AV] A Grande  │ 3       │ IG: 12 | TT: 8 | Grav: 2  │ [✎]🗑 │
-```
-
-## Arquivos a Modificar/Criar
-
-| Arquivo | Ação | Descrição |
-|---------|------|-----------|
-| `supabase/migrations/` | Criar | Migração para tabela `client_scopes` |
-| `src/hooks/useClients.tsx` | Modificar | Buscar e salvar dados de escopo |
-| `src/components/admin/AddClientDialog.tsx` | Modificar | Adicionar campos de escopo |
-| `src/components/admin/EditClientDialog.tsx` | Modificar | Adicionar campos de escopo |
-| `src/components/admin/ClientsTab.tsx` | Modificar | Exibir resumo do escopo na lista |
-
-## Detalhes Técnicos
-
-### Migração SQL
+## Migração SQL
 
 ```sql
-CREATE TABLE client_scopes (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  client_id uuid NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
-  instagram_posts integer DEFAULT 0,
-  instagram_reels integer DEFAULT 0,
-  instagram_stories integer DEFAULT 0,
-  tiktok_posts integer DEFAULT 0,
-  linkedin_posts integer DEFAULT 0,
-  youtube_videos integer DEFAULT 0,
-  youtube_shorts integer DEFAULT 0,
-  recordings integer DEFAULT 0,
-  created_at timestamp with time zone DEFAULT now() NOT NULL,
-  updated_at timestamp with time zone DEFAULT now() NOT NULL,
-  UNIQUE(client_id)
-);
+-- Consolidar campos do Instagram
+ALTER TABLE public.client_scopes 
+  ADD COLUMN instagram integer DEFAULT 0;
 
--- RLS policies
-ALTER TABLE client_scopes ENABLE ROW LEVEL SECURITY;
+UPDATE public.client_scopes 
+SET instagram = COALESCE(instagram_posts, 0) + COALESCE(instagram_reels, 0) + COALESCE(instagram_stories, 0);
 
-CREATE POLICY "Authenticated users can view client scopes"
-  ON client_scopes FOR SELECT USING (true);
+ALTER TABLE public.client_scopes 
+  DROP COLUMN instagram_posts,
+  DROP COLUMN instagram_reels,
+  DROP COLUMN instagram_stories;
 
-CREATE POLICY "Admins can insert client scopes"
-  ON client_scopes FOR INSERT WITH CHECK (is_admin());
+-- Consolidar campos do YouTube
+ALTER TABLE public.client_scopes 
+  ADD COLUMN youtube integer DEFAULT 0;
 
-CREATE POLICY "Admins can update client scopes"
-  ON client_scopes FOR UPDATE USING (is_admin());
+UPDATE public.client_scopes 
+SET youtube = COALESCE(youtube_videos, 0) + COALESCE(youtube_shorts, 0);
 
-CREATE POLICY "Admins can delete client scopes"
-  ON client_scopes FOR DELETE USING (is_admin());
+ALTER TABLE public.client_scopes 
+  DROP COLUMN youtube_videos,
+  DROP COLUMN youtube_shorts;
 ```
 
-### Interface TypeScript
+## Nova Interface TypeScript
 
 ```typescript
-interface ClientScope {
-  id: string;
-  client_id: string;
-  instagram_posts: number;
-  instagram_reels: number;
-  instagram_stories: number;
-  tiktok_posts: number;
-  linkedin_posts: number;
-  youtube_videos: number;
-  youtube_shorts: number;
-  recordings: number;
-}
-
-interface ClientWithStats {
-  id: string;
-  name: string;
-  created_at: string;
-  member_count: number;
-  members: TeamMemberInfo[];
-  scope?: ClientScope; // Novo campo
+export interface ClientScopeData {
+  instagram: number;      // Consolidado (era posts + reels + stories)
+  tiktok_posts: number;   // Mantém igual
+  linkedin_posts: number; // Mantém igual
+  youtube: number;        // Consolidado (era videos + shorts)
+  recordings: number;     // Mantém igual
 }
 ```
 
-### Componente de Input de Escopo
+## Componente Simplificado
 
-Criar um componente reutilizável para os campos de escopo com:
-- Agrupamento visual por rede social
-- Inputs numéricos com valor mínimo 0
-- Ícones para identificação rápida
+O novo `ClientScopeInput` terá layout mais compacto:
+
+- **Linha 1**: Instagram + TikTok (lado a lado)
+- **Linha 2**: LinkedIn + YouTube (lado a lado)
+- **Linha 3**: Gravações (largura total)
 
 ## Benefícios
 
-1. **Visibilidade**: Ver o escopo de cada cliente rapidamente na lista
-2. **Organização**: Dados estruturados por rede social
-3. **Escalabilidade**: Fácil adicionar novas redes sociais no futuro
-4. **Controle**: Acompanhar entregas contratadas vs realizadas
+1. Interface mais limpa e objetiva
+2. Menos campos para preencher
+3. Redução de complexidade no banco de dados
+4. Mantém as redes sociais essenciais (Instagram, TikTok, LinkedIn, YouTube) + Gravações
