@@ -1,108 +1,66 @@
 
 
-# Adicionar Coluna de Status de Clientes
+# Adicionar Coluna de Data de Início de Contrato
 
 ## Objetivo
 
-Adicionar uma coluna de status na tabela de clientes do Admin para rastrear a etapa do ciclo de vida de cada cliente.
-
-## Etapas de Status
-
-1. Kickoff
-2. Diagnóstico
-3. Apresentação de planejamento
-4. 30D
-5. 60D
-6. 90D
-7. Ongoing
-8. Cancelado
+Adicionar uma coluna "Início" na tabela de clientes do Admin para exibir a data de início do contrato de cada cliente.
 
 ## Implementação
 
 ### Passo 1: Migração do Banco de Dados
 
-Criar um enum type e adicionar coluna `status` na tabela `clients`:
+Adicionar coluna `contract_start_date` na tabela `clients`:
 
 ```sql
--- Criar enum type para status do cliente
-CREATE TYPE client_status AS ENUM (
-  'kickoff',
-  'diagnostico',
-  'apresentacao_planejamento',
-  '30d',
-  '60d',
-  '90d',
-  'ongoing',
-  'cancelado'
-);
-
--- Adicionar coluna status na tabela clients
 ALTER TABLE clients 
-ADD COLUMN status client_status DEFAULT 'kickoff';
+ADD COLUMN contract_start_date date;
 ```
 
-### Passo 2: Criar Configuração de Status
-
-Criar arquivo `src/lib/clientStatus.ts` com as definições de status e cores:
-
-| Status | Label | Cor |
-|--------|-------|-----|
-| kickoff | Kickoff | Azul |
-| diagnostico | Diagnóstico | Laranja |
-| apresentacao_planejamento | Apresentação de planejamento | Roxo |
-| 30d | 30D | Amarelo |
-| 60d | 60D | Amarelo |
-| 90d | 90D | Amarelo |
-| ongoing | Ongoing | Verde |
-| cancelado | Cancelado | Vermelho |
-
-### Passo 3: Atualizar Hook useClients
+### Passo 2: Atualizar Hook useClients
 
 Modificar `src/hooks/useClients.tsx`:
-- Adicionar `status` à interface `ClientWithStats`
-- Buscar `status` na query de clientes
-- Incluir `status` nas mutations de create e update
+- Adicionar `contract_start_date` à interface `ClientWithStats`
+- Incluir `contract_start_date` na query de clientes
+- Incluir `contract_start_date` nas mutations de create e update
 
-### Passo 4: Atualizar ClientsTab
+### Passo 3: Atualizar ClientsTab
 
 Modificar `src/components/admin/ClientsTab.tsx`:
-- Adicionar coluna "Status" no header da tabela
-- Exibir badge colorido com o status do cliente
-- Posicionar após a coluna "Cliente"
+- Adicionar ícone `Calendar` do lucide-react
+- Adicionar coluna "Início" no header da tabela (após Status)
+- Exibir a data formatada (DD/MM/YYYY) na linha de cada cliente
 
-### Passo 5: Atualizar Dialogs
+### Passo 4: Atualizar Dialogs
 
 Modificar `src/components/admin/AddClientDialog.tsx` e `EditClientDialog.tsx`:
-- Adicionar Select para escolher o status
-- Incluir status nos handlers de save
+- Importar componente de seleção de data (Popover + Calendar)
+- Adicionar campo de data de início de contrato
+- Incluir data nos handlers de save
 
 ## Layout Final da Tabela
 
 ```text
-| Avatar | Cliente | Status | Membros | IG | TT | LI | YT | Grav | SM | Editor | Designer | Ações |
+| Avatar | Cliente | Status | Início | Membros | IG | TT | LI | YT | Grav | SM | Editor | Designer | Ações |
 ```
 
-## Visualização do Status
+## Visualização da Data
 
-Cada status terá um indicador visual com ponto colorido + texto, seguindo o padrão existente no projeto:
+A data será exibida no formato brasileiro `DD/MM/YYYY`:
 
 ```text
-● Kickoff        (azul)
-● Diagnóstico    (laranja)
-● Apresentação   (roxo)
-● 30D / 60D / 90D (amarelo)
-● Ongoing        (verde)
-● Cancelado      (vermelho)
+01/01/2024
+15/03/2024
+—  (se não preenchida)
 ```
 
-## Arquivos a Modificar/Criar
+## Arquivos a Modificar
 
 | Arquivo | Ação |
 |---------|------|
-| Migração SQL | Criar enum e adicionar coluna |
-| `src/lib/clientStatus.ts` | Criar configuração de status |
-| `src/hooks/useClients.tsx` | Adicionar status na interface e queries |
-| `src/components/admin/ClientsTab.tsx` | Adicionar coluna de status na tabela |
-| `src/components/admin/AddClientDialog.tsx` | Adicionar seletor de status |
-| `src/components/admin/EditClientDialog.tsx` | Adicionar seletor de status |
+| Migração SQL | Adicionar coluna `contract_start_date` |
+| `src/hooks/useClients.tsx` | Adicionar campo na interface e queries |
+| `src/components/admin/ClientsTab.tsx` | Adicionar coluna na tabela |
+| `src/components/admin/AddClientDialog.tsx` | Adicionar seletor de data |
+| `src/components/admin/EditClientDialog.tsx` | Adicionar seletor de data |
 
