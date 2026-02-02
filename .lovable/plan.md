@@ -1,131 +1,105 @@
 
 
-# Adicionar Colunas de Equipe na Tabela de Clientes (Admin)
+# Separar Escopo por Canal na Tabela de Clientes
 
 ## Objetivo
 
-Substituir a coluna genérica "Responsáveis" por três colunas específicas:
-1. **Social Media** - Membro responsável pelo Social Media do cliente
-2. **Editor** - Membro responsável pela edição de vídeo
-3. **Designer** - Membro responsável pelo design
+Substituir a coluna única "Escopo" (que mostra `IG: 12 | LI: 8`) por colunas individuais para cada canal de entrega.
 
-## Análise Técnica
+## Situação Atual
 
-### Dados Atuais
+Atualmente a coluna "Escopo" exibe todos os canais em uma única célula condensada:
 
-O hook `useClients` já busca os membros de cada cliente, mas apenas com `area`. Para identificar o cargo específico, é necessário também buscar o campo `position` de cada membro.
+```
+IG: 30 | LI: 8 | YT: 4 | Grav: 2
+```
 
-Cargos relevantes no banco:
-- **Social Media**: `Social Media`, `Líder de Social Media`, `Coordenador de Social Media`
-- **Editor**: `Editor de Vídeos`
-- **Designer**: `Designer`, `Líder de Design`
+## Nova Estrutura
 
-### Lógica de Exibição
+Criar 5 colunas separadas para cada canal:
 
-Para cada cliente, mostrar o **primeiro nome** do membro que ocupa cada função:
-- Se não houver ninguém atribuído, mostrar "—"
-- Priorizar cargos "base" sobre líderes/coordenadores (opcional)
+| Canal | Ícone | Largura |
+|-------|-------|---------|
+| IG (Instagram) | Instagram icon (rosa) | w-12 |
+| TT (TikTok) | Video icon | w-12 |
+| LI (LinkedIn) | Linkedin icon (azul) | w-12 |
+| YT (YouTube) | Youtube icon (vermelho) | w-12 |
+| Grav (Gravações) | Camera icon (roxo) | w-12 |
+
+## Layout Final da Tabela
+
+```text
+| Avatar | Cliente | Membros | IG | TT | LI | YT | Grav | SM | Editor | Designer | Ações |
+```
 
 ## Implementação
 
-### Arquivos a Modificar
+### Arquivo a Modificar
 
-1. **`src/hooks/useClients.tsx`** - Adicionar `position` ao `TeamMemberInfo`
-2. **`src/components/admin/ClientsTab.tsx`** - Reorganizar colunas da tabela
+`src/components/admin/ClientsTab.tsx`
 
-### Passo 1: Atualizar useClients.tsx
+### Alterações
 
-Adicionar o campo `position` à interface e à query:
+1. **Importar ícones** - Adicionar `Instagram, Video, Linkedin, Youtube, Camera` do lucide-react
 
-```typescript
-interface TeamMemberInfo {
-  id: string;
-  full_name: string;
-  area: string | null;
-  position: string | null;  // Novo campo
-}
-```
-
-Atualizar a query para incluir `position`:
+2. **Atualizar Header** - Substituir a coluna "Escopo" por 5 colunas com ícones coloridos:
 
 ```typescript
-.select(`
-  client_id,
-  team_members (
-    id,
-    full_name,
-    area,
-    position
-  )
-`)
+<span className="w-12 text-center hidden lg:flex items-center justify-center">
+  <Instagram className="h-3.5 w-3.5 text-pink-500" />
+</span>
+<span className="w-12 text-center hidden lg:flex items-center justify-center">
+  <Video className="h-3.5 w-3.5" />
+</span>
+<span className="w-12 text-center hidden lg:flex items-center justify-center">
+  <Linkedin className="h-3.5 w-3.5 text-blue-600" />
+</span>
+<span className="w-12 text-center hidden lg:flex items-center justify-center">
+  <Youtube className="h-3.5 w-3.5 text-red-500" />
+</span>
+<span className="w-12 text-center hidden lg:flex items-center justify-center">
+  <Camera className="h-3.5 w-3.5 text-purple-500" />
+</span>
 ```
 
-### Passo 2: Atualizar ClientsTab.tsx
-
-Criar helper functions para extrair membros por cargo:
+3. **Atualizar Linhas** - Para cada cliente, mostrar os valores individuais:
 
 ```typescript
-const getMemberByPosition = (members: TeamMemberInfo[], positions: string[]) => {
-  const member = members.find(m => 
-    m.position && positions.includes(m.position)
-  );
-  return member ? member.full_name.split(" ")[0] : null;
-};
-
-const getSocialMedia = (members: TeamMemberInfo[]) => 
-  getMemberByPosition(members, ["Social Media", "Líder de Social Media", "Coordenador de Social Media"]);
-
-const getEditor = (members: TeamMemberInfo[]) => 
-  getMemberByPosition(members, ["Editor de Vídeos"]);
-
-const getDesigner = (members: TeamMemberInfo[]) => 
-  getMemberByPosition(members, ["Designer", "Líder de Design"]);
+<span className="w-12 text-center text-sm hidden lg:block">
+  {client.scope?.instagram || <span className="text-muted-foreground">—</span>}
+</span>
+<span className="w-12 text-center text-sm hidden lg:block">
+  {client.scope?.tiktok_posts || <span className="text-muted-foreground">—</span>}
+</span>
+<span className="w-12 text-center text-sm hidden lg:block">
+  {client.scope?.linkedin_posts || <span className="text-muted-foreground">—</span>}
+</span>
+<span className="w-12 text-center text-sm hidden lg:block">
+  {client.scope?.youtube || <span className="text-muted-foreground">—</span>}
+</span>
+<span className="w-12 text-center text-sm hidden lg:block">
+  {client.scope?.recordings || <span className="text-muted-foreground">—</span>}
+</span>
 ```
 
-Reorganizar as colunas da tabela:
-
-```text
-| Avatar | Cliente | Membros | Escopo | SM | Editor | Designer | Ações |
-```
-
-### Nova Estrutura do Header
-
-```typescript
-<span className="w-8"></span>           {/* Avatar */}
-<span className="flex-1 min-w-0">Cliente</span>
-<span className="w-20 text-center">Membros</span>
-<span className="w-44 hidden lg:block">Escopo</span>
-<span className="w-24 hidden md:block">SM</span>
-<span className="w-24 hidden md:block">Editor</span>
-<span className="w-24 hidden md:block">Designer</span>
-<span className="w-20 text-right">Ações</span>
-```
-
-### Nova Estrutura das Linhas
-
-Para cada cliente, exibir:
-- Nome do Social Media (primeiro nome apenas)
-- Nome do Editor de Vídeo (primeiro nome apenas)
-- Nome do Designer (primeiro nome apenas)
-
-Se o campo estiver vazio, mostrar "—" em cor mais suave.
+4. **Remover função `formatScope`** - Não será mais necessária
 
 ## Resultado Visual
 
 ```text
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│     │ Cliente        │ Membros │ Escopo              │ SM      │ Editor  │ Designer │ Ações │
-├────────────────────────────────────────────────────────────────────────────────────────┤
-│ RB  │ Reinaldo Boess │    3    │ IG: 30              │ Giovana │ Luiz    │ Henrique │ ⋮     │
-│ SC  │ Sandra Chayo   │    2    │ IG: 30              │ Maria   │ Daniel  │ —        │ ⋮     │
-│ FM  │ Fábio Müller   │    3    │ IG: 12 | LI: 8      │ Paulo   │ Willian │ Lucas    │ ⋮     │
-└────────────────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│     │ Cliente        │ Memb │ 📸  │ 🎬  │ 💼  │ ▶️  │ 📷  │ SM      │ Editor  │ Designer │ Ações │
+├──────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ RB  │ Reinaldo Boess │  3   │ 30  │  —  │  —  │  —  │  —  │ Giovana │ Luiz    │ Henrique │  ✏️🗑️ │
+│ NB  │ Natalia Beauty │  4   │ 60  │ 30  │  —  │  4  │  —  │ Maria   │ Daniel  │ Lucas    │  ✏️🗑️ │
+│ CU  │ Cubo Itaú      │  5   │ 60  │  —  │ 21  │  —  │  —  │ Paulo   │ Willian │ Ana      │  ✏️🗑️ │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-## Resumo das Alterações
+## Benefícios
 
-| Arquivo | Alteração |
-|---------|-----------|
-| `src/hooks/useClients.tsx` | Adicionar `position` ao `TeamMemberInfo` e à query Supabase |
-| `src/components/admin/ClientsTab.tsx` | Substituir coluna "Responsáveis" por 3 colunas: SM, Editor, Designer |
+- Visualização mais clara e rápida do escopo de cada cliente
+- Ícones coloridos facilitam identificação dos canais
+- Valores numéricos alinhados para fácil comparação
+- Consistência com as cores já usadas no `ClientScopeInput`
 
