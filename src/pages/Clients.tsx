@@ -1,20 +1,59 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Search, Plus, MoreHorizontal, Users } from "lucide-react";
+import { Plus, MoreHorizontal, Users } from "lucide-react";
 import { useClients } from "@/hooks/useClients";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ClientFilters } from "@/components/clients/ClientFilters";
 
 const Clients = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedMember, setSelectedMember] = useState("all");
+  const [selectedAllocation, setSelectedAllocation] = useState("all");
   const { data: clients, isLoading, error } = useClients();
 
-  const filteredClients = clients?.filter((client) =>
-    client.name.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || [];
+  // Extract unique members from all clients for the dropdown
+  const uniqueMembers = useMemo(() => {
+    if (!clients) return [];
+    const membersMap = new Map<string, { id: string; full_name: string }>();
+    clients.forEach((client) => {
+      client.members.forEach((member) => {
+        if (!membersMap.has(member.id)) {
+          membersMap.set(member.id, { id: member.id, full_name: member.full_name });
+        }
+      });
+    });
+    return Array.from(membersMap.values()).sort((a, b) =>
+      a.full_name.localeCompare(b.full_name)
+    );
+  }, [clients]);
+
+  const filteredClients = useMemo(() => {
+    return clients?.filter((client) => {
+      // Search filter
+      if (searchQuery && !client.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+        return false;
+      }
+
+      // Member filter
+      if (selectedMember !== "all") {
+        if (!client.members.some((m) => m.id === selectedMember)) {
+          return false;
+        }
+      }
+
+      // Social Media allocation filter
+      if (selectedAllocation !== "all") {
+        const hasSocialMedia = client.members.some((m) => m.area === "Social Media");
+        if (selectedAllocation === "with-sm" && !hasSocialMedia) return false;
+        if (selectedAllocation === "without-sm" && hasSocialMedia) return false;
+      }
+
+      return true;
+    }) || [];
+  }, [clients, searchQuery, selectedMember, selectedAllocation]);
 
   const getInitials = (name: string) => {
     return name
@@ -25,9 +64,9 @@ const Clients = () => {
       .slice(0, 2);
   };
 
-  const totalClients = clients?.length || 0;
-  const clientsWithMembers = clients?.filter((c) => c.member_count > 0).length || 0;
-  const clientsWithoutMembers = clients?.filter((c) => c.member_count === 0).length || 0;
+  const totalClients = filteredClients.length;
+  const clientsWithMembers = filteredClients.filter((c) => c.member_count > 0).length;
+  const clientsWithoutMembers = filteredClients.filter((c) => c.member_count === 0).length;
 
   if (error) {
     return (
@@ -43,18 +82,17 @@ const Clients = () => {
     <AppLayout title="Clientes">
       <div className="space-y-6">
         {/* Header Actions */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative max-w-sm flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Buscar clientes..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Button className="gap-2">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <ClientFilters
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            selectedMember={selectedMember}
+            onMemberChange={setSelectedMember}
+            selectedAllocation={selectedAllocation}
+            onAllocationChange={setSelectedAllocation}
+            members={uniqueMembers}
+          />
+          <Button className="gap-2 shrink-0">
             <Plus className="h-4 w-4" />
             Adicionar Cliente
           </Button>
