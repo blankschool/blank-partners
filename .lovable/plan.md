@@ -1,67 +1,80 @@
 
-# Corrigir Sobreposição da Sidebar
+# Importar Escopos de Clientes via CSV
 
-## Problema Identificado
+## Análise do CSV
 
-A sidebar tem posicionamento `fixed` com `z-10` que causa sobreposição no conteúdo quando a tela está em tamanhos intermediários (próximo ao breakpoint de 768px). Isso acontece porque:
+O arquivo contém 44 clientes com os seguintes campos:
+- **Cliente**: Nome do cliente
+- **Posts Insta**: Mapeado para `instagram`
+- **Posts LinkedIn**: Mapeado para `linkedin_posts`
+- **Posts Youtube**: Mapeado para `youtube`
+- **Posts TikTok**: Mapeado para `tiktok_posts`
+- **Captações**: Mapeado para `recordings`
 
-1. A sidebar usa `position: fixed` com `z-10`
-2. O header usa `z-50` para ficar acima da sidebar
-3. O conteúdo principal não tem z-index definido, ficando abaixo da sidebar
+## Mapeamento de Nomes
 
-## Solução
+Alguns nomes no CSV diferem levemente dos cadastrados no banco. Aqui está o mapeamento que será usado:
 
-Ajustar os z-indexes para criar uma hierarquia visual correta e garantir que o conteúdo principal fique ao lado (não abaixo) da sidebar.
+| CSV | Banco de Dados |
+|-----|----------------|
+| Fabio Müller | Fábio Müller |
+| Bruno Oliveira | Bruno de Oliveira |
+| Alê (Housi) | *(não encontrado)* |
+| Nêmora (Mest) | Nêmora |
+| Lucas André (Fast) | Lucas André |
+| Rogério Melzi | *(não encontrado)* |
+| Josef Rubin | *(não encontrado)* |
+| Luiz Ramalho | *(não encontrado)* |
+| Marcio Zarzur | Márcio Zarzur |
+| O Corpo Explica | *(não encontrado)* |
 
-## Alterações
+## Clientes a Importar (38 encontrados)
 
-### 1. Aumentar z-index da Sidebar
+Clientes com match exato ou mapeável:
+- A Grande Mesa, Agroadvance, Alex Moro, Anny Meisler, Ariane Abdallah
+- Bruno de Oliveira, Cubo Itaú, Danielle de Jesus, Dennis Wang
+- Efeito Empreendedor, Ekoa, Fábio Müller, Felipe Pacheco
+- Giovanni Colacicco, Gustavo Martins, Hendel Favarin, Henri Zylberstajn
+- Housi, Jacque Boesso, Lazo, Lincoln Fracari, Lucas André, Luis Wulff
+- Mara Cakes, Márcio Zarzur, Natalia Beauty, Nelson Lins, Nêmora
+- Ouro Câmbio, Peguei Bode, Raphael Soares, Reinaldo Boesso
+- Renata Pocztaruk, Renato Torres, Rony Meisler, Rubens Inácio
+- Sandra Chayo, Signal 55, Tony Bernardini
 
-**Arquivo:** `src/components/ui/sidebar.tsx`
+## Clientes sem Match (6)
 
-Alterar a sidebar de `z-10` para `z-30` para ficar abaixo do header mas acima de elementos de background:
+Estes clientes do CSV não foram encontrados no banco:
+1. **Alê (Housi)** - existe "Ale Frankel", pode ser diferente
+2. **O Corpo Explica** - não existe
+3. **Rogério Melzi** - não existe  
+4. **Josef Rubin** - não existe
+5. **Luiz Ramalho** - não existe (existe "Luis Wulff" e "Luiz Wulff")
 
-```tsx
-// Linha ~195
-"fixed inset-y-0 z-30 hidden h-svh w-[--sidebar-width]..."
+## Solução Técnica
+
+Criar uma série de comandos SQL para inserir os escopos usando `INSERT ... ON CONFLICT DO UPDATE` (upsert) para cada cliente encontrado.
+
+### Exemplo de Comando SQL
+
+```sql
+INSERT INTO client_scopes (client_id, instagram, linkedin_posts, youtube, tiktok_posts, recordings)
+SELECT id, 30, 0, 0, 0, 0
+FROM clients WHERE name = 'A Grande Mesa'
+ON CONFLICT (client_id) DO UPDATE SET
+  instagram = EXCLUDED.instagram,
+  linkedin_posts = EXCLUDED.linkedin_posts,
+  youtube = EXCLUDED.youtube,
+  tiktok_posts = EXCLUDED.tiktok_posts,
+  recordings = EXCLUDED.recordings;
 ```
 
-### 2. Ajustar z-index do Conteúdo Principal
+## Execução
 
-**Arquivo:** `src/components/layout/AppLayout.tsx`
-
-O conteúdo já está corretamente posicionado com `SidebarInset`, mas precisamos garantir que o z-index esteja correto:
-
-```tsx
-<main className="flex-1 overflow-auto p-6 bg-muted/30 relative z-0">
-```
-
-### 3. Garantir Header Acima de Tudo
-
-**Arquivo:** `src/components/layout/AppHeader.tsx`
-
-O header já está com `z-50`, o que está correto.
-
-## Hierarquia de Z-Index Final
-
-| Elemento | Z-Index | Descrição |
-|----------|---------|-----------|
-| Background gradients | 0 | Elementos decorativos |
-| Main content | 10 | Conteúdo principal |
-| Sidebar | 30 | Menu lateral |
-| Header | 50 | Barra superior (sempre visível) |
-| Dropdowns/Modals | 50+ | Elementos flutuantes |
-
-## Arquivos a Modificar
-
-| Arquivo | Alteração |
-|---------|-----------|
-| `src/components/ui/sidebar.tsx` | Aumentar z-index de `z-10` para `z-30` |
-| `src/components/layout/AppLayout.tsx` | Adicionar `z-0` ao main content para clareza |
+Executarei múltiplos comandos INSERT para atualizar os escopos de todos os 38 clientes encontrados no banco de dados.
 
 ## Resultado Esperado
 
-Após as alterações:
-- A sidebar ficará corretamente posicionada ao lado do conteúdo
-- O header sempre ficará acima da sidebar
-- Não haverá mais sobreposição visual entre sidebar e conteúdo
+Após a execução:
+- 38 clientes terão seus escopos atualizados
+- 6 clientes do CSV serão ignorados por não existirem no banco
+- Os escopos aparecerão automaticamente na lista de clientes no Admin
