@@ -10,14 +10,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ClientScopeInput, defaultScopeData, type ClientScopeData } from "./ClientScopeInput";
+import { clientStatusOptions, type ClientStatus } from "@/lib/clientStatus";
 import type { ClientWithStats } from "@/hooks/useClients";
 
 interface EditClientDialogProps {
   client: ClientWithStats | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (id: string, name: string, scope: ClientScopeData) => void;
+  onSave: (id: string, name: string, status: ClientStatus, scope: ClientScopeData) => void;
   isLoading: boolean;
 }
 
@@ -29,11 +37,13 @@ export function EditClientDialog({
   isLoading,
 }: EditClientDialogProps) {
   const [name, setName] = useState("");
+  const [status, setStatus] = useState<ClientStatus>("kickoff");
   const [scope, setScope] = useState<ClientScopeData>(defaultScopeData);
 
   useEffect(() => {
     if (client) {
       setName(client.name);
+      setStatus(client.status || "kickoff");
       if (client.scope) {
         setScope({
           instagram: client.scope.instagram,
@@ -50,7 +60,7 @@ export function EditClientDialog({
 
   const handleSave = () => {
     if (client && name.trim()) {
-      onSave(client.id, name.trim(), scope);
+      onSave(client.id, name.trim(), status, scope);
       onOpenChange(false);
     }
   };
@@ -72,6 +82,25 @@ export function EditClientDialog({
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Digite o nome do cliente"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select value={status} onValueChange={(value) => setStatus(value as ClientStatus)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clientStatusOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      <div className="flex items-center gap-2">
+                        <span className={`h-2 w-2 rounded-full ${option.color}`} />
+                        {option.label}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <ClientScopeInput value={scope} onChange={setScope} />

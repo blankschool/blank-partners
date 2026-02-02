@@ -63,16 +63,19 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          status: Database["public"]["Enums"]["client_status"] | null
         }
         Insert: {
           created_at?: string
           id?: string
           name: string
+          status?: Database["public"]["Enums"]["client_status"] | null
         }
         Update: {
           created_at?: string
           id?: string
           name?: string
+          status?: Database["public"]["Enums"]["client_status"] | null
         }
         Relationships: []
       }
@@ -343,6 +346,15 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      client_status:
+        | "kickoff"
+        | "diagnostico"
+        | "apresentacao_planejamento"
+        | "30d"
+        | "60d"
+        | "90d"
+        | "ongoing"
+        | "cancelado"
       seniority_level: "Júnior" | "Pleno" | "Sênior"
       team_type:
         | "Creative"
@@ -481,6 +493,16 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      client_status: [
+        "kickoff",
+        "diagnostico",
+        "apresentacao_planejamento",
+        "30d",
+        "60d",
+        "90d",
+        "ongoing",
+        "cancelado",
+      ],
       seniority_level: ["Júnior", "Pleno", "Sênior"],
       team_type: [
         "Creative",
