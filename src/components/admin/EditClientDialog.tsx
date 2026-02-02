@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { format, parseISO } from "date-fns";
+import { CalendarIcon } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +19,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 import { ClientScopeInput, defaultScopeData, type ClientScopeData } from "./ClientScopeInput";
 import { clientStatusOptions, type ClientStatus } from "@/lib/clientStatus";
 import type { ClientWithStats } from "@/hooks/useClients";
@@ -25,7 +34,7 @@ interface EditClientDialogProps {
   client: ClientWithStats | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (id: string, name: string, status: ClientStatus, scope: ClientScopeData) => void;
+  onSave: (id: string, name: string, status: ClientStatus, scope: ClientScopeData, contractStartDate: Date | undefined) => void;
   isLoading: boolean;
 }
 
@@ -39,6 +48,7 @@ export function EditClientDialog({
   const [name, setName] = useState("");
   const [status, setStatus] = useState<ClientStatus>("kickoff");
   const [scope, setScope] = useState<ClientScopeData>(defaultScopeData);
+  const [contractStartDate, setContractStartDate] = useState<Date | undefined>(undefined);
 
   useEffect(() => {
     if (client) {
@@ -55,12 +65,17 @@ export function EditClientDialog({
       } else {
         setScope(defaultScopeData);
       }
+      if (client.contract_start_date) {
+        setContractStartDate(parseISO(client.contract_start_date));
+      } else {
+        setContractStartDate(undefined);
+      }
     }
   }, [client]);
 
   const handleSave = () => {
     if (client && name.trim()) {
-      onSave(client.id, name.trim(), status, scope);
+      onSave(client.id, name.trim(), status, scope, contractStartDate);
       onOpenChange(false);
     }
   };
@@ -101,6 +116,33 @@ export function EditClientDialog({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Data de Início do Contrato</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !contractStartDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {contractStartDate ? format(contractStartDate, "dd/MM/yyyy") : "Selecione a data"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={contractStartDate}
+                    onSelect={setContractStartDate}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
             <ClientScopeInput value={scope} onChange={setScope} />

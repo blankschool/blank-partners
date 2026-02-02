@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Search, Plus, Pencil, Trash2, Users, Instagram, Video, Linkedin, Youtube, Camera } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, Users, Instagram, Video, Linkedin, Youtube, Camera, Calendar } from "lucide-react";
+import { format, parseISO } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -67,12 +68,21 @@ export function ClientsTab() {
   };
 
 
-  const handleCreate = (name: string, status: ClientStatus, scope: ClientScopeData) => {
-    createClient({ name, status, scope });
+  const handleCreate = (name: string, status: ClientStatus, scope: ClientScopeData, contractStartDate: Date | undefined) => {
+    createClient({ name, status, scope, contract_start_date: contractStartDate ? format(contractStartDate, "yyyy-MM-dd") : null });
   };
 
-  const handleUpdate = (id: string, name: string, status: ClientStatus, scope: ClientScopeData) => {
-    updateClient({ id, name, status, scope });
+  const handleUpdate = (id: string, name: string, status: ClientStatus, scope: ClientScopeData, contractStartDate: Date | undefined) => {
+    updateClient({ id, name, status, scope, contract_start_date: contractStartDate ? format(contractStartDate, "yyyy-MM-dd") : null });
+  };
+
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return null;
+    try {
+      return format(parseISO(dateStr), "dd/MM/yyyy");
+    } catch {
+      return null;
+    }
   };
 
   const handleDelete = () => {
@@ -113,6 +123,10 @@ export function ClientsTab() {
           <span className="w-8"></span>
           <span className="flex-1 min-w-0">Cliente</span>
           <span className="w-28 hidden md:block">Status</span>
+          <span className="w-24 hidden md:flex items-center gap-1" title="Data de início do contrato">
+            <Calendar className="h-3.5 w-3.5" />
+            Início
+          </span>
           <span className="w-16 text-center hidden sm:block">Membros</span>
           <span className="w-10 text-center hidden lg:flex items-center justify-center" title="Instagram">
             <Instagram className="h-3.5 w-3.5 text-pink-500" />
@@ -153,6 +167,9 @@ export function ClientsTab() {
               <span className="w-28 hidden md:flex items-center gap-1.5">
                 <span className={`h-2 w-2 rounded-full ${getStatusConfig(client.status).color}`} />
                 <span className="text-sm truncate">{getStatusConfig(client.status).label}</span>
+              </span>
+              <span className="w-24 text-sm hidden md:block">
+                {formatDate(client.contract_start_date) || <span className="text-muted-foreground">—</span>}
               </span>
               <span className="w-16 text-center text-sm text-muted-foreground hidden sm:flex items-center justify-center gap-1">
                 <Users className="h-3 w-3" />
