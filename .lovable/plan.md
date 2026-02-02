@@ -1,128 +1,167 @@
 
-# Convert Team and Users Tabs to List Layout
+# Adicionar Escopo de Clientes
 
-## Overview
+## Problema
 
-Convert the Team (Equipe) and Users (Usuários) tabs from card grid layouts to compact, table-like list layouts, matching the optimized Clients tab design.
+Atualmente, os clientes só possuem o campo "nome". Você precisa registrar o escopo de entregas de cada cliente, incluindo:
+1. **Quantidade de conteúdos por rede social** (Instagram, TikTok, LinkedIn, YouTube, etc.)
+2. **Gravações por cliente** (número de gravações contratadas)
 
-## Current State
+## Solução
 
-Both tabs use a 3-column card grid that takes significant vertical space:
-- **TeamTab**: Shows 39 team members with name, email, area, seniority, position, start date, and clients
-- **UsersTab**: Shows users with name, email, team, position, and admin status
+Criar uma nova tabela `client_scopes` para armazenar o escopo de cada cliente, permitindo definir quantidades por rede social e o número de gravações.
 
-## New List Layout Design
+## Estrutura do Banco de Dados
 
-### TeamTab Columns
-| Avatar | Nome | Email | Área | Senioridade | Cargo | Ações |
+### Nova Tabela: `client_scopes`
 
-### UsersTab Columns
-| Avatar | Nome | Email | Equipe | Cargo | Tipo | Ações |
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | uuid | Chave primária |
+| client_id | uuid | FK para clients |
+| instagram_posts | integer | Qtd de posts no Instagram |
+| instagram_reels | integer | Qtd de reels no Instagram |
+| instagram_stories | integer | Qtd de stories no Instagram |
+| tiktok_posts | integer | Qtd de posts no TikTok |
+| linkedin_posts | integer | Qtd de posts no LinkedIn |
+| youtube_videos | integer | Qtd de vídeos no YouTube |
+| youtube_shorts | integer | Qtd de shorts no YouTube |
+| recordings | integer | Qtd de gravações |
+| created_at | timestamp | Data de criação |
+| updated_at | timestamp | Data de atualização |
 
-## Technical Changes
+### Por que uma tabela separada?
 
-### File: `src/components/admin/TeamTab.tsx`
+- Permite adicionar novas redes sociais sem alterar a tabela principal
+- Mantém histórico de alterações
+- Separação de responsabilidades (dados do cliente vs escopo)
 
-**Replace grid layout (lines 130-210) with:**
-- Rounded container with header row and dividers
-- Header: Avatar space, Nome, Email, Área, Senioridade, Cargo, Ações
-- Each member as a single row with:
-  - Compact avatar (h-8 w-8)
-  - Name (font-medium, truncate)
-  - Email (hidden on mobile, text-muted-foreground)
-  - Area badge (hidden on small screens)
-  - Seniority badge (hidden on small screens)
-  - Position text (hidden on medium screens)
-  - Edit/Delete buttons (opacity on hover)
+## Alterações de Interface
 
-**Responsive behavior:**
-- Mobile: Avatar, Name, Actions only
-- Tablet: Add Email
-- Desktop: Show all columns
+### 1. Dialog de Adicionar/Editar Cliente
 
-### File: `src/components/admin/UsersTab.tsx`
+Expandir os dialogs para incluir uma seção "Escopo de Entregas":
 
-**Replace grid layout (lines 80-158) with:**
-- Same container style as TeamTab
-- Header: Avatar space, Nome, Email, Equipe, Cargo, Tipo, Ações
-- Each user as a single row with:
-  - Avatar with image support
-  - Name with admin shield icon inline
-  - Email (hidden on mobile)
-  - Team badge (hidden on small screens)
-  - Position text (hidden on medium screens)
-  - Admin/User badge
-  - Edit/Delete buttons (opacity on hover)
-
-## Visual Comparison
-
-### Before (Card Grid)
 ```text
-┌──────────────┐ ┌──────────────┐ ┌──────────────┐
-│ [Avatar]     │ │ [Avatar]     │ │ [Avatar]     │
-│ Name         │ │ Name         │ │ Name         │
-│ email@...    │ │ email@...    │ │ email@...    │
-│ [Area][Sen]  │ │ [Area][Sen]  │ │ [Area][Sen]  │
-│ Start: Date  │ │ Start: Date  │ │ Start: Date  │
-└──────────────┘ └──────────────┘ └──────────────┘
+┌─────────────────────────────────────────────────────────┐
+│ Adicionar Cliente                                       │
+├─────────────────────────────────────────────────────────┤
+│ Nome do Cliente: [________________________]             │
+│                                                         │
+│ ─── Escopo de Entregas ───────────────────────────────  │
+│                                                         │
+│ 📸 Instagram                                            │
+│   Posts: [__]    Reels: [__]    Stories: [__]          │
+│                                                         │
+│ 🎵 TikTok                                               │
+│   Posts: [__]                                           │
+│                                                         │
+│ 💼 LinkedIn                                             │
+│   Posts: [__]                                           │
+│                                                         │
+│ 🎬 YouTube                                              │
+│   Vídeos: [__]    Shorts: [__]                         │
+│                                                         │
+│ 🎥 Gravações                                            │
+│   Quantidade: [__]                                      │
+│                                                         │
+│                        [Cancelar]  [Adicionar]          │
+└─────────────────────────────────────────────────────────┘
 ```
 
-### After (List)
+### 2. Lista de Clientes
+
+Adicionar coluna de escopo resumido na lista:
+
 ```text
-┌──────────────────────────────────────────────────────────────────┐
-│      Nome           Email              Área    Senior.   Ações   │
-├──────────────────────────────────────────────────────────────────┤
-│ [AV] João Silva     joao@email.com     Design  Pleno     [✎][🗑] │
-│ [MA] Maria Santos   maria@email.com    Dev     Senior    [✎][🗑] │
-│ [PE] Pedro Costa    pedro@email.com    Growth  Junior    [✎][🗑] │
-└──────────────────────────────────────────────────────────────────┘
+│ Cliente        │ Membros │ Escopo                    │ Ações │
+├────────────────┼─────────┼───────────────────────────┼───────┤
+│ [AV] A Grande  │ 3       │ IG: 12 | TT: 8 | Grav: 2  │ [✎]🗑 │
 ```
 
-## Benefits
+## Arquivos a Modificar/Criar
 
-1. **Space Efficiency**: Display 15+ members per screen vs 6-9 with cards
-2. **Faster Scanning**: Horizontal alignment enables quick comparison
-3. **Consistent Design**: Matches the optimized Clients tab
-4. **Better for Admin Tasks**: Quick access to edit/delete across many records
+| Arquivo | Ação | Descrição |
+|---------|------|-----------|
+| `supabase/migrations/` | Criar | Migração para tabela `client_scopes` |
+| `src/hooks/useClients.tsx` | Modificar | Buscar e salvar dados de escopo |
+| `src/components/admin/AddClientDialog.tsx` | Modificar | Adicionar campos de escopo |
+| `src/components/admin/EditClientDialog.tsx` | Modificar | Adicionar campos de escopo |
+| `src/components/admin/ClientsTab.tsx` | Modificar | Exibir resumo do escopo na lista |
 
-## Files to Modify
+## Detalhes Técnicos
 
-| File | Changes |
-|------|---------|
-| `src/components/admin/TeamTab.tsx` | Replace grid with list layout |
-| `src/components/admin/UsersTab.tsx` | Replace grid with list layout |
+### Migração SQL
 
-## Implementation Details
+```sql
+CREATE TABLE client_scopes (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id uuid NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  instagram_posts integer DEFAULT 0,
+  instagram_reels integer DEFAULT 0,
+  instagram_stories integer DEFAULT 0,
+  tiktok_posts integer DEFAULT 0,
+  linkedin_posts integer DEFAULT 0,
+  youtube_videos integer DEFAULT 0,
+  youtube_shorts integer DEFAULT 0,
+  recordings integer DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  UNIQUE(client_id)
+);
 
-### List Container Structure
-```tsx
-<div className="rounded-xl border border-border bg-card overflow-hidden">
-  {/* Header row */}
-  <div className="flex items-center gap-4 px-4 py-3 text-xs font-medium 
-                  text-muted-foreground uppercase tracking-wider 
-                  border-b border-border bg-muted/30">
-    <span className="w-8"></span>
-    <span className="flex-1 min-w-0">Nome</span>
-    <span className="w-48 hidden sm:block">Email</span>
-    <span className="w-24 hidden md:block">Área</span>
-    <span className="w-20 hidden lg:block">Senioridade</span>
-    <span className="w-20 text-right">Ações</span>
-  </div>
-  
-  {/* List items */}
-  <div className="divide-y divide-border">
-    {filteredMembers.map((member) => (
-      <div className="group flex items-center gap-4 px-4 py-3 
-                      transition-colors hover:bg-muted/50">
-        {/* Row content */}
-      </div>
-    ))}
-  </div>
-</div>
+-- RLS policies
+ALTER TABLE client_scopes ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Authenticated users can view client scopes"
+  ON client_scopes FOR SELECT USING (true);
+
+CREATE POLICY "Admins can insert client scopes"
+  ON client_scopes FOR INSERT WITH CHECK (is_admin());
+
+CREATE POLICY "Admins can update client scopes"
+  ON client_scopes FOR UPDATE USING (is_admin());
+
+CREATE POLICY "Admins can delete client scopes"
+  ON client_scopes FOR DELETE USING (is_admin());
 ```
 
-### Badge Styling
-Keep existing badge styles but make them more compact:
-- Area/Team: `variant="secondary"` with smaller text
-- Seniority/Position: `variant="outline"`
-- Admin status: Keep the primary colored badge for visibility
+### Interface TypeScript
+
+```typescript
+interface ClientScope {
+  id: string;
+  client_id: string;
+  instagram_posts: number;
+  instagram_reels: number;
+  instagram_stories: number;
+  tiktok_posts: number;
+  linkedin_posts: number;
+  youtube_videos: number;
+  youtube_shorts: number;
+  recordings: number;
+}
+
+interface ClientWithStats {
+  id: string;
+  name: string;
+  created_at: string;
+  member_count: number;
+  members: TeamMemberInfo[];
+  scope?: ClientScope; // Novo campo
+}
+```
+
+### Componente de Input de Escopo
+
+Criar um componente reutilizável para os campos de escopo com:
+- Agrupamento visual por rede social
+- Inputs numéricos com valor mínimo 0
+- Ícones para identificação rápida
+
+## Benefícios
+
+1. **Visibilidade**: Ver o escopo de cada cliente rapidamente na lista
+2. **Organização**: Dados estruturados por rede social
+3. **Escalabilidade**: Fácil adicionar novas redes sociais no futuro
+4. **Controle**: Acompanhar entregas contratadas vs realizadas
