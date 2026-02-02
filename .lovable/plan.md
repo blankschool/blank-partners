@@ -1,117 +1,67 @@
 
-# Simplificar Escopo de Clientes
+# Corrigir Sobreposição da Sidebar
 
-## Alterações Solicitadas
+## Problema Identificado
 
-1. **Instagram**: Remover divisão (Posts, Reels, Stories) → Um único campo "Conteúdos"
-2. **YouTube**: Remover divisão (Vídeos, Shorts) → Um único campo "Conteúdos"  
-3. **Gravações**: Verificar se está aparecendo corretamente (o código já tem, pode ser problema de scroll)
+A sidebar tem posicionamento `fixed` com `z-10` que causa sobreposição no conteúdo quando a tela está em tamanhos intermediários (próximo ao breakpoint de 768px). Isso acontece porque:
+
+1. A sidebar usa `position: fixed` com `z-10`
+2. O header usa `z-50` para ficar acima da sidebar
+3. O conteúdo principal não tem z-index definido, ficando abaixo da sidebar
 
 ## Solução
 
-Simplificar tanto o banco de dados quanto a interface, consolidando os campos.
+Ajustar os z-indexes para criar uma hierarquia visual correta e garantir que o conteúdo principal fique ao lado (não abaixo) da sidebar.
 
-## Estrutura Simplificada
+## Alterações
 
-### Antes (Atual)
-| Campo | Descrição |
-|-------|-----------|
-| instagram_posts | Posts do Instagram |
-| instagram_reels | Reels do Instagram |
-| instagram_stories | Stories do Instagram |
-| youtube_videos | Vídeos do YouTube |
-| youtube_shorts | Shorts do YouTube |
+### 1. Aumentar z-index da Sidebar
 
-### Depois (Simplificado)
-| Campo | Descrição |
-|-------|-----------|
-| instagram | Total de conteúdos Instagram |
-| youtube | Total de conteúdos YouTube |
+**Arquivo:** `src/components/ui/sidebar.tsx`
 
-## Layout da Interface Simplificada
+Alterar a sidebar de `z-10` para `z-30` para ficar abaixo do header mas acima de elementos de background:
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│ Editar Cliente                                          │
-├─────────────────────────────────────────────────────────┤
-│ Nome do Cliente: [Ale Frankel________________]          │
-│                                                         │
-│ ─── Escopo de Entregas ─────────────────────────────── │
-│                                                         │
-│ 📸 Instagram                TikTok 🎵                   │
-│    Conteúdos: [__]            Posts: [__]              │
-│                                                         │
-│ 💼 LinkedIn                 YouTube 🎬                  │
-│    Posts: [__]                Conteúdos: [__]          │
-│                                                         │
-│ 🎥 Gravações                                            │
-│    Quantidade: [__]                                     │
-│                                                         │
-│                        [Cancelar]  [Salvar]             │
-└─────────────────────────────────────────────────────────┘
+```tsx
+// Linha ~195
+"fixed inset-y-0 z-30 hidden h-svh w-[--sidebar-width]..."
 ```
+
+### 2. Ajustar z-index do Conteúdo Principal
+
+**Arquivo:** `src/components/layout/AppLayout.tsx`
+
+O conteúdo já está corretamente posicionado com `SidebarInset`, mas precisamos garantir que o z-index esteja correto:
+
+```tsx
+<main className="flex-1 overflow-auto p-6 bg-muted/30 relative z-0">
+```
+
+### 3. Garantir Header Acima de Tudo
+
+**Arquivo:** `src/components/layout/AppHeader.tsx`
+
+O header já está com `z-50`, o que está correto.
+
+## Hierarquia de Z-Index Final
+
+| Elemento | Z-Index | Descrição |
+|----------|---------|-----------|
+| Background gradients | 0 | Elementos decorativos |
+| Main content | 10 | Conteúdo principal |
+| Sidebar | 30 | Menu lateral |
+| Header | 50 | Barra superior (sempre visível) |
+| Dropdowns/Modals | 50+ | Elementos flutuantes |
 
 ## Arquivos a Modificar
 
 | Arquivo | Alteração |
 |---------|-----------|
-| `supabase/migrations/` | Nova migração para consolidar colunas |
-| `src/integrations/supabase/types.ts` | Atualizar tipos gerados |
-| `src/components/admin/ClientScopeInput.tsx` | Simplificar para campos únicos |
-| `src/hooks/useClients.tsx` | Atualizar interface ClientScopeData |
-| `src/components/admin/EditClientDialog.tsx` | Ajustar mapeamento de escopo |
-| `src/components/admin/ClientsTab.tsx` | Atualizar resumo do escopo |
+| `src/components/ui/sidebar.tsx` | Aumentar z-index de `z-10` para `z-30` |
+| `src/components/layout/AppLayout.tsx` | Adicionar `z-0` ao main content para clareza |
 
-## Migração SQL
+## Resultado Esperado
 
-```sql
--- Consolidar campos do Instagram
-ALTER TABLE public.client_scopes 
-  ADD COLUMN instagram integer DEFAULT 0;
-
-UPDATE public.client_scopes 
-SET instagram = COALESCE(instagram_posts, 0) + COALESCE(instagram_reels, 0) + COALESCE(instagram_stories, 0);
-
-ALTER TABLE public.client_scopes 
-  DROP COLUMN instagram_posts,
-  DROP COLUMN instagram_reels,
-  DROP COLUMN instagram_stories;
-
--- Consolidar campos do YouTube
-ALTER TABLE public.client_scopes 
-  ADD COLUMN youtube integer DEFAULT 0;
-
-UPDATE public.client_scopes 
-SET youtube = COALESCE(youtube_videos, 0) + COALESCE(youtube_shorts, 0);
-
-ALTER TABLE public.client_scopes 
-  DROP COLUMN youtube_videos,
-  DROP COLUMN youtube_shorts;
-```
-
-## Nova Interface TypeScript
-
-```typescript
-export interface ClientScopeData {
-  instagram: number;      // Consolidado (era posts + reels + stories)
-  tiktok_posts: number;   // Mantém igual
-  linkedin_posts: number; // Mantém igual
-  youtube: number;        // Consolidado (era videos + shorts)
-  recordings: number;     // Mantém igual
-}
-```
-
-## Componente Simplificado
-
-O novo `ClientScopeInput` terá layout mais compacto:
-
-- **Linha 1**: Instagram + TikTok (lado a lado)
-- **Linha 2**: LinkedIn + YouTube (lado a lado)
-- **Linha 3**: Gravações (largura total)
-
-## Benefícios
-
-1. Interface mais limpa e objetiva
-2. Menos campos para preencher
-3. Redução de complexidade no banco de dados
-4. Mantém as redes sociais essenciais (Instagram, TikTok, LinkedIn, YouTube) + Gravações
+Após as alterações:
+- A sidebar ficará corretamente posicionada ao lado do conteúdo
+- O header sempre ficará acima da sidebar
+- Não haverá mais sobreposição visual entre sidebar e conteúdo
