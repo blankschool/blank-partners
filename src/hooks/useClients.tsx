@@ -1,10 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import type { ClientScopeData } from "@/components/admin/ClientScopeInput";
 
 interface TeamMemberInfo {
   id: string;
   full_name: string;
+}
+
+export interface ClientScope extends ClientScopeData {
+  id: string;
+  client_id: string;
 }
 
 export interface ClientWithStats {
@@ -13,6 +19,7 @@ export interface ClientWithStats {
   created_at: string;
   member_count: number;
   members: TeamMemberInfo[];
+  scope?: ClientScope;
 }
 
 export const useClients = () => {
@@ -43,6 +50,19 @@ export const useClients = () => {
 
       if (assignmentsError) throw assignmentsError;
 
+      // Fetch client scopes
+      const { data: scopes, error: scopesError } = await supabase
+        .from("client_scopes")
+        .select("*");
+
+      if (scopesError) throw scopesError;
+
+      // Map scopes by client_id
+      const scopesByClient = new Map<string, ClientScope>();
+      scopes?.forEach((scope) => {
+        scopesByClient.set(scope.client_id, scope as ClientScope);
+      });
+
       // Map assignments by client_id
       const membersByClient = new Map<string, TeamMemberInfo[]>();
       
@@ -61,19 +81,20 @@ export const useClients = () => {
         }
       });
 
-      // Merge clients with their members
+      // Merge clients with their members and scopes
       return (clients || []).map((client) => ({
         id: client.id,
         name: client.name,
         created_at: client.created_at,
         members: membersByClient.get(client.id) || [],
         member_count: membersByClient.get(client.id)?.length || 0,
+        scope: scopesByClient.get(client.id),
       }));
     },
   });
 
   const createClientMutation = useMutation({
-    mutationFn: async (name: string) => {
+    mutationFn: async ({ name, scope }: { name: string; scope?: ClientScopeData }) => {
       const { data, error } = await supabase
         .from("clients")
         .insert({ name })
@@ -81,6 +102,16 @@ export const useClients = () => {
         .single();
 
       if (error) throw error;
+
+      // Create scope if provided
+      if (scope) {
+        const { error: scopeError } = await supabase
+          .from("client_scopes")
+          .insert({ client_id: data.id, ...scope });
+
+        if (scopeError) throw scopeError;
+      }
+
       return data;
     },
     onSuccess: () => {
@@ -101,13 +132,22 @@ export const useClients = () => {
   });
 
   const updateClientMutation = useMutation({
-    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+    mutationFn: async ({ id, name, scope }: { id: string; name: string; scope?: ClientScopeData }) => {
       const { error } = await supabase
         .from("clients")
         .update({ name })
         .eq("id", id);
 
       if (error) throw error;
+
+      // Upsert scope if provided
+      if (scope) {
+        const { error: scopeError } = await supabase
+          .from("client_scopes")
+          .upsert({ client_id: id, ...scope }, { onConflict: "client_id" });
+
+        if (scopeError) throw scopeError;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clients-with-members"] });

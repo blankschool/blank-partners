@@ -8,6 +8,7 @@ import { AddClientDialog } from "./AddClientDialog";
 import { EditClientDialog } from "./EditClientDialog";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import type { ClientWithStats } from "@/hooks/useClients";
+import type { ClientScopeData } from "./ClientScopeInput";
 
 export function ClientsTab() {
   const {
@@ -38,12 +39,24 @@ export function ClientsTab() {
     return name.substring(0, 2).toUpperCase();
   };
 
-  const handleCreate = (name: string) => {
-    createClient(name);
+  const formatScope = (scope: ClientScopeData) => {
+    const parts: string[] = [];
+    const igTotal = scope.instagram_posts + scope.instagram_reels + scope.instagram_stories;
+    if (igTotal > 0) parts.push(`IG: ${igTotal}`);
+    if (scope.tiktok_posts > 0) parts.push(`TT: ${scope.tiktok_posts}`);
+    if (scope.linkedin_posts > 0) parts.push(`LI: ${scope.linkedin_posts}`);
+    const ytTotal = scope.youtube_videos + scope.youtube_shorts;
+    if (ytTotal > 0) parts.push(`YT: ${ytTotal}`);
+    if (scope.recordings > 0) parts.push(`Grav: ${scope.recordings}`);
+    return parts.length > 0 ? parts.join(" | ") : "—";
   };
 
-  const handleUpdate = (id: string, name: string) => {
-    updateClient({ id, name });
+  const handleCreate = (name: string, scope: ClientScopeData) => {
+    createClient({ name, scope });
+  };
+
+  const handleUpdate = (id: string, name: string, scope: ClientScopeData) => {
+    updateClient({ id, name, scope });
   };
 
   const handleDelete = () => {
@@ -85,6 +98,7 @@ export function ClientsTab() {
           <span className="w-8"></span>
           <span className="flex-1 min-w-0">Cliente</span>
           <span className="w-24 text-center hidden sm:block">Membros</span>
+          <span className="w-48 hidden lg:block">Escopo</span>
           <span className="flex-1 min-w-0 hidden md:block">Responsáveis</span>
           <span className="w-20 text-right">Ações</span>
         </div>
@@ -107,6 +121,9 @@ export function ClientsTab() {
               <span className="w-24 text-center text-sm text-muted-foreground hidden sm:flex items-center justify-center gap-1">
                 <Users className="h-3 w-3" />
                 {client.member_count}
+              </span>
+              <span className="w-48 text-xs text-muted-foreground hidden lg:block truncate">
+                {client.scope ? formatScope(client.scope) : "—"}
               </span>
               <span className="flex-1 min-w-0 text-sm text-muted-foreground truncate hidden md:block">
                 {client.members.length > 0
