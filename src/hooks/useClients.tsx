@@ -6,6 +6,7 @@ import type { ClientScopeData } from "@/components/admin/ClientScopeInput";
 interface TeamMemberInfo {
   id: string;
   full_name: string;
+  area: string | null;
 }
 
 export interface ClientScope {
@@ -49,7 +50,8 @@ export const useClients = () => {
           client_id,
           team_members (
             id,
-            full_name
+            full_name,
+            area
           )
         `);
 
@@ -82,6 +84,7 @@ export const useClients = () => {
           membersByClient.get(clientId)!.push({
             id: member.id,
             full_name: member.full_name,
+            area: member.area,
           });
         }
       });
