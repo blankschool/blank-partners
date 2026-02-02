@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Plus, Pencil, Trash2, Users } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, Users, Instagram, Video, Linkedin, Youtube, Camera } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -65,15 +65,6 @@ export function ClientsTab() {
     return name.substring(0, 2).toUpperCase();
   };
 
-  const formatScope = (scope: ClientScopeData) => {
-    const parts: string[] = [];
-    if (scope.instagram > 0) parts.push(`IG: ${scope.instagram}`);
-    if (scope.tiktok_posts > 0) parts.push(`TT: ${scope.tiktok_posts}`);
-    if (scope.linkedin_posts > 0) parts.push(`LI: ${scope.linkedin_posts}`);
-    if (scope.youtube > 0) parts.push(`YT: ${scope.youtube}`);
-    if (scope.recordings > 0) parts.push(`Grav: ${scope.recordings}`);
-    return parts.length > 0 ? parts.join(" | ") : "—";
-  };
 
   const handleCreate = (name: string, scope: ClientScopeData) => {
     createClient({ name, scope });
@@ -120,11 +111,25 @@ export function ClientsTab() {
         <div className="flex items-center gap-4 px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider border-b border-border bg-muted/30">
           <span className="w-8"></span>
           <span className="flex-1 min-w-0">Cliente</span>
-          <span className="w-20 text-center hidden sm:block">Membros</span>
-          <span className="w-44 hidden lg:block">Escopo</span>
-          <span className="w-24 hidden md:block">SM</span>
-          <span className="w-24 hidden md:block">Editor</span>
-          <span className="w-24 hidden md:block">Designer</span>
+          <span className="w-16 text-center hidden sm:block">Membros</span>
+          <span className="w-10 text-center hidden lg:flex items-center justify-center" title="Instagram">
+            <Instagram className="h-3.5 w-3.5 text-pink-500" />
+          </span>
+          <span className="w-10 text-center hidden lg:flex items-center justify-center" title="TikTok">
+            <Video className="h-3.5 w-3.5" />
+          </span>
+          <span className="w-10 text-center hidden lg:flex items-center justify-center" title="LinkedIn">
+            <Linkedin className="h-3.5 w-3.5 text-blue-600" />
+          </span>
+          <span className="w-10 text-center hidden lg:flex items-center justify-center" title="YouTube">
+            <Youtube className="h-3.5 w-3.5 text-red-500" />
+          </span>
+          <span className="w-10 text-center hidden lg:flex items-center justify-center" title="Gravações">
+            <Camera className="h-3.5 w-3.5 text-purple-500" />
+          </span>
+          <span className="w-20 hidden md:block">SM</span>
+          <span className="w-20 hidden md:block">Editor</span>
+          <span className="w-20 hidden md:block">Designer</span>
           <span className="w-20 text-right">Ações</span>
         </div>
 
@@ -143,24 +148,36 @@ export function ClientsTab() {
               <span className="flex-1 min-w-0 font-medium text-foreground truncate">
                 {client.name}
               </span>
-              <span className="w-20 text-center text-sm text-muted-foreground hidden sm:flex items-center justify-center gap-1">
+              <span className="w-16 text-center text-sm text-muted-foreground hidden sm:flex items-center justify-center gap-1">
                 <Users className="h-3 w-3" />
                 {client.member_count}
               </span>
-              <span className="w-44 text-xs text-muted-foreground hidden lg:block truncate">
-                {client.scope ? formatScope(client.scope) : "—"}
+              <span className="w-10 text-center text-sm hidden lg:block">
+                {client.scope?.instagram || <span className="text-muted-foreground">—</span>}
               </span>
-              <span className="w-24 text-sm hidden md:block truncate">
+              <span className="w-10 text-center text-sm hidden lg:block">
+                {client.scope?.tiktok_posts || <span className="text-muted-foreground">—</span>}
+              </span>
+              <span className="w-10 text-center text-sm hidden lg:block">
+                {client.scope?.linkedin_posts || <span className="text-muted-foreground">—</span>}
+              </span>
+              <span className="w-10 text-center text-sm hidden lg:block">
+                {client.scope?.youtube || <span className="text-muted-foreground">—</span>}
+              </span>
+              <span className="w-10 text-center text-sm hidden lg:block">
+                {client.scope?.recordings || <span className="text-muted-foreground">—</span>}
+              </span>
+              <span className="w-20 text-sm hidden md:block truncate">
                 {getSocialMedia(client.members as TeamMemberInfo[]) || (
                   <span className="text-muted-foreground">—</span>
                 )}
               </span>
-              <span className="w-24 text-sm hidden md:block truncate">
+              <span className="w-20 text-sm hidden md:block truncate">
                 {getEditor(client.members as TeamMemberInfo[]) || (
                   <span className="text-muted-foreground">—</span>
                 )}
               </span>
-              <span className="w-24 text-sm hidden md:block truncate">
+              <span className="w-20 text-sm hidden md:block truncate">
                 {getDesigner(client.members as TeamMemberInfo[]) || (
                   <span className="text-muted-foreground">—</span>
                 )}
