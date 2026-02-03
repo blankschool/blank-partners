@@ -117,7 +117,7 @@ export function ScopeControlTable({
                   const planned = item.client.scope?.[field.key] || 0;
                   const actual = item.actual?.[field.key] || 0;
                   const localValue = getLocalValue(item.client.id, field.key);
-                  const displayValue = localValue !== undefined ? localValue : (actual || "");
+                  const displayValue = localValue !== undefined ? localValue : (actual ?? "");
 
                   return (
                     <td key={field.key} colSpan={2} className="px-1 py-2">
