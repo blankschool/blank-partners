@@ -1,45 +1,121 @@
 
 
-# Correção: Permitir valor 0 no Controle de Escopo
+# Relatório de Controle de Escopo
 
-## Problema Identificado
+## Objetivo
 
-O campo de input não mantém o valor "0" visível porque a lógica de exibição trata `0` como valor "falsy".
+Adicionar um painel de estatísticas na página de Controle de Escopo que exiba:
+1. **Taxa de conclusão geral** - Percentual global de entregas realizadas vs. planejadas
+2. **Taxa de conclusão por canal** - Percentual de cada canal (IG, TikTok, LinkedIn, YT Shorts, YT Videos, Gravações)
 
-**Código atual (linha 120):**
-```typescript
-const displayValue = localValue !== undefined ? localValue : (actual || "");
+## Visualização Proposta
+
+```text
+┌────────────────────────────────────────────────────────────────────────────────┐
+│  📊 Controle de Escopo                                       [Mês/Ano ▼]       │
+├────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                │
+│  ┌────────────────────────────────────────────────────────────────────────┐    │
+│  │  📈 RELATÓRIO DE ESCOPO                                                │    │
+│  │                                                                        │    │
+│  │  ┌──────────────────────┐                                              │    │
+│  │  │   Taxa Geral: 78%    │  ████████████████░░░░░                       │    │
+│  │  │   152/195 entregas   │                                              │    │
+│  │  └──────────────────────┘                                              │    │
+│  │                                                                        │    │
+│  │  Por Canal:                                                            │    │
+│  │  ┌───────┬───────┬───────┬───────┬───────┬───────┐                     │    │
+│  │  │  IG   │  TT   │  LI   │  YTS  │  YTV  │ Grav  │                     │    │
+│  │  │  85%  │  72%  │  90%  │  65%  │  80%  │  70%  │                     │    │
+│  │  │ 34/40 │ 18/25 │ 27/30 │ 13/20 │ 40/50 │ 21/30 │                     │    │
+│  │  └───────┴───────┴───────┴───────┴───────┴───────┘                     │    │
+│  └────────────────────────────────────────────────────────────────────────┘    │
+│                                                                                │
+│  ┌─ Tabela de Clientes (existente) ─────────────────────────────────────────┐  │
+│  │ ...                                                                      │  │
+│  └──────────────────────────────────────────────────────────────────────────┘  │
+└────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-Quando `actual = 0`, a expressão `actual || ""` retorna `""` (string vazia), porque `0` é considerado "falsy" em JavaScript.
+## Implementação Técnica
 
-## Solução
+### 1. Novo Componente: ScopeStatsPanel
 
-Alterar a lógica para verificar explicitamente se o valor é `null` ou `undefined`, em vez de usar o operador `||`:
+Criar `src/components/scope/ScopeStatsPanel.tsx`:
 
-**Código corrigido:**
+- Recebe os dados do `useScopeControl`
+- Calcula as métricas de forma derivada (sem novas queries)
+- Exibe cards com estatísticas visuais
+
+### 2. Lógica de Cálculo
+
 ```typescript
-const displayValue = localValue !== undefined 
-  ? localValue 
-  : (actual !== null && actual !== undefined ? actual : "");
+// Para cada canal
+const calculateChannelStats = (data: ScopeControlData[], channel: ScopeField) => {
+  const totalPlanned = data.reduce((sum, item) => sum + (item.client.scope?.[channel] || 0), 0);
+  const totalActual = data.reduce((sum, item) => sum + (item.actual?.[channel] || 0), 0);
+  const percentage = totalPlanned > 0 ? Math.round((totalActual / totalPlanned) * 100) : 0;
+  return { planned: totalPlanned, actual: totalActual, percentage };
+};
+
+// Taxa geral (soma de todos os canais)
+const calculateOverallStats = (data: ScopeControlData[]) => {
+  const channels = ["instagram", "tiktok_posts", "linkedin_posts", "youtube_shorts", "youtube_videos", "recordings"];
+  let totalPlanned = 0;
+  let totalActual = 0;
+  
+  channels.forEach(channel => {
+    data.forEach(item => {
+      totalPlanned += item.client.scope?.[channel] || 0;
+      totalActual += item.actual?.[channel] || 0;
+    });
+  });
+  
+  const percentage = totalPlanned > 0 ? Math.round((totalActual / totalPlanned) * 100) : 0;
+  return { planned: totalPlanned, actual: totalActual, percentage };
+};
 ```
 
-Ou de forma mais limpa usando o operador nullish coalescing (`??`):
-```typescript
-const displayValue = localValue !== undefined ? localValue : (actual ?? "");
-```
+### 3. Componentes Visuais
 
-O operador `??` só retorna o valor da direita se o valor da esquerda for `null` ou `undefined`, **não** quando for `0`.
+| Elemento | Descrição |
+|----------|-----------|
+| Card principal | Exibe taxa geral com barra de progresso grande |
+| Grid de canais | 6 mini-cards, um para cada canal |
+| Barra de progresso | Usa componente `Progress` existente |
+| Cores dinâmicas | Verde (>=100%), Amarelo (50-99%), Vermelho (<50%) |
 
-## Arquivo a Modificar
+### 4. Integração na Página
 
-| Arquivo | Alteração |
-|---------|-----------|
-| `src/components/scope/ScopeControlTable.tsx` | Linha 120: trocar `actual \|\| ""` por `actual ?? ""` |
+Atualizar `src/pages/ScopeControl.tsx`:
+- Importar novo componente `ScopeStatsPanel`
+- Renderizar acima da tabela existente
+- Passar os mesmos dados do hook `useScopeControl`
 
-## Resultado Esperado
+## Arquivos a Criar/Modificar
 
-- O valor `0` será exibido corretamente no input
-- O usuário poderá digitar, salvar e visualizar `0` sem problemas
-- A cor de status continuará funcionando corretamente (verde quando real = planejado)
+| Arquivo | Ação |
+|---------|------|
+| `src/components/scope/ScopeStatsPanel.tsx` | Criar componente de estatísticas |
+| `src/pages/ScopeControl.tsx` | Adicionar painel de estatísticas |
+
+## Detalhes do Design
+
+### Card de Taxa Geral
+- Ícone: `TrendingUp` ou `PieChart`
+- Valor grande: "78%"
+- Subtexto: "152 de 195 entregas"
+- Barra de progresso visual
+
+### Cards por Canal
+- Layout em grid responsivo (2 colunas mobile, 3 tablet, 6 desktop)
+- Ícone do canal (Instagram, Video, etc.)
+- Percentual em destaque
+- Proporção (ex: "34/40")
+- Mini barra de progresso
+
+### Cores de Status
+- **Verde**: >= 100% (meta atingida ou superada)
+- **Amarelo**: 50% - 99% (em andamento)
+- **Vermelho**: < 50% (atenção necessária)
 
