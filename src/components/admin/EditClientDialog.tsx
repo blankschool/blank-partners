@@ -59,7 +59,8 @@ export function EditClientDialog({
           instagram: client.scope.instagram,
           tiktok_posts: client.scope.tiktok_posts,
           linkedin_posts: client.scope.linkedin_posts,
-          youtube: client.scope.youtube,
+          youtube_shorts: client.scope.youtube_shorts,
+          youtube_videos: client.scope.youtube_videos,
           recordings: client.scope.recordings,
         });
       } else {

@@ -14,6 +14,7 @@ import Healthscore from "./pages/Healthscore";
 import Users from "./pages/Users";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
+import ScopeControl from "./pages/ScopeControl";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -89,6 +90,14 @@ const App = () => (
               element={
                 <AdminRoute>
                   <Admin />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/scope-control"
+              element={
+                <AdminRoute>
+                  <ScopeControl />
                 </AdminRoute>
               }
             />

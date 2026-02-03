@@ -17,7 +17,8 @@ export interface ClientScope {
   instagram: number;
   tiktok_posts: number;
   linkedin_posts: number;
-  youtube: number;
+  youtube_shorts: number;
+  youtube_videos: number;
   recordings: number;
 }
 

@@ -137,7 +137,10 @@ export function ClientsTab() {
           <span className="w-10 text-center hidden lg:flex items-center justify-center" title="LinkedIn">
             <Linkedin className="h-3.5 w-3.5 text-blue-600" />
           </span>
-          <span className="w-10 text-center hidden lg:flex items-center justify-center" title="YouTube">
+          <span className="w-10 text-center hidden lg:flex items-center justify-center" title="YouTube Shorts">
+            <Youtube className="h-3.5 w-3.5 text-red-500" />
+          </span>
+          <span className="w-10 text-center hidden lg:flex items-center justify-center" title="YouTube Videos">
             <Youtube className="h-3.5 w-3.5 text-red-500" />
           </span>
           <span className="w-10 text-center hidden lg:flex items-center justify-center" title="Gravações">
@@ -185,7 +188,10 @@ export function ClientsTab() {
                 {client.scope?.linkedin_posts || <span className="text-muted-foreground">—</span>}
               </span>
               <span className="w-10 text-center text-sm hidden lg:block">
-                {client.scope?.youtube || <span className="text-muted-foreground">—</span>}
+                {client.scope?.youtube_shorts || <span className="text-muted-foreground">—</span>}
+              </span>
+              <span className="w-10 text-center text-sm hidden lg:block">
+                {client.scope?.youtube_videos || <span className="text-muted-foreground">—</span>}
               </span>
               <span className="w-10 text-center text-sm hidden lg:block">
                 {client.scope?.recordings || <span className="text-muted-foreground">—</span>}
