@@ -1,54 +1,68 @@
-# Scope Control - Redesign Completo
 
-## ✅ Status: IMPLEMENTED
+# Correção de Tipografia - Scope Control
 
-Todas as funcionalidades foram implementadas conforme o plano.
+## Problema Identificado
 
-## Arquivos Criados
+Os números grandes nos cards de KPI e canais estão usando a fonte **Inter (sans-serif)** com `font-semibold`, quando deveriam usar **DM Serif Display (serif)** conforme o padrão visual do projeto.
 
-| Arquivo | Descrição |
+## Padrão Estabelecido no Projeto
+
+Baseado nas páginas Team, Clients e StageStatsPanel, o padrão para métricas grandes é:
+
+```text
+font-serif text-5xl font-normal tracking-tight
+```
+
+## Alterações Necessárias
+
+### 1. ScopeKPISummary.tsx
+
+| Linha | Atual | Corrigir Para |
+|-------|-------|---------------|
+| 40 | `text-3xl font-semibold tabular-nums` | `font-serif text-4xl font-normal tracking-tight` |
+| 50 | `text-3xl font-semibold tabular-nums` | `font-serif text-4xl font-normal tracking-tight` |
+| 70 | `text-3xl font-semibold tabular-nums` | `font-serif text-4xl font-normal tracking-tight` |
+
+**Notas:**
+- Usar `text-4xl` (ou `text-5xl`) para manter proporção visual adequada
+- Remover `font-semibold` (DM Serif Display funciona melhor com `font-normal`)
+- Adicionar `tracking-tight` para o espaçamento característico da fonte serif
+
+### 2. ScopeChannelCards.tsx
+
+| Linha | Atual | Corrigir Para |
+|-------|-------|---------------|
+| 70 | `text-3xl font-semibold tabular-nums` | `font-serif text-4xl font-normal tracking-tight` |
+
+**Notas:**
+- Manter as cores condicionais de status (`text-red-600`, `text-amber-600`, etc.)
+- Aplicar o mesmo padrão tipográfico dos KPIs
+
+## Comparação Visual
+
+```text
+ANTES (Inter - Sans-serif):
+┌─────────────────────┐
+│  PLANEJADO          │
+│  1.408              │  ← Inter, font-semibold
+└─────────────────────┘
+
+DEPOIS (DM Serif Display):
+┌─────────────────────┐
+│  PLANEJADO          │
+│  1.408              │  ← DM Serif Display, font-normal, tracking-tight
+└─────────────────────┘
+```
+
+## Arquivos a Modificar
+
+| Arquivo | Alteração |
 |---------|-----------|
-| `src/lib/scopeCalculations.ts` | Lógica centralizada de cálculo e status |
-| `src/components/scope/ScopeStatusBadge.tsx` | Badge de status (BEHIND, ON_TRACK, OVERDELIVERY, OUT_OF_SCOPE) |
-| `src/components/scope/ScopeDeltaPill.tsx` | Pill colorido para delta (+/-) |
-| `src/components/scope/ScopeKPISummary.tsx` | Card com KPIs gerais |
-| `src/components/scope/ScopeChannelCards.tsx` | Grid de cards por canal |
-| `src/components/scope/ScopeTopRisks.tsx` | Top 5 atrasados e excedidos |
-| `src/components/scope/ScopeControlFilters.tsx` | Filtros e busca |
-| `src/components/scope/ScopeClientRow.tsx` | Linha expansível de cliente |
-| `src/components/scope/ScopeChannelBreakdown.tsx` | Breakdown por canal |
-| `src/components/scope/ScopeDecisionTable.tsx` | Tabela principal |
+| `src/components/scope/ScopeKPISummary.tsx` | Atualizar 3 classes de métricas |
+| `src/components/scope/ScopeChannelCards.tsx` | Atualizar 1 classe de percentual |
 
-## Arquivos Modificados
+## Resultado Esperado
 
-| Arquivo | Modificação |
-|---------|-------------|
-| `src/hooks/useScopeControl.tsx` | Novo shape de dados (ScopeData) |
-| `src/pages/ScopeControl.tsx` | Nova estrutura com todos os componentes |
-| `src/components/scope/ChannelPendingDialog.tsx` | Atualizado para usar novos tipos |
-
-## Arquivos Removidos
-
-| Arquivo | Motivo |
-|---------|--------|
-| `src/components/scope/ScopeControlTable.tsx` | Substituído por ScopeDecisionTable |
-| `src/components/scope/ScopeStatsPanel.tsx` | Substituído por ScopeKPISummary + ScopeChannelCards |
-
-## Regras de Status Implementadas
-
-- **OUT_OF_SCOPE** (cinza): planned = 0
-- **BEHIND** (vermelho): planned > 0 AND percent < 90%
-- **ON_TRACK** (verde): planned > 0 AND 90% <= percent <= 110%
-- **OVERDELIVERY** (âmbar): planned > 0 AND percent > 110% - **NUNCA verde!**
-
-## Funcionalidades
-
-- ✅ Seletor de período (mês)
-- ✅ Busca por cliente
-- ✅ Filtros: status, canal, só desvios, incluir fora do escopo
-- ✅ KPI Summary com todas as métricas
-- ✅ Cards de canal clicáveis
-- ✅ Top 5 riscos (atrasados e excedidos)
-- ✅ Tabela ordenada por risco
-- ✅ Linhas expansíveis com breakdown por canal
-- ✅ Destaque de cliente ao clicar nos Top Risks
+- Métricas grandes com tipografia elegante e corporativa (DM Serif Display)
+- Consistência visual com as demais páginas do sistema (Team, Clients, Contents)
+- Melhor hierarquia visual entre labels (uppercase, tracking-widest) e valores (serif, tracking-tight)
