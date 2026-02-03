@@ -37,7 +37,7 @@ export function ScopeKPISummary({ channels, lastUpdated }: ScopeKPISummaryProps)
             <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
               Planejado
             </p>
-            <p className="text-3xl font-semibold tabular-nums">
+            <p className="font-serif text-4xl font-normal tracking-tight">
               {totals.planned.toLocaleString('pt-BR')}
             </p>
           </div>
@@ -47,7 +47,7 @@ export function ScopeKPISummary({ channels, lastUpdated }: ScopeKPISummaryProps)
             <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
               Realizado
             </p>
-            <p className="text-3xl font-semibold tabular-nums">
+            <p className="font-serif text-4xl font-normal tracking-tight">
               {totals.actual.toLocaleString('pt-BR')}
             </p>
           </div>
@@ -67,7 +67,7 @@ export function ScopeKPISummary({ channels, lastUpdated }: ScopeKPISummaryProps)
             <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
               % do Plano
             </p>
-            <p className="text-3xl font-semibold tabular-nums">
+            <p className="font-serif text-4xl font-normal tracking-tight">
               {formatPercent(percent)}
             </p>
           </div>

@@ -67,7 +67,7 @@ export function ScopeChannelCards({ channels, onChannelClick }: ScopeChannelCard
                 </p>
               ) : (
                 <p className={cn(
-                  'text-3xl font-semibold tabular-nums',
+                  'font-serif text-4xl font-normal tracking-tight',
                   status === 'BEHIND' && 'text-red-600 dark:text-red-400',
                   status === 'ON_TRACK' && 'text-green-600 dark:text-green-400',
                   status === 'OVERDELIVERY' && 'text-amber-600 dark:text-amber-400'
