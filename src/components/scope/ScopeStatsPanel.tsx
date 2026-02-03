@@ -1,8 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { TrendingUp, Instagram, Video, Linkedin, Youtube, Camera } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import { ChannelPendingDialog } from "./ChannelPendingDialog";
 import type { ScopeControlData } from "@/hooks/useScopeControl";
 
 type ScopeField = "instagram" | "tiktok_posts" | "linkedin_posts" | "youtube_shorts" | "youtube_videos" | "recordings";
@@ -33,6 +33,8 @@ const getProgressColor = (percentage: number) => {
 };
 
 export function ScopeStatsPanel({ data }: ScopeStatsPanelProps) {
+  const [selectedChannel, setSelectedChannel] = useState<ScopeField | null>(null);
+
   const stats = useMemo(() => {
     const channels: ScopeField[] = ["instagram", "tiktok_posts", "linkedin_posts", "youtube_shorts", "youtube_videos", "recordings"];
     
@@ -59,73 +61,87 @@ export function ScopeStatsPanel({ data }: ScopeStatsPanelProps) {
     };
   }, [data]);
 
+  const selectedConfig = channelConfig.find((c) => c.key === selectedChannel);
+
   return (
-    <Card className="border-border">
-      <CardContent className="p-6">
-        <div className="flex items-center gap-2 mb-6">
-          <TrendingUp className="h-5 w-5 text-primary" />
-          <h2 className="text-sm font-medium uppercase tracking-widest text-muted-foreground">
-            Relatório de Escopo
-          </h2>
-        </div>
-
-        {/* Overall Stats */}
-        <div className="mb-8">
-          <div className="flex items-baseline gap-3 mb-2">
-            <span className={cn("font-serif text-4xl", getStatusColor(stats.overall.percentage))}>
-              {stats.overall.percentage}%
-            </span>
-            <span className="text-muted-foreground text-sm">
-              {stats.overall.actual} de {stats.overall.planned} entregas
-            </span>
+    <>
+      <Card className="border-border">
+        <CardContent className="p-6">
+          <div className="flex items-center gap-2 mb-6">
+            <TrendingUp className="h-5 w-5 text-primary" />
+            <h2 className="text-sm font-medium uppercase tracking-widest text-muted-foreground">
+              Relatório de Escopo
+            </h2>
           </div>
-          <div className="relative h-3 w-full overflow-hidden rounded-full bg-secondary">
-            <div
-              className={cn("h-full transition-all duration-500", getProgressColor(stats.overall.percentage))}
-              style={{ width: `${Math.min(stats.overall.percentage, 100)}%` }}
-            />
-          </div>
-        </div>
 
-        {/* Per-Channel Stats */}
-        <div>
-          <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-4">
-            Por Canal
-          </p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            {stats.channels.map((channelStat) => {
-              const config = channelConfig.find((c) => c.key === channelStat.channel);
-              if (!config) return null;
-
-              return (
-                <div
-                  key={channelStat.channel}
-                  className="rounded-xl border border-border bg-muted/30 p-4 space-y-2"
-                >
-                  <div className="flex items-center gap-2">
-                    {config.icon}
-                    <span className="text-xs font-medium text-muted-foreground truncate">
-                      {config.label}
-                    </span>
-                  </div>
-                  <div className={cn("font-serif text-2xl", getStatusColor(channelStat.percentage))}>
-                    {channelStat.percentage}%
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {channelStat.actual}/{channelStat.planned}
-                  </div>
-                  <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-secondary">
-                    <div
-                      className={cn("h-full transition-all duration-500", getProgressColor(channelStat.percentage))}
-                      style={{ width: `${Math.min(channelStat.percentage, 100)}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
+          {/* Overall Stats */}
+          <div className="mb-8">
+            <div className="flex items-baseline gap-3 mb-2">
+              <span className={cn("font-serif text-4xl", getStatusColor(stats.overall.percentage))}>
+                {stats.overall.percentage}%
+              </span>
+              <span className="text-muted-foreground text-sm">
+                {stats.overall.actual} de {stats.overall.planned} entregas
+              </span>
+            </div>
+            <div className="relative h-3 w-full overflow-hidden rounded-full bg-secondary">
+              <div
+                className={cn("h-full transition-all duration-500", getProgressColor(stats.overall.percentage))}
+                style={{ width: `${Math.min(stats.overall.percentage, 100)}%` }}
+              />
+            </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+
+          {/* Per-Channel Stats */}
+          <div>
+            <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-4">
+              Por Canal
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+              {stats.channels.map((channelStat) => {
+                const config = channelConfig.find((c) => c.key === channelStat.channel);
+                if (!config) return null;
+
+                return (
+                  <div
+                    key={channelStat.channel}
+                    onClick={() => setSelectedChannel(channelStat.channel)}
+                    className="rounded-xl border border-border bg-muted/30 p-4 space-y-2 cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      {config.icon}
+                      <span className="text-xs font-medium text-muted-foreground truncate">
+                        {config.label}
+                      </span>
+                    </div>
+                    <div className={cn("font-serif text-2xl", getStatusColor(channelStat.percentage))}>
+                      {channelStat.percentage}%
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {channelStat.actual}/{channelStat.planned}
+                    </div>
+                    <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+                      <div
+                        className={cn("h-full transition-all duration-500", getProgressColor(channelStat.percentage))}
+                        style={{ width: `${Math.min(channelStat.percentage, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <ChannelPendingDialog
+        open={selectedChannel !== null}
+        onOpenChange={(open) => !open && setSelectedChannel(null)}
+        channel={selectedChannel}
+        channelLabel={selectedConfig?.label || ""}
+        channelIcon={selectedConfig?.icon || null}
+        data={data}
+      />
+    </>
   );
 }
