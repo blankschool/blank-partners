@@ -1,132 +1,86 @@
 
 
-# Popup de Clientes Pendentes por Canal
+# Correção: Tema Claro para Popup de Clientes Pendentes
 
-## Objetivo
+## Problema
 
-Permitir que o usuário clique em cada card de canal no painel de estatísticas e visualize um popup (Dialog) listando os clientes que possuem entregas pendentes naquele canal específico.
+O popup de clientes pendentes está usando o tema escuro padrão do projeto, resultando em baixo contraste e difícil leitura, conforme mostrado na imagem.
 
-## Critério de "Pendente"
+## Solução
 
-Um cliente é considerado pendente quando:
-- `actual[channel] < planned[channel]` (realizado menor que planejado)
+Aplicar um tema claro (light theme) ao `DialogContent` e aos cards internos, seguindo o padrão de outros dialogs administrativos do projeto.
 
-## Visualização Proposta
+## Alterações
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│  Clientes Pendentes - Instagram                    [X]  │
-├─────────────────────────────────────────────────────────┤
-│                                                         │
-│  ┌─────────────────────────────────────────────────┐    │
-│  │ Cliente A              Faltam 3 de 10           │    │
-│  │ ████████████████████░░░░░░░░░░  70%             │    │
-│  ├─────────────────────────────────────────────────┤    │
-│  │ Cliente B              Faltam 5 de 8            │    │
-│  │ ██████████░░░░░░░░░░░░░░░░░░░░  38%             │    │
-│  ├─────────────────────────────────────────────────┤    │
-│  │ Cliente C              Faltam 2 de 5            │    │
-│  │ █████████████████░░░░░░░░░░░░░  60%             │    │
-│  └─────────────────────────────────────────────────┘    │
-│                                                         │
-│  Total: 3 clientes pendentes                            │
-└─────────────────────────────────────────────────────────┘
-```
+| Arquivo | Alteração |
+|---------|-----------|
+| `src/components/scope/ChannelPendingDialog.tsx` | Aplicar classes de tema claro |
 
-## Implementação Técnica
+## Detalhes Técnicos
 
-### 1. Novo Componente: ChannelPendingDialog
+### DialogContent (linha 64)
 
-Criar `src/components/scope/ChannelPendingDialog.tsx`:
-
-| Propriedade | Tipo | Descrição |
-|-------------|------|-----------|
-| `open` | boolean | Controla visibilidade do dialog |
-| `onOpenChange` | (open: boolean) => void | Callback para fechar |
-| `channel` | ScopeField | Canal selecionado |
-| `channelLabel` | string | Nome do canal para exibição |
-| `channelIcon` | ReactNode | Ícone do canal |
-| `data` | ScopeControlData[] | Dados completos de escopo |
-
-### 2. Lógica de Filtragem
+Adicionar classes para fundo branco e texto escuro:
 
 ```typescript
-const pendingClients = useMemo(() => {
-  return data
-    .filter((item) => {
-      const planned = item.client.scope?.[channel] || 0;
-      const actual = item.actual?.[channel] || 0;
-      return planned > 0 && actual < planned;
-    })
-    .map((item) => ({
-      name: item.client.name,
-      planned: item.client.scope?.[channel] || 0,
-      actual: item.actual?.[channel] || 0,
-      missing: (item.client.scope?.[channel] || 0) - (item.actual?.[channel] || 0),
-      percentage: Math.round(((item.actual?.[channel] || 0) / (item.client.scope?.[channel] || 1)) * 100),
-    }))
-    .sort((a, b) => a.percentage - b.percentage); // Ordena do mais atrasado ao menos
-}, [data, channel]);
+// De:
+<DialogContent className="max-w-md">
+
+// Para:
+<DialogContent className="max-w-md bg-white text-gray-900 border-gray-200">
 ```
 
-### 3. Atualizar ScopeStatsPanel
+### Cards de Cliente (linha 87)
 
-Modificar `src/components/scope/ScopeStatsPanel.tsx`:
-
-- Adicionar estado para controlar o dialog aberto
-- Tornar os cards de canal clicáveis (cursor-pointer, hover effect)
-- Ao clicar, abrir o dialog passando o canal selecionado
+Ajustar cores para contrastar com o fundo branco:
 
 ```typescript
-const [selectedChannel, setSelectedChannel] = useState<ScopeField | null>(null);
+// De:
+className="rounded-lg border border-border bg-muted/30 p-4 space-y-2"
 
-// No card do canal:
-<div
-  onClick={() => setSelectedChannel(channelStat.channel)}
-  className="cursor-pointer hover:border-primary/50 transition-colors ..."
->
-  ...
-</div>
-
-// No final do componente:
-<ChannelPendingDialog
-  open={selectedChannel !== null}
-  onOpenChange={(open) => !open && setSelectedChannel(null)}
-  channel={selectedChannel}
-  data={data}
-  ...
-/>
+// Para:
+className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-2"
 ```
 
-## Arquivos a Criar/Modificar
+### Barra de Progresso (linha 96)
 
-| Arquivo | Ação |
-|---------|------|
-| `src/components/scope/ChannelPendingDialog.tsx` | Criar componente de dialog |
-| `src/components/scope/ScopeStatsPanel.tsx` | Adicionar interatividade aos cards |
+Ajustar cor de fundo da barra:
 
-## Detalhes do Dialog
+```typescript
+// De:
+className="flex-1 relative h-2 w-full overflow-hidden rounded-full bg-secondary"
 
-### Cabeçalho
-- Ícone do canal + título "Clientes Pendentes - [Nome do Canal]"
-- Botão de fechar (X)
+// Para:
+className="flex-1 relative h-2 w-full overflow-hidden rounded-full bg-gray-200"
+```
 
-### Lista de Clientes
-- Ordenados do mais atrasado (menor %) ao menos atrasado
-- Para cada cliente:
-  - Nome do cliente
-  - Texto: "Faltam X de Y"
-  - Barra de progresso colorida
-  - Percentual de conclusão
+### Textos Secundários (linhas 91, 114)
 
-### Rodapé
-- Total de clientes pendentes
-- Caso não haja pendências: mensagem "Todos os clientes estão em dia!"
+Usar cores de texto adequadas para o tema claro:
 
-## Interação UX
+```typescript
+// De:
+className="text-sm text-muted-foreground"
 
-- Cards ganham `cursor-pointer` e efeito de hover
-- Dialog usa animação suave de entrada/saída
-- ScrollArea para listas longas de clientes
-- Cores consistentes com o restante do sistema
+// Para:
+className="text-sm text-gray-500"
+```
+
+### Borda do Rodapé (linha 114)
+
+```typescript
+// De:
+className="pt-2 border-t border-border text-sm text-muted-foreground"
+
+// Para:
+className="pt-2 border-t border-gray-200 text-sm text-gray-500"
+```
+
+## Resultado Esperado
+
+- Fundo branco no dialog
+- Cards com fundo cinza claro (`bg-gray-50`)
+- Bordas em cinza suave (`border-gray-200`)
+- Texto principal em preto/cinza escuro
+- Melhor legibilidade e contraste geral
 
