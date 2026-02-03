@@ -61,7 +61,7 @@ export function ChannelPendingDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md bg-white text-gray-900 border-gray-200">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {channelIcon}
@@ -84,16 +84,16 @@ export function ChannelPendingDialog({
                 {pendingClients.map((client) => (
                   <div
                     key={client.id}
-                    className="rounded-lg border border-border bg-muted/30 p-4 space-y-2"
+                    className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-2"
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-medium truncate">{client.name}</span>
-                      <span className="text-sm text-muted-foreground whitespace-nowrap ml-2">
+                      <span className="text-sm text-gray-500 whitespace-nowrap ml-2">
                         Faltam {client.missing} de {client.planned}
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className="flex-1 relative h-2 w-full overflow-hidden rounded-full bg-secondary">
+                      <div className="flex-1 relative h-2 w-full overflow-hidden rounded-full bg-gray-200">
                         <div
                           className={cn("h-full transition-all duration-500", getProgressColor(client.percentage))}
                           style={{ width: `${client.percentage}%` }}
@@ -111,7 +111,7 @@ export function ChannelPendingDialog({
               </div>
             </ScrollArea>
 
-            <div className="pt-2 border-t border-border text-sm text-muted-foreground">
+            <div className="pt-2 border-t border-gray-200 text-sm text-gray-500">
               Total: {pendingClients.length} {pendingClients.length === 1 ? "cliente pendente" : "clientes pendentes"}
             </div>
           </>
