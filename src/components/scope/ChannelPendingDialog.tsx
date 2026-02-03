@@ -8,17 +8,15 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import type { ScopeControlData } from "@/hooks/useScopeControl";
-
-type ScopeField = "instagram" | "tiktok_posts" | "linkedin_posts" | "youtube_shorts" | "youtube_videos" | "recordings";
+import type { ClientScope, ChannelCode } from "@/lib/scopeCalculations";
 
 interface ChannelPendingDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  channel: ScopeField | null;
+  channel: ChannelCode | null;
   channelLabel: string;
   channelIcon: React.ReactNode;
-  data: ScopeControlData[];
+  clients: ClientScope[];
 }
 
 const getProgressColor = (percentage: number) => {
@@ -33,23 +31,24 @@ export function ChannelPendingDialog({
   channel,
   channelLabel,
   channelIcon,
-  data,
+  clients,
 }: ChannelPendingDialogProps) {
   const pendingClients = useMemo(() => {
     if (!channel) return [];
 
-    return data
-      .filter((item) => {
-        const planned = item.client.scope?.[channel] || 0;
-        const actual = item.actual?.[channel] || 0;
-        return planned > 0 && actual < planned;
+    return clients
+      .filter((client) => {
+        const channelData = client.by_channel.find((c) => c.code === channel);
+        if (!channelData) return false;
+        return channelData.planned > 0 && channelData.actual < channelData.planned;
       })
-      .map((item) => {
-        const planned = item.client.scope?.[channel] || 0;
-        const actual = item.actual?.[channel] || 0;
+      .map((client) => {
+        const channelData = client.by_channel.find((c) => c.code === channel);
+        const planned = channelData?.planned || 0;
+        const actual = channelData?.actual || 0;
         return {
-          id: item.client.id,
-          name: item.client.name,
+          id: client.client_id,
+          name: client.client_name,
           planned,
           actual,
           missing: planned - actual,
@@ -57,7 +56,7 @@ export function ChannelPendingDialog({
         };
       })
       .sort((a, b) => a.percentage - b.percentage);
-  }, [data, channel]);
+  }, [clients, channel]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
