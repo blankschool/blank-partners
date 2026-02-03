@@ -1,121 +1,132 @@
 
 
-# Relatório de Controle de Escopo
+# Popup de Clientes Pendentes por Canal
 
 ## Objetivo
 
-Adicionar um painel de estatísticas na página de Controle de Escopo que exiba:
-1. **Taxa de conclusão geral** - Percentual global de entregas realizadas vs. planejadas
-2. **Taxa de conclusão por canal** - Percentual de cada canal (IG, TikTok, LinkedIn, YT Shorts, YT Videos, Gravações)
+Permitir que o usuário clique em cada card de canal no painel de estatísticas e visualize um popup (Dialog) listando os clientes que possuem entregas pendentes naquele canal específico.
+
+## Critério de "Pendente"
+
+Um cliente é considerado pendente quando:
+- `actual[channel] < planned[channel]` (realizado menor que planejado)
 
 ## Visualização Proposta
 
 ```text
-┌────────────────────────────────────────────────────────────────────────────────┐
-│  📊 Controle de Escopo                                       [Mês/Ano ▼]       │
-├────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                │
-│  ┌────────────────────────────────────────────────────────────────────────┐    │
-│  │  📈 RELATÓRIO DE ESCOPO                                                │    │
-│  │                                                                        │    │
-│  │  ┌──────────────────────┐                                              │    │
-│  │  │   Taxa Geral: 78%    │  ████████████████░░░░░                       │    │
-│  │  │   152/195 entregas   │                                              │    │
-│  │  └──────────────────────┘                                              │    │
-│  │                                                                        │    │
-│  │  Por Canal:                                                            │    │
-│  │  ┌───────┬───────┬───────┬───────┬───────┬───────┐                     │    │
-│  │  │  IG   │  TT   │  LI   │  YTS  │  YTV  │ Grav  │                     │    │
-│  │  │  85%  │  72%  │  90%  │  65%  │  80%  │  70%  │                     │    │
-│  │  │ 34/40 │ 18/25 │ 27/30 │ 13/20 │ 40/50 │ 21/30 │                     │    │
-│  │  └───────┴───────┴───────┴───────┴───────┴───────┘                     │    │
-│  └────────────────────────────────────────────────────────────────────────┘    │
-│                                                                                │
-│  ┌─ Tabela de Clientes (existente) ─────────────────────────────────────────┐  │
-│  │ ...                                                                      │  │
-│  └──────────────────────────────────────────────────────────────────────────┘  │
-└────────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────┐
+│  Clientes Pendentes - Instagram                    [X]  │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐    │
+│  │ Cliente A              Faltam 3 de 10           │    │
+│  │ ████████████████████░░░░░░░░░░  70%             │    │
+│  ├─────────────────────────────────────────────────┤    │
+│  │ Cliente B              Faltam 5 de 8            │    │
+│  │ ██████████░░░░░░░░░░░░░░░░░░░░  38%             │    │
+│  ├─────────────────────────────────────────────────┤    │
+│  │ Cliente C              Faltam 2 de 5            │    │
+│  │ █████████████████░░░░░░░░░░░░░  60%             │    │
+│  └─────────────────────────────────────────────────┘    │
+│                                                         │
+│  Total: 3 clientes pendentes                            │
+└─────────────────────────────────────────────────────────┘
 ```
 
 ## Implementação Técnica
 
-### 1. Novo Componente: ScopeStatsPanel
+### 1. Novo Componente: ChannelPendingDialog
 
-Criar `src/components/scope/ScopeStatsPanel.tsx`:
+Criar `src/components/scope/ChannelPendingDialog.tsx`:
 
-- Recebe os dados do `useScopeControl`
-- Calcula as métricas de forma derivada (sem novas queries)
-- Exibe cards com estatísticas visuais
+| Propriedade | Tipo | Descrição |
+|-------------|------|-----------|
+| `open` | boolean | Controla visibilidade do dialog |
+| `onOpenChange` | (open: boolean) => void | Callback para fechar |
+| `channel` | ScopeField | Canal selecionado |
+| `channelLabel` | string | Nome do canal para exibição |
+| `channelIcon` | ReactNode | Ícone do canal |
+| `data` | ScopeControlData[] | Dados completos de escopo |
 
-### 2. Lógica de Cálculo
+### 2. Lógica de Filtragem
 
 ```typescript
-// Para cada canal
-const calculateChannelStats = (data: ScopeControlData[], channel: ScopeField) => {
-  const totalPlanned = data.reduce((sum, item) => sum + (item.client.scope?.[channel] || 0), 0);
-  const totalActual = data.reduce((sum, item) => sum + (item.actual?.[channel] || 0), 0);
-  const percentage = totalPlanned > 0 ? Math.round((totalActual / totalPlanned) * 100) : 0;
-  return { planned: totalPlanned, actual: totalActual, percentage };
-};
-
-// Taxa geral (soma de todos os canais)
-const calculateOverallStats = (data: ScopeControlData[]) => {
-  const channels = ["instagram", "tiktok_posts", "linkedin_posts", "youtube_shorts", "youtube_videos", "recordings"];
-  let totalPlanned = 0;
-  let totalActual = 0;
-  
-  channels.forEach(channel => {
-    data.forEach(item => {
-      totalPlanned += item.client.scope?.[channel] || 0;
-      totalActual += item.actual?.[channel] || 0;
-    });
-  });
-  
-  const percentage = totalPlanned > 0 ? Math.round((totalActual / totalPlanned) * 100) : 0;
-  return { planned: totalPlanned, actual: totalActual, percentage };
-};
+const pendingClients = useMemo(() => {
+  return data
+    .filter((item) => {
+      const planned = item.client.scope?.[channel] || 0;
+      const actual = item.actual?.[channel] || 0;
+      return planned > 0 && actual < planned;
+    })
+    .map((item) => ({
+      name: item.client.name,
+      planned: item.client.scope?.[channel] || 0,
+      actual: item.actual?.[channel] || 0,
+      missing: (item.client.scope?.[channel] || 0) - (item.actual?.[channel] || 0),
+      percentage: Math.round(((item.actual?.[channel] || 0) / (item.client.scope?.[channel] || 1)) * 100),
+    }))
+    .sort((a, b) => a.percentage - b.percentage); // Ordena do mais atrasado ao menos
+}, [data, channel]);
 ```
 
-### 3. Componentes Visuais
+### 3. Atualizar ScopeStatsPanel
 
-| Elemento | Descrição |
-|----------|-----------|
-| Card principal | Exibe taxa geral com barra de progresso grande |
-| Grid de canais | 6 mini-cards, um para cada canal |
-| Barra de progresso | Usa componente `Progress` existente |
-| Cores dinâmicas | Verde (>=100%), Amarelo (50-99%), Vermelho (<50%) |
+Modificar `src/components/scope/ScopeStatsPanel.tsx`:
 
-### 4. Integração na Página
+- Adicionar estado para controlar o dialog aberto
+- Tornar os cards de canal clicáveis (cursor-pointer, hover effect)
+- Ao clicar, abrir o dialog passando o canal selecionado
 
-Atualizar `src/pages/ScopeControl.tsx`:
-- Importar novo componente `ScopeStatsPanel`
-- Renderizar acima da tabela existente
-- Passar os mesmos dados do hook `useScopeControl`
+```typescript
+const [selectedChannel, setSelectedChannel] = useState<ScopeField | null>(null);
+
+// No card do canal:
+<div
+  onClick={() => setSelectedChannel(channelStat.channel)}
+  className="cursor-pointer hover:border-primary/50 transition-colors ..."
+>
+  ...
+</div>
+
+// No final do componente:
+<ChannelPendingDialog
+  open={selectedChannel !== null}
+  onOpenChange={(open) => !open && setSelectedChannel(null)}
+  channel={selectedChannel}
+  data={data}
+  ...
+/>
+```
 
 ## Arquivos a Criar/Modificar
 
 | Arquivo | Ação |
 |---------|------|
-| `src/components/scope/ScopeStatsPanel.tsx` | Criar componente de estatísticas |
-| `src/pages/ScopeControl.tsx` | Adicionar painel de estatísticas |
+| `src/components/scope/ChannelPendingDialog.tsx` | Criar componente de dialog |
+| `src/components/scope/ScopeStatsPanel.tsx` | Adicionar interatividade aos cards |
 
-## Detalhes do Design
+## Detalhes do Dialog
 
-### Card de Taxa Geral
-- Ícone: `TrendingUp` ou `PieChart`
-- Valor grande: "78%"
-- Subtexto: "152 de 195 entregas"
-- Barra de progresso visual
+### Cabeçalho
+- Ícone do canal + título "Clientes Pendentes - [Nome do Canal]"
+- Botão de fechar (X)
 
-### Cards por Canal
-- Layout em grid responsivo (2 colunas mobile, 3 tablet, 6 desktop)
-- Ícone do canal (Instagram, Video, etc.)
-- Percentual em destaque
-- Proporção (ex: "34/40")
-- Mini barra de progresso
+### Lista de Clientes
+- Ordenados do mais atrasado (menor %) ao menos atrasado
+- Para cada cliente:
+  - Nome do cliente
+  - Texto: "Faltam X de Y"
+  - Barra de progresso colorida
+  - Percentual de conclusão
 
-### Cores de Status
-- **Verde**: >= 100% (meta atingida ou superada)
-- **Amarelo**: 50% - 99% (em andamento)
-- **Vermelho**: < 50% (atenção necessária)
+### Rodapé
+- Total de clientes pendentes
+- Caso não haja pendências: mensagem "Todos os clientes estão em dia!"
+
+## Interação UX
+
+- Cards ganham `cursor-pointer` e efeito de hover
+- Dialog usa animação suave de entrada/saída
+- ScrollArea para listas longas de clientes
+- Cores consistentes com o restante do sistema
 
