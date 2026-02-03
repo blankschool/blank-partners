@@ -1,66 +1,163 @@
 
 
-# Adicionar Coluna de Data de Início de Contrato
+# Página de Controle de Escopo (Atualizado)
 
-## Objetivo
+## Ajuste Solicitado
 
-Adicionar uma coluna "Início" na tabela de clientes do Admin para exibir a data de início do contrato de cada cliente.
+Separar o YouTube em duas categorias distintas:
+- **YouTube Shorts** - Vídeos curtos verticais
+- **YouTube Videos** - Vídeos longos tradicionais
 
 ## Implementação
 
-### Passo 1: Migração do Banco de Dados
+### 1. Migração do Banco de Dados
 
-Adicionar coluna `contract_start_date` na tabela `clients`:
+#### Tabela client_scopes (alterar estrutura existente)
 
 ```sql
-ALTER TABLE clients 
-ADD COLUMN contract_start_date date;
+-- Renomear coluna existente e adicionar nova
+ALTER TABLE client_scopes 
+  RENAME COLUMN youtube TO youtube_shorts;
+
+ALTER TABLE client_scopes 
+  ADD COLUMN youtube_videos integer DEFAULT 0;
 ```
 
-### Passo 2: Atualizar Hook useClients
+#### Nova tabela client_scope_actuals
 
-Modificar `src/hooks/useClients.tsx`:
-- Adicionar `contract_start_date` à interface `ClientWithStats`
-- Incluir `contract_start_date` na query de clientes
-- Incluir `contract_start_date` nas mutations de create e update
+```sql
+CREATE TABLE client_scope_actuals (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id uuid NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  month date NOT NULL,
+  instagram integer DEFAULT 0,
+  tiktok_posts integer DEFAULT 0,
+  linkedin_posts integer DEFAULT 0,
+  youtube_shorts integer DEFAULT 0,
+  youtube_videos integer DEFAULT 0,
+  recordings integer DEFAULT 0,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE(client_id, month)
+);
 
-### Passo 3: Atualizar ClientsTab
+-- RLS Policies
+ALTER TABLE client_scope_actuals ENABLE ROW LEVEL SECURITY;
 
-Modificar `src/components/admin/ClientsTab.tsx`:
-- Adicionar ícone `Calendar` do lucide-react
-- Adicionar coluna "Início" no header da tabela (após Status)
-- Exibir a data formatada (DD/MM/YYYY) na linha de cada cliente
+CREATE POLICY "Authenticated users can view scope actuals"
+  ON client_scope_actuals FOR SELECT TO authenticated
+  USING (true);
 
-### Passo 4: Atualizar Dialogs
+CREATE POLICY "Admins can insert scope actuals"
+  ON client_scope_actuals FOR INSERT TO authenticated
+  WITH CHECK (is_admin());
 
-Modificar `src/components/admin/AddClientDialog.tsx` e `EditClientDialog.tsx`:
-- Importar componente de seleção de data (Popover + Calendar)
-- Adicionar campo de data de início de contrato
-- Incluir data nos handlers de save
+CREATE POLICY "Admins can update scope actuals"
+  ON client_scope_actuals FOR UPDATE TO authenticated
+  USING (is_admin());
 
-## Layout Final da Tabela
+CREATE POLICY "Admins can delete scope actuals"
+  ON client_scope_actuals FOR DELETE TO authenticated
+  USING (is_admin());
+```
+
+### 2. Atualizar Componentes Existentes
+
+#### ClientScopeInput.tsx
+
+Alterar de:
+```text
+YouTube (1 campo)
+```
+
+Para:
+```text
+YouTube Shorts | YouTube Videos (2 campos lado a lado)
+```
+
+#### ClientsTab.tsx
+
+Na tabela de clientes, substituir a coluna única de YouTube por duas:
+- Coluna YT Shorts (ícone YouTube com "S")
+- Coluna YT Videos (ícone YouTube com "V")
+
+#### useClients.tsx
+
+Atualizar interface `ClientScope`:
+- Remover `youtube`
+- Adicionar `youtube_shorts` e `youtube_videos`
+
+Atualizar `ClientScopeData`:
+- Remover `youtube`
+- Adicionar `youtube_shorts` e `youtube_videos`
+
+### 3. Criar Página de Controle de Escopo
+
+#### Estrutura da Tabela
 
 ```text
-| Avatar | Cliente | Status | Início | Membros | IG | TT | LI | YT | Grav | SM | Editor | Designer | Ações |
+| Cliente | IG Plan | IG Real | TT Plan | TT Real | LI Plan | LI Real | YTS Plan | YTS Real | YTV Plan | YTV Real | Grav Plan | Grav Real |
 ```
 
-## Visualização da Data
+Legenda:
+- **IG** = Instagram
+- **TT** = TikTok
+- **LI** = LinkedIn
+- **YTS** = YouTube Shorts
+- **YTV** = YouTube Videos
+- **Grav** = Gravações
 
-A data será exibida no formato brasileiro `DD/MM/YYYY`:
+#### Novos Arquivos
 
-```text
-01/01/2024
-15/03/2024
-—  (se não preenchida)
-```
+| Arquivo | Descrição |
+|---------|-----------|
+| `src/pages/ScopeControl.tsx` | Página principal com seletor de mês |
+| `src/hooks/useScopeControl.tsx` | Hook para buscar e atualizar dados |
+| `src/components/scope/ScopeControlTable.tsx` | Tabela editável com inputs |
+| `src/components/scope/ScopeMonthSelector.tsx` | Seletor de período |
 
-## Arquivos a Modificar
+#### Navegação
+
+Adicionar ao AppSidebar:
+- Ícone: Target
+- Label: "Controle de Escopo"
+- Rota: `/scope-control`
+
+### 4. Arquivos a Modificar
 
 | Arquivo | Ação |
 |---------|------|
-| Migração SQL | Adicionar coluna `contract_start_date` |
-| `src/hooks/useClients.tsx` | Adicionar campo na interface e queries |
-| `src/components/admin/ClientsTab.tsx` | Adicionar coluna na tabela |
-| `src/components/admin/AddClientDialog.tsx` | Adicionar seletor de data |
-| `src/components/admin/EditClientDialog.tsx` | Adicionar seletor de data |
+| Migração SQL | Alterar `client_scopes` + criar `client_scope_actuals` |
+| `src/components/admin/ClientScopeInput.tsx` | Separar YouTube em 2 campos |
+| `src/components/admin/ClientsTab.tsx` | Adicionar 2 colunas de YouTube |
+| `src/hooks/useClients.tsx` | Atualizar interfaces e queries |
+| `src/pages/ScopeControl.tsx` | Criar página |
+| `src/hooks/useScopeControl.tsx` | Criar hook |
+| `src/components/scope/ScopeControlTable.tsx` | Criar componente |
+| `src/components/scope/ScopeMonthSelector.tsx` | Criar componente |
+| `src/App.tsx` | Adicionar rota |
+| `src/components/layout/AppSidebar.tsx` | Adicionar link no menu |
+
+### 5. Visualização do Input de Escopo (Atualizado)
+
+```text
+┌─────────────────────────────────────────────┐
+│         Escopo de Entregas                  │
+├─────────────────────────────────────────────┤
+│  Instagram        │  TikTok                 │
+│  Conteúdos: [___] │  Posts: [___]           │
+├─────────────────────────────────────────────┤
+│  LinkedIn         │  YouTube Shorts         │
+│  Posts: [___]     │  Conteúdos: [___]       │
+├─────────────────────────────────────────────┤
+│  YouTube Videos   │  Gravações              │
+│  Conteúdos: [___] │  Quantidade: [___]      │
+└─────────────────────────────────────────────┘
+```
+
+### 6. Colunas da Tabela de Clientes (Atualizado)
+
+```text
+| Avatar | Cliente | Status | Início | Membros | IG | TT | LI | YTS | YTV | Grav | SM | Editor | Designer | Ações |
+```
 
