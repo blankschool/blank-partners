@@ -4,6 +4,7 @@ import { startOfMonth } from "date-fns";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ScopeMonthSelector } from "@/components/scope/ScopeMonthSelector";
 import { ScopeControlTable } from "@/components/scope/ScopeControlTable";
+import { ScopeStatsPanel } from "@/components/scope/ScopeStatsPanel";
 import { useScopeControl } from "@/hooks/useScopeControl";
 
 export default function ScopeControl() {
@@ -36,11 +37,14 @@ export default function ScopeControl() {
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
           </div>
         ) : (
-          <ScopeControlTable
-            data={data || []}
-            onUpdateActual={upsertActual}
-            isUpdating={isUpdating}
-          />
+          <>
+            <ScopeStatsPanel data={data || []} />
+            <ScopeControlTable
+              data={data || []}
+              onUpdateActual={upsertActual}
+              isUpdating={isUpdating}
+            />
+          </>
         )}
 
         <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
