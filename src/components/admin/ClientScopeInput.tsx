@@ -6,7 +6,8 @@ export interface ClientScopeData {
   instagram: number;
   tiktok_posts: number;
   linkedin_posts: number;
-  youtube: number;
+  youtube_shorts: number;
+  youtube_videos: number;
   recordings: number;
 }
 
@@ -14,7 +15,8 @@ export const defaultScopeData: ClientScopeData = {
   instagram: 0,
   tiktok_posts: 0,
   linkedin_posts: 0,
-  youtube: 0,
+  youtube_shorts: 0,
+  youtube_videos: 0,
   recordings: 0,
 };
 
@@ -82,7 +84,7 @@ export function ClientScopeInput({ value, onChange }: ClientScopeInputProps) {
         </div>
       </div>
 
-      {/* Row 2: LinkedIn + YouTube */}
+      {/* Row 2: LinkedIn + YouTube Shorts */}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm font-medium">
@@ -108,18 +110,18 @@ export function ClientScopeInput({ value, onChange }: ClientScopeInputProps) {
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm font-medium">
             <Youtube className="h-4 w-4 text-red-500" />
-            <span>YouTube</span>
+            <span>YouTube Shorts</span>
           </div>
           <div className="space-y-1">
-            <Label htmlFor="youtube" className="text-xs text-muted-foreground">
+            <Label htmlFor="youtube_shorts" className="text-xs text-muted-foreground">
               Conteúdos
             </Label>
             <Input
-              id="youtube"
+              id="youtube_shorts"
               type="number"
               min="0"
-              value={value.youtube || ""}
-              onChange={(e) => handleChange("youtube", e.target.value)}
+              value={value.youtube_shorts || ""}
+              onChange={(e) => handleChange("youtube_shorts", e.target.value)}
               placeholder="0"
               className="h-9"
             />
@@ -127,25 +129,48 @@ export function ClientScopeInput({ value, onChange }: ClientScopeInputProps) {
         </div>
       </div>
 
-      {/* Row 3: Gravações */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 text-sm font-medium">
-          <Camera className="h-4 w-4 text-purple-500" />
-          <span>Gravações</span>
+      {/* Row 3: YouTube Videos + Gravações */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Youtube className="h-4 w-4 text-red-500" />
+            <span>YouTube Videos</span>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="youtube_videos" className="text-xs text-muted-foreground">
+              Conteúdos
+            </Label>
+            <Input
+              id="youtube_videos"
+              type="number"
+              min="0"
+              value={value.youtube_videos || ""}
+              onChange={(e) => handleChange("youtube_videos", e.target.value)}
+              placeholder="0"
+              className="h-9"
+            />
+          </div>
         </div>
-        <div className="space-y-1">
-          <Label htmlFor="recordings" className="text-xs text-muted-foreground">
-            Quantidade
-          </Label>
-          <Input
-            id="recordings"
-            type="number"
-            min="0"
-            value={value.recordings || ""}
-            onChange={(e) => handleChange("recordings", e.target.value)}
-            placeholder="0"
-            className="h-9"
-          />
+
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Camera className="h-4 w-4 text-purple-500" />
+            <span>Gravações</span>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="recordings" className="text-xs text-muted-foreground">
+              Quantidade
+            </Label>
+            <Input
+              id="recordings"
+              type="number"
+              min="0"
+              value={value.recordings || ""}
+              onChange={(e) => handleChange("recordings", e.target.value)}
+              placeholder="0"
+              className="h-9"
+            />
+          </div>
         </div>
       </div>
     </div>

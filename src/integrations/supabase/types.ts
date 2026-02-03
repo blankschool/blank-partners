@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      client_scope_actuals: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          instagram: number | null
+          linkedin_posts: number | null
+          month: string
+          recordings: number | null
+          tiktok_posts: number | null
+          updated_at: string
+          youtube_shorts: number | null
+          youtube_videos: number | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          instagram?: number | null
+          linkedin_posts?: number | null
+          month: string
+          recordings?: number | null
+          tiktok_posts?: number | null
+          updated_at?: string
+          youtube_shorts?: number | null
+          youtube_videos?: number | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          instagram?: number | null
+          linkedin_posts?: number | null
+          month?: string
+          recordings?: number | null
+          tiktok_posts?: number | null
+          updated_at?: string
+          youtube_shorts?: number | null
+          youtube_videos?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_scope_actuals_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_scopes: {
         Row: {
           client_id: string
@@ -24,7 +74,8 @@ export type Database = {
           recordings: number | null
           tiktok_posts: number | null
           updated_at: string
-          youtube: number | null
+          youtube_shorts: number | null
+          youtube_videos: number | null
         }
         Insert: {
           client_id: string
@@ -35,7 +86,8 @@ export type Database = {
           recordings?: number | null
           tiktok_posts?: number | null
           updated_at?: string
-          youtube?: number | null
+          youtube_shorts?: number | null
+          youtube_videos?: number | null
         }
         Update: {
           client_id?: string
@@ -46,7 +98,8 @@ export type Database = {
           recordings?: number | null
           tiktok_posts?: number | null
           updated_at?: string
-          youtube?: number | null
+          youtube_shorts?: number | null
+          youtube_videos?: number | null
         }
         Relationships: [
           {
