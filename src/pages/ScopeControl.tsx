@@ -8,12 +8,15 @@ import { ScopeChannelCards } from "@/components/scope/ScopeChannelCards";
 import { ScopeTopRisks } from "@/components/scope/ScopeTopRisks";
 import { ScopeControlFilters, type StatusFilter, type ChannelFilter } from "@/components/scope/ScopeControlFilters";
 import { ScopeDecisionTable } from "@/components/scope/ScopeDecisionTable";
+import { EditActualsDialog } from "@/components/scope/EditActualsDialog";
 import { useScopeControl } from "@/hooks/useScopeControl";
-import type { ChannelCode } from "@/lib/scopeCalculations";
+import { useToast } from "@/hooks/use-toast";
+import type { ChannelCode, ClientScope } from "@/lib/scopeCalculations";
 
 export default function ScopeControl() {
   const [selectedMonth, setSelectedMonth] = useState(() => startOfMonth(new Date()));
-  const { data, isLoading } = useScopeControl(selectedMonth);
+  const { data, isLoading, upsertActual, isUpdating } = useScopeControl(selectedMonth);
+  const { toast } = useToast();
 
   // Filter state
   const [searchQuery, setSearchQuery] = useState("");
@@ -23,6 +26,9 @@ export default function ScopeControl() {
   const [includeOutOfScope, setIncludeOutOfScope] = useState(false);
   const [highlightedClientId, setHighlightedClientId] = useState<string | null>(null);
 
+  // Edit dialog state
+  const [editingClient, setEditingClient] = useState<ClientScope | null>(null);
+
   const handleChannelClick = (channel: ChannelCode) => {
     setChannelFilter(channel);
   };
@@ -31,6 +37,64 @@ export default function ScopeControl() {
     setHighlightedClientId(clientId);
     // Clear highlight after 3 seconds
     setTimeout(() => setHighlightedClientId(null), 3000);
+  };
+
+  const handleEditClient = (client: ClientScope) => {
+    setEditingClient(client);
+  };
+
+  const handleSaveActuals = async (clientId: string, values: Record<ChannelCode, number>) => {
+    // Get original values from the client data
+    const client = data?.clients.find((c) => c.client_id === clientId);
+    if (!client) return;
+
+    const originalValues: Record<ChannelCode, number> = {
+      instagram: 0,
+      tiktok_posts: 0,
+      linkedin_posts: 0,
+      youtube_shorts: 0,
+      youtube_videos: 0,
+      recordings: 0,
+    };
+    client.by_channel.forEach((ch) => {
+      originalValues[ch.code] = ch.actual;
+    });
+
+    // Find changes
+    const changes = (Object.entries(values) as [ChannelCode, number][]).filter(
+      ([code, value]) => originalValues[code] !== value
+    );
+
+    if (changes.length === 0) {
+      return;
+    }
+
+    // Execute all mutations
+    try {
+      await Promise.all(
+        changes.map(([field, value]) =>
+          new Promise<void>((resolve, reject) => {
+            upsertActual(
+              { clientId, field, value },
+              {
+                onSuccess: () => resolve(),
+                onError: (error) => reject(error),
+              }
+            );
+          })
+        )
+      );
+      toast({
+        title: "Alterações salvas",
+        description: `${changes.length} campo(s) atualizado(s) com sucesso.`,
+      });
+    } catch {
+      toast({
+        title: "Erro ao salvar",
+        description: "Algumas alterações não puderam ser salvas.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -102,6 +166,7 @@ export default function ScopeControl() {
               showOnlyDeviations={showOnlyDeviations}
               includeOutOfScope={includeOutOfScope}
               highlightedClientId={highlightedClientId}
+              onEditClient={handleEditClient}
             />
 
             {/* Legend */}
@@ -132,6 +197,16 @@ export default function ScopeControl() {
           </div>
         )}
       </div>
+
+      {/* Edit Actuals Dialog */}
+      <EditActualsDialog
+        open={!!editingClient}
+        onOpenChange={(open) => !open && setEditingClient(null)}
+        client={editingClient}
+        month={selectedMonth}
+        onSave={handleSaveActuals}
+        isLoading={isUpdating}
+      />
     </AppLayout>
   );
 }

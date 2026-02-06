@@ -15,14 +15,19 @@ import {
 interface ScopeClientRowProps {
   client: ClientScope;
   isHighlighted?: boolean;
+  onEditClient?: (client: ClientScope) => void;
 }
 
-export function ScopeClientRow({ client, isHighlighted }: ScopeClientRowProps) {
+export function ScopeClientRow({ client, isHighlighted, onEditClient }: ScopeClientRowProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const status = calculateStatus(client.totals.planned, client.totals.actual);
   const percent = calculatePercentOfPlan(client.totals.planned, client.totals.actual);
   const delta = calculateDelta(client.totals.planned, client.totals.actual);
+
+  const handleEditClick = () => {
+    onEditClient?.(client);
+  };
 
   return (
     <div
@@ -88,7 +93,10 @@ export function ScopeClientRow({ client, isHighlighted }: ScopeClientRowProps) {
       {/* Expanded content */}
       {isExpanded && (
         <div className="px-4 pb-4">
-          <ScopeChannelBreakdown channels={client.by_channel} />
+          <ScopeChannelBreakdown
+            channels={client.by_channel}
+            onEditClick={handleEditClick}
+          />
         </div>
       )}
     </div>

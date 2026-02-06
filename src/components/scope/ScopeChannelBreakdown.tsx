@@ -1,4 +1,5 @@
-import { Instagram, Video, Linkedin, Youtube, Camera } from "lucide-react";
+import { Instagram, Video, Linkedin, Youtube, Camera, Pencil } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { ScopeStatusBadge } from "./ScopeStatusBadge";
 import { ScopeDeltaPill } from "./ScopeDeltaPill";
 import {
@@ -12,6 +13,7 @@ import {
 
 interface ScopeChannelBreakdownProps {
   channels: ChannelData[];
+  onEditClick?: () => void;
 }
 
 const channelIcons: Record<ChannelCode, React.ReactNode> = {
@@ -23,9 +25,30 @@ const channelIcons: Record<ChannelCode, React.ReactNode> = {
   recordings: <Camera className="h-4 w-4 text-purple-500" />,
 };
 
-export function ScopeChannelBreakdown({ channels }: ScopeChannelBreakdownProps) {
+export function ScopeChannelBreakdown({ channels, onEditClick }: ScopeChannelBreakdownProps) {
   return (
     <div className="bg-muted/30 rounded-lg p-4 mt-2">
+      {/* Header with Edit Button */}
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-sm font-medium text-muted-foreground">
+          Detalhes por Canal
+        </span>
+        {onEditClick && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEditClick();
+            }}
+            className="h-7 text-xs"
+          >
+            <Pencil className="h-3.5 w-3.5 mr-1.5" />
+            Editar Realizado
+          </Button>
+        )}
+      </div>
+
       <table className="w-full text-sm">
         <thead>
           <tr className="text-muted-foreground">
