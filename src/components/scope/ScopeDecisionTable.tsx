@@ -17,6 +17,7 @@ interface ScopeDecisionTableProps {
   showOnlyDeviations: boolean;
   includeOutOfScope: boolean;
   highlightedClientId?: string | null;
+  onEditClient?: (client: ClientScope) => void;
 }
 
 export function ScopeDecisionTable({
@@ -27,6 +28,7 @@ export function ScopeDecisionTable({
   showOnlyDeviations,
   includeOutOfScope,
   highlightedClientId,
+  onEditClient,
 }: ScopeDecisionTableProps) {
   const filteredAndSortedClients = useMemo(() => {
     let result = [...clients];
@@ -111,6 +113,7 @@ export function ScopeDecisionTable({
             key={client.client_id}
             client={client}
             isHighlighted={highlightedClientId === client.client_id}
+            onEditClient={onEditClient}
           />
         ))}
       </div>
