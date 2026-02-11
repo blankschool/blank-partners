@@ -201,6 +201,8 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          reference_date: string
+          report_link: string | null
           report_period: string | null
           title: string
           updated_at: string
@@ -211,6 +213,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          reference_date: string
+          report_link?: string | null
           report_period?: string | null
           title: string
           updated_at?: string
@@ -221,6 +225,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          reference_date?: string
+          report_link?: string | null
           report_period?: string | null
           title?: string
           updated_at?: string
