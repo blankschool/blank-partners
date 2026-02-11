@@ -1,25 +1,22 @@
 
 
-# Ajuste Visual da Celula de Relatorio Preenchido
+# Adicionar Botao "Abrir Relatorio" no Dialog
 
 ## Problema
 
-Quando um relatorio e preenchido, a celula usa `bg-primary/15` que fica quase branca e invisivel contra o fundo da tabela. Nao ha contraste suficiente para distinguir celulas preenchidas das vazias.
+Quando o usuario edita um relatorio que ja tem link, nao ha como abrir o link diretamente pelo dialog.
 
 ## Mudanca
 
-Arquivo: `src/components/reports/ReportCell.tsx`
+Arquivo: `src/components/reports/ReportLinkDialog.tsx`
 
-Alterar o estilo da celula preenchida para usar um verde solido que se destaque claramente:
+Adicionar um botao "Abrir Relatorio" com icone `ExternalLink` no footer do dialog, visivel apenas quando estiver editando (quando `initialLink` existe). O botao abre o link em nova aba via `window.open`.
 
-- **Celula preenchida**: `bg-emerald-500/20 text-emerald-400` com hover `bg-emerald-500/30`
-- **Celula vazia**: manter o estilo atual (cinza tracejado)
+## Detalhes
 
-## Detalhes Tecnicos
-
-Na celula preenchida (quando `report.report_link` existe), trocar:
-- De: `bg-primary/15 text-primary hover:bg-primary/25`
-- Para: `bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30`
-
-Isso garante que o check verde se destaque contra o fundo escuro da tabela, tornando facil identificar quais relatorios ja foram entregues.
+- Posicionar entre o botao "Remover" e "Cancelar"
+- Estilo: `variant="outline"` com icone `ExternalLink`
+- Texto: "Abrir"
+- Acao: `window.open(link, "_blank")`
+- Visivel apenas no modo edicao (`isEditing = true`)
 
