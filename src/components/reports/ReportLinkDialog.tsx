@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ExternalLink } from "lucide-react";
 
 interface ReportLinkDialogProps {
   open: boolean;
@@ -67,6 +68,12 @@ export function ReportLinkDialog({
             {isEditing && onDelete && (
               <Button type="button" variant="destructive" size="sm" onClick={onDelete} className="mr-auto">
                 Remover
+              </Button>
+            )}
+            {isEditing && (
+              <Button type="button" variant="outline" size="sm" onClick={() => window.open(link, "_blank")} className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50">
+                <ExternalLink className="mr-1 h-4 w-4" />
+                Abrir
               </Button>
             )}
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50">Cancelar</Button>
