@@ -4,38 +4,45 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ExternalLink } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ExternalLink, FileText } from "lucide-react";
+import type { Report } from "@/hooks/useReports";
 
 interface MeetingLinkDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (data: { meeting_link: string; title: string; description: string; meeting_date: string }) => void;
+  onSave: (data: { meeting_link: string; title: string; description: string; meeting_date: string; report_id: string | null }) => void;
   onDelete?: () => void;
   isSaving: boolean;
   initialLink?: string;
   initialTitle?: string;
   initialDescription?: string;
   initialMeetingDate?: string;
+  initialReportId?: string | null;
   clientName: string;
   periodLabel: string;
+  clientReports?: Report[];
 }
 
 export function MeetingLinkDialog({
   open, onOpenChange, onSave, onDelete, isSaving,
   initialLink = "", initialTitle = "", initialDescription = "", initialMeetingDate = "",
-  clientName, periodLabel,
+  initialReportId = null,
+  clientName, periodLabel, clientReports = [],
 }: MeetingLinkDialogProps) {
   const [link, setLink] = useState(initialLink);
   const [title, setTitle] = useState(initialTitle);
   const [description, setDescription] = useState(initialDescription);
   const [meetingDate, setMeetingDate] = useState(initialMeetingDate);
+  const [reportId, setReportId] = useState<string | null>(initialReportId);
 
   useEffect(() => {
     setLink(initialLink);
     setTitle(initialTitle);
     setDescription(initialDescription);
     setMeetingDate(initialMeetingDate);
-  }, [initialLink, initialTitle, initialDescription, initialMeetingDate, open]);
+    setReportId(initialReportId);
+  }, [initialLink, initialTitle, initialDescription, initialMeetingDate, initialReportId, open]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,10 +52,12 @@ export function MeetingLinkDialog({
       description: description.trim(),
       meeting_date: meetingDate,
       meeting_link: link.trim(),
+      report_id: reportId || null,
     });
   };
 
   const isEditing = !!initialTitle;
+  const selectedReport = clientReports.find(r => r.id === reportId);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -94,6 +103,40 @@ export function MeetingLinkDialog({
               placeholder="https://meet.google.com/... (opcional)"
               className="bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400"
             />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-gray-700">Relatório vinculado</Label>
+            <Select
+              value={reportId || "none"}
+              onValueChange={(val) => setReportId(val === "none" ? null : val)}
+            >
+              <SelectTrigger className="bg-gray-50 border-gray-300 text-gray-900">
+                <SelectValue placeholder="Nenhum" />
+              </SelectTrigger>
+              <SelectContent className="bg-white border-gray-200">
+                <SelectItem value="none" className="text-gray-500">Nenhum</SelectItem>
+                {clientReports.map((r) => (
+                  <SelectItem key={r.id} value={r.id} className="text-gray-900">
+                    <span className="flex items-center gap-1.5">
+                      <FileText className="h-3 w-3 text-gray-400" />
+                      {r.title}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedReport?.report_link && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-1 border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
+                onClick={() => window.open(selectedReport.report_link!, "_blank")}
+              >
+                <ExternalLink className="mr-1 h-3.5 w-3.5" />
+                Abrir relatório
+              </Button>
+            )}
           </div>
           <DialogFooter className="flex gap-2">
             {isEditing && onDelete && (

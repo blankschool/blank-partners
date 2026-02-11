@@ -3,6 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { MeetingCell } from "./MeetingCell";
 import { MeetingLinkDialog } from "./MeetingLinkDialog";
 import type { Meeting } from "@/hooks/useMeetings";
+import type { Report } from "@/hooks/useReports";
 
 interface Client {
   id: string;
@@ -19,7 +20,8 @@ interface MeetingTrackingTableProps {
   meetings: Meeting[];
   weeks: WeekDef[];
   monthReferenceDate: string;
-  onUpsert: (data: { client_id: string; meeting_period: "weekly" | "monthly"; meeting_date: string; meeting_link: string; title: string; description: string }) => void;
+  reports: Report[];
+  onUpsert: (data: { client_id: string; meeting_period: "weekly" | "monthly"; meeting_date: string; meeting_link: string; title: string; description: string; report_id: string | null }) => void;
   onDelete: (id: string) => void;
   isSaving: boolean;
 }
@@ -33,7 +35,7 @@ interface DialogState {
   existing?: Meeting;
 }
 
-export function MeetingTrackingTable({ clients, meetings, weeks, monthReferenceDate, onUpsert, onDelete, isSaving }: MeetingTrackingTableProps) {
+export function MeetingTrackingTable({ clients, meetings, weeks, monthReferenceDate, reports, onUpsert, onDelete, isSaving }: MeetingTrackingTableProps) {
   const [dialog, setDialog] = useState<DialogState | null>(null);
 
   const meetingMap = useMemo(() => {
@@ -126,6 +128,7 @@ export function MeetingTrackingTable({ clients, meetings, weeks, monthReferenceD
               meeting_link: data.meeting_link,
               title: data.title,
               description: data.description,
+              report_id: data.report_id,
             });
             setDialog(null);
           }}
@@ -138,8 +141,10 @@ export function MeetingTrackingTable({ clients, meetings, weeks, monthReferenceD
           initialTitle={dialog.existing?.title || ""}
           initialDescription={dialog.existing?.description || ""}
           initialMeetingDate={dialog.existing?.meeting_date?.split("T")[0] || dialog.meetingDate}
+          initialReportId={dialog.existing?.report_id || null}
           clientName={dialog.clientName}
           periodLabel={dialog.periodLabel}
+          clientReports={reports.filter(r => r.client_id === dialog.clientId)}
         />
       )}
     </>

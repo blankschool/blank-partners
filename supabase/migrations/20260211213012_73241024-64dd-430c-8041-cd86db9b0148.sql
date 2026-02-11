@@ -1,0 +1,1 @@
+ALTER TABLE public.client_meetings ADD COLUMN report_id uuid REFERENCES public.client_reports(id) ON DELETE SET NULL;
