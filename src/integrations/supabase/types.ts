@@ -169,6 +169,7 @@ export type Database = {
           id: string
           meeting_date: string
           meeting_link: string
+          meeting_period: string | null
           title: string
           updated_at: string
         }
@@ -181,6 +182,7 @@ export type Database = {
           id?: string
           meeting_date: string
           meeting_link: string
+          meeting_period?: string | null
           title: string
           updated_at?: string
         }
@@ -193,6 +195,7 @@ export type Database = {
           id?: string
           meeting_date?: string
           meeting_link?: string
+          meeting_period?: string | null
           title?: string
           updated_at?: string
         }
