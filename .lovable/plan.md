@@ -1,38 +1,37 @@
 
 
-# Mostrar Periodo do Relatorio no Dropdown
+# Incluir Mes e Ano no Label do Relatorio
 
 ## Problema
 
-Quando o relatorio nao tem titulo, so aparece o link truncado, dificultando a identificacao. O usuario quer ver a semana/mes do relatorio para facilitar a selecao.
+O dropdown mostra apenas "Sem 1" sem indicar o mes/ano, dificultando a identificacao quando ha relatorios de meses diferentes.
 
 ## Solucao
 
-Alterar o label de cada item no dropdown para incluir o periodo e a data de referencia. O formato sera:
+Alterar a funcao `getReportLabel` em `MeetingLinkDialog.tsx` para incluir o mes abreviado e ano. O formato passara a ser:
 
-- Com titulo: `"Sem 1 - Titulo do relatorio"` ou `"Mensal - Titulo do relatorio"`
-- Sem titulo: `"Sem 1 - https://supabase.com/dash..."` ou `"Mensal - Relatorio sem titulo"`
+- `"Sem 1/Fev 26 — Titulo"` para relatorios semanais
+- `"Mensal/Fev 26 — Titulo"` para relatorios mensais
 
 ### Arquivo: `src/components/meetings/MeetingLinkDialog.tsx`
 
-Criar uma funcao helper que monta o label do relatorio:
+Atualizar a funcao `getReportLabel` para extrair mes e ano do `reference_date`:
 
 ```text
 function getReportLabel(r: Report): string {
+  const date = new Date(r.reference_date + "T12:00:00");
+  const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+  const monthYear = `${monthNames[date.getMonth()]} ${String(date.getFullYear()).slice(2)}`;
   const periodPrefix = r.report_period === "monthly"
-    ? "Mensal"
-    : `Sem ${getWeekNumber(r.reference_date)}`;
-  const name = r.title || (r.report_link ? r.report_link.substring(0, 30) + '...' : 'Sem titulo');
+    ? `Mensal/${monthYear}`
+    : `Sem ${Math.ceil(date.getDate() / 7)}/${monthYear}`;
+  const name = r.title || (r.report_link ? r.report_link.substring(0, 30) + '...' : 'Sem título');
   return `${periodPrefix} — ${name}`;
 }
 ```
 
-A funcao `getWeekNumber` calcula a semana com base no dia do `reference_date` (1-7 = Sem 1, 8-14 = Sem 2, etc).
-
-Usar esse label tanto no `SelectItem` quanto na exibicao do valor selecionado.
-
 ## Escopo
 
 - 1 arquivo alterado: `MeetingLinkDialog.tsx`
-- Sem migracao, sem mudanca de hook
+- Apenas a funcao `getReportLabel` sera modificada
 
