@@ -38,27 +38,29 @@ export function ReportLinkDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-white text-gray-900 border-gray-200 [&>button]:text-gray-500 [&>button]:hover:text-gray-900">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Editar Relatório" : "Adicionar Relatório"}</DialogTitle>
-          <p className="text-sm text-muted-foreground">{clientName} — {periodLabel}</p>
+          <DialogTitle className="text-gray-900">{isEditing ? "Editar Relatório" : "Adicionar Relatório"}</DialogTitle>
+          <p className="text-sm text-gray-500">{clientName} — {periodLabel}</p>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label>Link do Relatório *</Label>
+            <Label className="text-gray-700">Link do Relatório *</Label>
             <Input
               type="url"
               value={link}
               onChange={(e) => setLink(e.target.value)}
               placeholder="https://..."
+              className="bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400"
             />
           </div>
           <div className="space-y-2">
-            <Label>Título / Observação</Label>
+            <Label className="text-gray-700">Título / Observação</Label>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Opcional"
+              className="bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400"
             />
           </div>
           <DialogFooter className="flex gap-2">
@@ -67,8 +69,8 @@ export function ReportLinkDialog({
                 Remover
               </Button>
             )}
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-            <Button type="submit" disabled={isSaving || !link.trim()}>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50">Cancelar</Button>
+            <Button type="submit" disabled={isSaving || !link.trim()} className="bg-gray-900 text-white hover:bg-gray-800">
               {isSaving ? "Salvando..." : "Salvar"}
             </Button>
           </DialogFooter>
