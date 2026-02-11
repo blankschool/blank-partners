@@ -1,56 +1,61 @@
 
 
-# Revisar Pop-up de Reunioes
+# Vincular Relatorio a Reuniao
 
 ## Resumo
 
-O dialog atual so tem 2 campos (Link e Titulo). A tabela `client_meetings` ja possui colunas para `description` e `meeting_date` que nao estao sendo usadas no formulario. Vamos adicionar esses campos ao pop-up para capturar todas as informacoes relevantes.
-
-## Campos do Pop-up Revisado
-
-| Campo | Tipo | Obrigatorio | Situacao Atual |
-|---|---|---|---|
-| Cliente | Texto (somente leitura) | -- | Ja aparece no header |
-| Periodo | Texto (somente leitura) | -- | Ja aparece no header |
-| Titulo | Input texto | Sim | Existe, mas era opcional. Passa a ser obrigatorio |
-| Descricao | Textarea | Nao | Novo campo |
-| Data da Reuniao | Input date | Nao | Novo campo (pre-preenchido com a data de referencia) |
-| Link da Reuniao | Input url | Nao | Ja existe, passa a ser opcional |
+Adicionar a possibilidade de vincular um relatorio existente (da pagina de Relatorios) a uma reuniao. O usuario podera selecionar um relatorio do mesmo cliente em um dropdown dentro do pop-up da reuniao.
 
 ## Mudancas
 
-### 1. `src/components/meetings/MeetingLinkDialog.tsx`
+### 1. Migracao: Adicionar coluna `report_id` na tabela `client_meetings`
 
-- Adicionar campo **Descricao** (textarea) para observacoes sobre a reuniao
-- Adicionar campo **Data da Reuniao** (input date) pre-preenchido com a data de referencia da celula clicada, permitindo ajuste manual
-- Tornar **Titulo** obrigatorio (era opcional)
-- Tornar **Link** opcional (era obrigatorio) -- nem toda reuniao tem link no momento do cadastro
-- Atualizar a interface `onSave` para incluir `description` e `meeting_date`
-- Renomear o componente conceitualmente de "link dialog" para um formulario mais completo
+Adicionar uma coluna opcional `report_id` (uuid, nullable) que referencia a tabela `client_reports`.
 
-### 2. `src/hooks/useMeetings.tsx`
+```text
+ALTER TABLE client_meetings ADD COLUMN report_id uuid REFERENCES client_reports(id) ON DELETE SET NULL;
+```
 
-- Adicionar `description` e `meeting_date` ao `UpsertMeetingInput`
-- Incluir `description` no insert e update do Supabase
-- Permitir que `meeting_link` seja string vazia (opcional)
+Quando o relatorio vinculado for deletado, o campo sera limpo automaticamente (`SET NULL`).
 
-### 3. `src/components/meetings/MeetingTrackingTable.tsx`
+### 2. `src/components/meetings/MeetingLinkDialog.tsx`
 
-- Atualizar o `onSave` callback para passar os novos campos (`description`, `meeting_date`)
-- Passar `initialDescription` e `initialMeetingDate` para o dialog
+- Adicionar um campo **"Relatorio vinculado"** com um `Select` dropdown
+- O dropdown lista os relatorios do mesmo cliente (buscados via props)
+- Opcao "Nenhum" para desvincular
+- Ao selecionar um relatorio, mostra o titulo e um botao para abrir o link do relatorio
+- Atualizar a interface `onSave` para incluir `report_id`
 
-### 4. `src/components/meetings/MeetingCell.tsx`
+### 3. `src/hooks/useMeetings.tsx`
 
-- Ajustar a logica de "preenchido" para considerar `title` (nao apenas `meeting_link`) como indicador de reuniao registrada
+- Adicionar `report_id` ao `Meeting` interface e ao `UpsertMeetingInput`
+- Incluir `report_id` no insert e update do Supabase
+- Na query, fazer join com `client_reports` para trazer o titulo do relatorio vinculado
+
+### 4. `src/components/meetings/MeetingTrackingTable.tsx`
+
+- Passar a lista de relatorios do mes para o dialog
+- Atualizar o `onSave` callback para incluir `report_id`
+- Passar `initialReportId` para o dialog
 
 ### 5. `src/pages/Meetings.tsx`
 
-- Atualizar o handler `onUpsert` para incluir os novos campos
+- Buscar os relatorios do mes selecionado (reutilizar `useReports` ja existente)
+- Passar a lista de relatorios para o `MeetingTrackingTable`
+- Atualizar o handler `onUpsert` para incluir `report_id`
+
+## Fluxo do Usuario
+
+1. Usuario clica em uma celula na tabela de reunioes
+2. Pop-up abre com os campos atuais + novo campo "Relatorio vinculado"
+3. O dropdown mostra todos os relatorios do mesmo cliente no mes
+4. Usuario seleciona o relatorio desejado e salva
+5. A vinculacao fica salva no banco
 
 ## Detalhes Tecnicos
 
-- O campo `description` ja existe na tabela `client_meetings` (tipo `text`, nullable)
-- O campo `meeting_date` ja existe e e usado como referencia; agora o usuario podera ajustar a data real da reuniao
-- A validacao muda: antes exigia `link`, agora exige `title` como campo obrigatorio
-- Nenhuma migracao de banco necessaria -- todos os campos ja existem na tabela
+- A coluna `report_id` e nullable para permitir reunioes sem relatorio vinculado
+- O `ON DELETE SET NULL` garante que se o relatorio for removido, a reuniao nao quebra
+- Os relatorios serao filtrados por `client_id` no dropdown para mostrar apenas os do mesmo cliente
+- O hook `useReports` ja existente sera reutilizado na pagina de Meetings para buscar os relatorios disponiveis
 
