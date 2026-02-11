@@ -8,6 +8,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ExternalLink, FileText } from "lucide-react";
 import type { Report } from "@/hooks/useReports";
 
+function getWeekNumber(dateStr: string): number {
+  const day = new Date(dateStr + "T12:00:00").getDate();
+  return Math.ceil(day / 7);
+}
+
+function getReportLabel(r: Report): string {
+  const periodPrefix = r.report_period === "monthly"
+    ? "Mensal"
+    : `Sem ${getWeekNumber(r.reference_date)}`;
+  const name = r.title || (r.report_link ? r.report_link.substring(0, 30) + '...' : 'Sem título');
+  return `${periodPrefix} — ${name}`;
+}
+
 interface MeetingLinkDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -119,7 +132,7 @@ export function MeetingLinkDialog({
                   <SelectItem key={r.id} value={r.id} className="text-gray-900">
                     <span className="flex items-center gap-1.5">
                       <FileText className="h-3 w-3 text-gray-400" />
-                      {r.title || (r.report_link ? r.report_link.substring(0, 40) + '...' : 'Relatório sem título')}
+                      {getReportLabel(r)}
                     </span>
                   </SelectItem>
                 ))}
