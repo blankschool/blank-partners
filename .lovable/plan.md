@@ -1,31 +1,25 @@
 
 
-# Ajuste Estetico do Dialog de Relatorio - Fundo Claro
+# Ajuste Visual da Celula de Relatorio Preenchido
 
 ## Problema
 
-O dialog "Adicionar Relatorio" esta usando o tema escuro padrao (glassmorphism com `bg-card/90` e `backdrop-blur`), o que dificulta a leitura. Conforme o padrao do projeto, dialogs administrativos devem usar fundo claro para contraste.
+Quando um relatorio e preenchido, a celula usa `bg-primary/15` que fica quase branca e invisivel contra o fundo da tabela. Nao ha contraste suficiente para distinguir celulas preenchidas das vazias.
 
 ## Mudanca
 
-Aplicar o mesmo padrao de tema claro usado nos dialogs administrativos (Admin, Clients, Team) ao `ReportLinkDialog.tsx`.
+Arquivo: `src/components/reports/ReportCell.tsx`
 
-## Arquivo a Modificar
+Alterar o estilo da celula preenchida para usar um verde solido que se destaque claramente:
 
-`src/components/reports/ReportLinkDialog.tsx`
+- **Celula preenchida**: `bg-emerald-500/20 text-emerald-400` com hover `bg-emerald-500/30`
+- **Celula vazia**: manter o estilo atual (cinza tracejado)
 
 ## Detalhes Tecnicos
 
-Adicionar classes de override no `DialogContent` para forcar fundo branco, texto escuro, bordas cinza e inputs com estilo claro:
+Na celula preenchida (quando `report.report_link` existe), trocar:
+- De: `bg-primary/15 text-primary hover:bg-primary/25`
+- Para: `bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30`
 
-- **Fundo**: `bg-white text-gray-900`
-- **Subtitulo**: `text-gray-500`
-- **Labels**: `text-gray-700`
-- **Inputs**: `bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400`
-- **Botao fechar (X)**: `text-gray-500 hover:text-gray-900`
-- **Botao Cancelar**: `border-gray-300 text-gray-700 bg-white hover:bg-gray-50`
-- **Botao Salvar**: `bg-gray-900 text-white hover:bg-gray-800`
-- **Botao Remover**: manter `variant="destructive"`
-
-Nenhum arquivo novo necessario, apenas ajuste de classes CSS no componente existente.
+Isso garante que o check verde se destaque contra o fundo escuro da tabela, tornando facil identificar quais relatorios ja foram entregues.
 
