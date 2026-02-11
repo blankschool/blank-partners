@@ -1,61 +1,38 @@
 
+# Corrigir Nome do Relatorio no Dropdown
 
-# Vincular Relatorio a Reuniao
+## Problema
 
-## Resumo
+O relatorio vinculado no dropdown nao mostra nome porque o campo `title` esta vazio no banco de dados. O `SelectItem` renderiza `{r.title}` que e uma string vazia.
 
-Adicionar a possibilidade de vincular um relatorio existente (da pagina de Relatorios) a uma reuniao. O usuario podera selecionar um relatorio do mesmo cliente em um dropdown dentro do pop-up da reuniao.
+## Solucao
 
-## Mudancas
+Atualizar o `MeetingLinkDialog.tsx` para exibir um texto fallback quando o titulo do relatorio estiver vazio. A logica sera:
 
-### 1. Migracao: Adicionar coluna `report_id` na tabela `client_meetings`
+1. Se `title` existir, mostrar o titulo
+2. Se nao, mostrar o `report_link` truncado (ex: "https://supabase.com/dash..." )
+3. Se nenhum dos dois existir, mostrar "Relatorio sem titulo"
 
-Adicionar uma coluna opcional `report_id` (uuid, nullable) que referencia a tabela `client_reports`.
+### Arquivo: `src/components/meetings/MeetingLinkDialog.tsx`
+
+Alterar o `SelectItem` dos relatorios para usar um label com fallback:
 
 ```text
-ALTER TABLE client_meetings ADD COLUMN report_id uuid REFERENCES client_reports(id) ON DELETE SET NULL;
+// De:
+{r.title}
+
+// Para:
+{r.title || (r.report_link ? r.report_link.substring(0, 40) + '...' : 'Relatório sem título')}
 ```
 
-Quando o relatorio vinculado for deletado, o campo sera limpo automaticamente (`SET NULL`).
+Tambem atualizar o `SelectValue` para mostrar o label correto quando um relatorio esta selecionado.
 
-### 2. `src/components/meetings/MeetingLinkDialog.tsx`
+### Arquivo: `src/components/meetings/MeetingLinkDialog.tsx` (SelectValue)
 
-- Adicionar um campo **"Relatorio vinculado"** com um `Select` dropdown
-- O dropdown lista os relatorios do mesmo cliente (buscados via props)
-- Opcao "Nenhum" para desvincular
-- Ao selecionar um relatorio, mostra o titulo e um botao para abrir o link do relatorio
-- Atualizar a interface `onSave` para incluir `report_id`
+O `SelectValue` do Select tambem precisa mostrar o nome correto do relatorio selecionado, nao apenas o placeholder.
 
-### 3. `src/hooks/useMeetings.tsx`
+## Escopo
 
-- Adicionar `report_id` ao `Meeting` interface e ao `UpsertMeetingInput`
-- Incluir `report_id` no insert e update do Supabase
-- Na query, fazer join com `client_reports` para trazer o titulo do relatorio vinculado
-
-### 4. `src/components/meetings/MeetingTrackingTable.tsx`
-
-- Passar a lista de relatorios do mes para o dialog
-- Atualizar o `onSave` callback para incluir `report_id`
-- Passar `initialReportId` para o dialog
-
-### 5. `src/pages/Meetings.tsx`
-
-- Buscar os relatorios do mes selecionado (reutilizar `useReports` ja existente)
-- Passar a lista de relatorios para o `MeetingTrackingTable`
-- Atualizar o handler `onUpsert` para incluir `report_id`
-
-## Fluxo do Usuario
-
-1. Usuario clica em uma celula na tabela de reunioes
-2. Pop-up abre com os campos atuais + novo campo "Relatorio vinculado"
-3. O dropdown mostra todos os relatorios do mesmo cliente no mes
-4. Usuario seleciona o relatorio desejado e salva
-5. A vinculacao fica salva no banco
-
-## Detalhes Tecnicos
-
-- A coluna `report_id` e nullable para permitir reunioes sem relatorio vinculado
-- O `ON DELETE SET NULL` garante que se o relatorio for removido, a reuniao nao quebra
-- Os relatorios serao filtrados por `client_id` no dropdown para mostrar apenas os do mesmo cliente
-- O hook `useReports` ja existente sera reutilizado na pagina de Meetings para buscar os relatorios disponiveis
-
+- Apenas 1 arquivo alterado: `MeetingLinkDialog.tsx`
+- Sem migracao de banco
+- Sem mudanca de logica, apenas exibicao
