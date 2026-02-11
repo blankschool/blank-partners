@@ -15,6 +15,7 @@ import Users from "./pages/Users";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
 import ScopeControl from "./pages/ScopeControl";
+import Reports from "./pages/Reports";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -98,6 +99,14 @@ const App = () => (
               element={
                 <AdminRoute>
                   <ScopeControl />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/reports"
+              element={
+                <AdminRoute>
+                  <Reports />
                 </AdminRoute>
               }
             />
