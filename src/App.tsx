@@ -17,6 +17,7 @@ import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
 import ScopeControl from "./pages/ScopeControl";
 import Reports from "./pages/Reports";
+import Meetings from "./pages/Meetings";
 import Auth from "./pages/Auth";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
@@ -110,6 +111,14 @@ const App = () => (
               element={
                 <AgencyRoute>
                   <Reports />
+                </AgencyRoute>
+              }
+            />
+            <Route
+              path="/meetings"
+              element={
+                <AgencyRoute>
+                  <Meetings />
                 </AgencyRoute>
               }
             />

@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, FileText, UsersRound, HeartPulse, LogOut, UserCog, Shield, Target, ClipboardList } from "lucide-react";
+import { LayoutDashboard, Users, FileText, UsersRound, HeartPulse, LogOut, UserCog, Shield, Target, ClipboardList, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
@@ -28,6 +28,7 @@ const baseNavigationItems = [
 // Visible to agency + admin
 const agencyNavigationItems = [
   { title: "Relatórios", url: "/reports", icon: ClipboardList },
+  { title: "Reuniões", url: "/meetings", icon: Calendar },
 ];
 
 // Visible to admin only
