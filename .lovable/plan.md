@@ -1,38 +1,38 @@
 
-# Corrigir Nome do Relatorio no Dropdown
+
+# Mostrar Periodo do Relatorio no Dropdown
 
 ## Problema
 
-O relatorio vinculado no dropdown nao mostra nome porque o campo `title` esta vazio no banco de dados. O `SelectItem` renderiza `{r.title}` que e uma string vazia.
+Quando o relatorio nao tem titulo, so aparece o link truncado, dificultando a identificacao. O usuario quer ver a semana/mes do relatorio para facilitar a selecao.
 
 ## Solucao
 
-Atualizar o `MeetingLinkDialog.tsx` para exibir um texto fallback quando o titulo do relatorio estiver vazio. A logica sera:
+Alterar o label de cada item no dropdown para incluir o periodo e a data de referencia. O formato sera:
 
-1. Se `title` existir, mostrar o titulo
-2. Se nao, mostrar o `report_link` truncado (ex: "https://supabase.com/dash..." )
-3. Se nenhum dos dois existir, mostrar "Relatorio sem titulo"
+- Com titulo: `"Sem 1 - Titulo do relatorio"` ou `"Mensal - Titulo do relatorio"`
+- Sem titulo: `"Sem 1 - https://supabase.com/dash..."` ou `"Mensal - Relatorio sem titulo"`
 
 ### Arquivo: `src/components/meetings/MeetingLinkDialog.tsx`
 
-Alterar o `SelectItem` dos relatorios para usar um label com fallback:
+Criar uma funcao helper que monta o label do relatorio:
 
 ```text
-// De:
-{r.title}
-
-// Para:
-{r.title || (r.report_link ? r.report_link.substring(0, 40) + '...' : 'Relatório sem título')}
+function getReportLabel(r: Report): string {
+  const periodPrefix = r.report_period === "monthly"
+    ? "Mensal"
+    : `Sem ${getWeekNumber(r.reference_date)}`;
+  const name = r.title || (r.report_link ? r.report_link.substring(0, 30) + '...' : 'Sem titulo');
+  return `${periodPrefix} — ${name}`;
+}
 ```
 
-Tambem atualizar o `SelectValue` para mostrar o label correto quando um relatorio esta selecionado.
+A funcao `getWeekNumber` calcula a semana com base no dia do `reference_date` (1-7 = Sem 1, 8-14 = Sem 2, etc).
 
-### Arquivo: `src/components/meetings/MeetingLinkDialog.tsx` (SelectValue)
-
-O `SelectValue` do Select tambem precisa mostrar o nome correto do relatorio selecionado, nao apenas o placeholder.
+Usar esse label tanto no `SelectItem` quanto na exibicao do valor selecionado.
 
 ## Escopo
 
-- Apenas 1 arquivo alterado: `MeetingLinkDialog.tsx`
-- Sem migracao de banco
-- Sem mudanca de logica, apenas exibicao
+- 1 arquivo alterado: `MeetingLinkDialog.tsx`
+- Sem migracao, sem mudanca de hook
+
