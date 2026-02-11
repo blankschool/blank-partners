@@ -8,15 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ExternalLink, FileText } from "lucide-react";
 import type { Report } from "@/hooks/useReports";
 
-function getWeekNumber(dateStr: string): number {
-  const day = new Date(dateStr + "T12:00:00").getDate();
-  return Math.ceil(day / 7);
-}
-
 function getReportLabel(r: Report): string {
+  const date = new Date(r.reference_date + "T12:00:00");
+  const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+  const monthYear = `${monthNames[date.getMonth()]} ${String(date.getFullYear()).slice(2)}`;
   const periodPrefix = r.report_period === "monthly"
-    ? "Mensal"
-    : `Sem ${getWeekNumber(r.reference_date)}`;
+    ? `Mensal/${monthYear}`
+    : `Sem ${Math.ceil(date.getDate() / 7)}/${monthYear}`;
   const name = r.title || (r.report_link ? r.report_link.substring(0, 30) + '...' : 'Sem título');
   return `${periodPrefix} — ${name}`;
 }
