@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentUserRole } from "@/hooks/useCurrentUserRole";
+import { useIsAgencyOrAdmin } from "@/hooks/useIsAgencyOrAdmin";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -19,27 +20,35 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const navigationItems = [
+// Visible to all authenticated users
+const baseNavigationItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
+];
+
+// Visible to agency + admin
+const agencyNavigationItems = [
+  { title: "Relatórios", url: "/reports", icon: ClipboardList },
+];
+
+// Visible to admin only
+const adminNavigationItems = [
   { title: "Clients", url: "/clients", icon: Users },
   { title: "Contents", url: "/contents", icon: FileText },
   { title: "Team", url: "/team", icon: UsersRound },
   { title: "Healthscore", url: "/healthscore", icon: HeartPulse },
   { title: "Users", url: "/users", icon: UserCog },
-];
-
-const adminNavigationItems = [
   { title: "Admin", url: "/admin", icon: Shield },
   { title: "Controle de Escopo", url: "/scope-control", icon: Target },
-  { title: "Relatórios", url: "/reports", icon: ClipboardList },
 ];
 
 export function AppSidebar() {
   const { state } = useSidebar();
   const { user, signOut } = useAuth();
   const { isAdmin } = useCurrentUserRole();
-  const { toast } = useToast();
+  const { isAgencyOrAdmin } = useIsAgencyOrAdmin();
   const isCollapsed = state === "collapsed";
+
+  const { toast } = useToast();
 
   const handleSignOut = async () => {
     const { error } = await signOut();
@@ -78,12 +87,26 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu className="gap-0">
-              {navigationItems.map((item) => (
+              {baseNavigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild tooltip={item.title}>
                     <NavLink
                       to={item.url}
                       end={item.url === "/"}
+                      className="flex items-center gap-3 h-12 px-4 rounded-lg transition-all duration-300 hover:bg-white/10 [&.active]:bg-white/10"
+                      activeClassName="bg-white/10"
+                    >
+                      <item.icon className="h-5 w-5 shrink-0 text-white/70" />
+                      <span className="text-[15px] font-medium text-white">{item.title}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+              {isAgencyOrAdmin && agencyNavigationItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild tooltip={item.title}>
+                    <NavLink
+                      to={item.url}
                       className="flex items-center gap-3 h-12 px-4 rounded-lg transition-all duration-300 hover:bg-white/10 [&.active]:bg-white/10"
                       activeClassName="bg-white/10"
                     >

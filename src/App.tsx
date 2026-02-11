@@ -44,41 +44,41 @@ const App = () => (
             <Route
               path="/clients"
               element={
-                <ProtectedRoute>
+                <AdminRoute>
                   <Clients />
-                </ProtectedRoute>
+                </AdminRoute>
               }
             />
             <Route
               path="/contents"
               element={
-                <ProtectedRoute>
+                <AdminRoute>
                   <Contents />
-                </ProtectedRoute>
+                </AdminRoute>
               }
             />
             <Route
               path="/team"
               element={
-                <ProtectedRoute>
+                <AdminRoute>
                   <Team />
-                </ProtectedRoute>
+                </AdminRoute>
               }
             />
             <Route
               path="/healthscore"
               element={
-                <ProtectedRoute>
+                <AdminRoute>
                   <Healthscore />
-                </ProtectedRoute>
+                </AdminRoute>
               }
             />
             <Route
               path="/users"
               element={
-                <ProtectedRoute>
+                <AdminRoute>
                   <Users />
-                </ProtectedRoute>
+                </AdminRoute>
               }
             />
             <Route
