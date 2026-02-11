@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           actor_id: string | null
           client_id: string | null
+          client_name: string | null
           created_at: string
           id: string
           message: string | null
@@ -27,6 +28,7 @@ export type Database = {
         Insert: {
           actor_id?: string | null
           client_id?: string | null
+          client_name?: string | null
           created_at?: string
           id?: string
           message?: string | null
@@ -36,6 +38,7 @@ export type Database = {
         Update: {
           actor_id?: string | null
           client_id?: string | null
+          client_name?: string | null
           created_at?: string
           id?: string
           message?: string | null
@@ -47,32 +50,35 @@ export type Database = {
       client_contacts: {
         Row: {
           client_id: string
+          client_name: string | null
           contato: string | null
           created_at: string
           email: string | null
           funcao: string | null
           id: string
-          nome: string
+          nome: string | null
           papel: string | null
         }
         Insert: {
           client_id: string
+          client_name?: string | null
           contato?: string | null
           created_at?: string
           email?: string | null
           funcao?: string | null
           id?: string
-          nome: string
+          nome?: string | null
           papel?: string | null
         }
         Update: {
           client_id?: string
+          client_name?: string | null
           contato?: string | null
           created_at?: string
           email?: string | null
           funcao?: string | null
           id?: string
-          nome?: string
+          nome?: string | null
           papel?: string | null
         }
         Relationships: [
@@ -89,6 +95,7 @@ export type Database = {
         Row: {
           calendar: string | null
           client_id: string
+          client_name: string | null
           conta: string | null
           created_at: string
           data: string | null
@@ -107,6 +114,7 @@ export type Database = {
         Insert: {
           calendar?: string | null
           client_id: string
+          client_name?: string | null
           conta?: string | null
           created_at?: string
           data?: string | null
@@ -125,6 +133,7 @@ export type Database = {
         Update: {
           calendar?: string | null
           client_id?: string
+          client_name?: string | null
           conta?: string | null
           created_at?: string
           data?: string | null
@@ -153,6 +162,7 @@ export type Database = {
       client_meetings: {
         Row: {
           client_id: string
+          client_name: string | null
           created_at: string
           created_by: string | null
           description: string | null
@@ -164,6 +174,7 @@ export type Database = {
         }
         Insert: {
           client_id: string
+          client_name?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -175,6 +186,7 @@ export type Database = {
         }
         Update: {
           client_id?: string
+          client_name?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -197,6 +209,7 @@ export type Database = {
       client_reports: {
         Row: {
           client_id: string
+          client_name: string | null
           content: string
           created_at: string
           created_by: string | null
@@ -209,6 +222,7 @@ export type Database = {
         }
         Insert: {
           client_id: string
+          client_name?: string | null
           content: string
           created_at?: string
           created_by?: string | null
@@ -221,6 +235,7 @@ export type Database = {
         }
         Update: {
           client_id?: string
+          client_name?: string | null
           content?: string
           created_at?: string
           created_by?: string | null
@@ -244,6 +259,7 @@ export type Database = {
       client_scope_actuals: {
         Row: {
           client_id: string
+          client_name: string | null
           created_at: string
           id: string
           instagram: number | null
@@ -257,6 +273,7 @@ export type Database = {
         }
         Insert: {
           client_id: string
+          client_name?: string | null
           created_at?: string
           id?: string
           instagram?: number | null
@@ -270,6 +287,7 @@ export type Database = {
         }
         Update: {
           client_id?: string
+          client_name?: string | null
           created_at?: string
           id?: string
           instagram?: number | null
@@ -294,6 +312,7 @@ export type Database = {
       client_scopes: {
         Row: {
           client_id: string
+          client_name: string | null
           created_at: string
           id: string
           instagram: number | null
@@ -306,6 +325,7 @@ export type Database = {
         }
         Insert: {
           client_id: string
+          client_name?: string | null
           created_at?: string
           id?: string
           instagram?: number | null
@@ -318,6 +338,7 @@ export type Database = {
         }
         Update: {
           client_id?: string
+          client_name?: string | null
           created_at?: string
           id?: string
           instagram?: number | null
@@ -594,18 +615,21 @@ export type Database = {
       team_member_clients: {
         Row: {
           client_id: string
+          client_name: string | null
           created_at: string
           id: string
           team_member_id: string
         }
         Insert: {
           client_id: string
+          client_name?: string | null
           created_at?: string
           id?: string
           team_member_id: string
         }
         Update: {
           client_id?: string
+          client_name?: string | null
           created_at?: string
           id?: string
           team_member_id?: string
@@ -767,7 +791,147 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      activity_feed_view: {
+        Row: {
+          actor_id: string | null
+          actor_name: string | null
+          client_id: string | null
+          client_name: string | null
+          created_at: string | null
+          id: string | null
+          message: string | null
+          payload: Json | null
+          type: string | null
+        }
+        Relationships: []
+      }
+      client_contacts_view: {
+        Row: {
+          client_id: string | null
+          client_name: string | null
+          contato: string | null
+          created_at: string | null
+          email: string | null
+          funcao: string | null
+          id: string | null
+          nome: string | null
+          papel: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_contacts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_goals_view: {
+        Row: {
+          calendar: string | null
+          client_id: string | null
+          client_name: string | null
+          conta: string | null
+          created_at: string | null
+          data: string | null
+          descricao: string | null
+          id: string | null
+          marcos: string | null
+          meta: string | null
+          periodo: string | null
+          plataforma: string | null
+          status: string | null
+          status_marcos: string | null
+          updated_at: string | null
+          valor_alvo: number | null
+          valor_atual: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_goals_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_meetings_view: {
+        Row: {
+          client_id: string | null
+          client_name: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string | null
+          meeting_date: string | null
+          meeting_link: string | null
+          title: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_meetings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_reports_view: {
+        Row: {
+          client_id: string | null
+          client_name: string | null
+          content: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string | null
+          reference_date: string | null
+          report_link: string | null
+          report_period: string | null
+          title: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_reports_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_member_clients_view: {
+        Row: {
+          area: Database["public"]["Enums"]["team_type"] | null
+          client_id: string | null
+          client_name: string | null
+          created_at: string | null
+          id: string | null
+          member_name: string | null
+          position: string | null
+          team_member_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_member_clients_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_member_clients_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       has_role: {

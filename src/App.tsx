@@ -18,6 +18,7 @@ import Admin from "./pages/Admin";
 import ScopeControl from "./pages/ScopeControl";
 import Reports from "./pages/Reports";
 import Auth from "./pages/Auth";
+import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/register" element={<Register />} />
             <Route
               path="/"
               element={
