@@ -19,7 +19,7 @@ interface MeetingTrackingTableProps {
   meetings: Meeting[];
   weeks: WeekDef[];
   monthReferenceDate: string;
-  onUpsert: (data: { client_id: string; meeting_period: "weekly" | "monthly"; meeting_date: string; meeting_link: string; title: string }) => void;
+  onUpsert: (data: { client_id: string; meeting_period: "weekly" | "monthly"; meeting_date: string; meeting_link: string; title: string; description: string }) => void;
   onDelete: (id: string) => void;
   isSaving: boolean;
 }
@@ -122,9 +122,10 @@ export function MeetingTrackingTable({ clients, meetings, weeks, monthReferenceD
             onUpsert({
               client_id: dialog.clientId,
               meeting_period: dialog.period,
-              meeting_date: dialog.meetingDate,
+              meeting_date: data.meeting_date || dialog.meetingDate,
               meeting_link: data.meeting_link,
               title: data.title,
+              description: data.description,
             });
             setDialog(null);
           }}
@@ -135,6 +136,8 @@ export function MeetingTrackingTable({ clients, meetings, weeks, monthReferenceD
           isSaving={isSaving}
           initialLink={dialog.existing?.meeting_link || ""}
           initialTitle={dialog.existing?.title || ""}
+          initialDescription={dialog.existing?.description || ""}
+          initialMeetingDate={dialog.existing?.meeting_date?.split("T")[0] || dialog.meetingDate}
           clientName={dialog.clientName}
           periodLabel={dialog.periodLabel}
         />

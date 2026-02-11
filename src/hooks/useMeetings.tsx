@@ -21,6 +21,7 @@ interface UpsertMeetingInput {
   meeting_date: string; // YYYY-MM-DD
   meeting_link: string;
   title: string;
+  description: string;
 }
 
 export function useMeetings(month?: Date) {
@@ -67,6 +68,7 @@ export function useMeetings(month?: Date) {
           .update({
             meeting_link: input.meeting_link,
             title: input.title,
+            description: input.description || null,
           })
           .eq("id", existing.id);
         if (error) throw error;
@@ -79,6 +81,7 @@ export function useMeetings(month?: Date) {
             meeting_date: meetingDateISO,
             meeting_link: input.meeting_link,
             title: input.title,
+            description: input.description || null,
             created_by: user?.id ?? null,
           });
         if (error) throw error;
