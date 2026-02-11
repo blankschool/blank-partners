@@ -1,69 +1,66 @@
 
 
-# Ajustar Governanca de Novos Usuarios
+# Calendario de Reunioes
 
-## Resumo
+## Objetivo
 
-Novos usuarios que se cadastram via `/register` devem receber a role `agency` (em vez de nenhuma role no `user_roles`) e ver apenas **Dashboard** e **Relatorios** na sidebar. Admins continuam vendo tudo como hoje.
+Criar uma pagina de acompanhamento de reunioes (semanais e mensais) para todos os clientes, seguindo o mesmo layout e logica da pagina de Relatorios. A tabela `client_meetings` ja existe no Supabase com as colunas necessarias.
+
+## Estrutura da Pagina
+
+A pagina tera o mesmo layout da pagina de Relatorios:
+- Seletor de mes no topo
+- Tabela com clientes nas linhas e semanas + coluna mensal nas colunas
+- Celulas clicaveis para adicionar/editar link da reuniao
+- Indicador visual (check verde = reuniao agendada, tracinho = pendente)
 
 ## Mudancas
 
-### 1. Migracao: Trigger para atribuir role `agency` automaticamente
+### 1. Migracao: Adicionar coluna `meeting_period` na tabela `client_meetings`
 
-Criar um trigger no banco que, ao inserir um novo usuario no `auth.users`, insira automaticamente uma entrada na tabela `user_roles` com role `agency`. Isso garante que todo novo cadastro via `/register` ja tenha a permissao correta.
+A tabela atual nao tem como diferenciar reunioes semanais de mensais. Sera adicionada uma coluna `meeting_period` (text) e uma constraint unique em `(client_id, meeting_period, meeting_date)` para evitar duplicatas, similar ao que `client_reports` faz com `report_period` e `reference_date`.
 
 ```text
--- Funcao que insere role agency para novos usuarios
-CREATE OR REPLACE FUNCTION public.handle_new_user_role()
-RETURNS trigger
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-BEGIN
-  INSERT INTO public.user_roles (user_id, role)
-  VALUES (NEW.id, 'agency')
-  ON CONFLICT (user_id, role) DO NOTHING;
-  RETURN NEW;
-END;
-$$;
-
--- Trigger no auth.users
-CREATE TRIGGER on_auth_user_created_add_role
-  AFTER INSERT ON auth.users
-  FOR EACH ROW
-  EXECUTE FUNCTION public.handle_new_user_role();
+ALTER TABLE client_meetings ADD COLUMN meeting_period text;
+-- Unique constraint para evitar duplicatas
+ALTER TABLE client_meetings ADD CONSTRAINT client_meetings_unique_period 
+  UNIQUE (client_id, meeting_period, meeting_date);
 ```
 
-### 2. Sidebar: Mostrar itens conforme o role do usuario
+### 2. Hook: `src/hooks/useMeetings.tsx`
 
-Atualizar `src/components/layout/AppSidebar.tsx` para ter 3 niveis de navegacao:
+Novo hook seguindo o padrao de `useReports.tsx`:
+- Query que busca reunioes do mes selecionado filtrando por `meeting_date`
+- Mutation `upsertMeeting` que verifica existencia antes de inserir/atualizar
+- Mutation `deleteMeeting` para remover reunioes
 
-- **Todos os usuarios autenticados** (incluindo agency): Dashboard
-- **Agency ou Admin** (`is_admin_or_agency`): Relatorios
-- **Apenas Admin** (`is_admin`): Clients, Contents, Team, Healthscore, Users, Admin, Controle de Escopo
+### 3. Componentes de Reunioes
 
-A sidebar vai usar o hook `useIsAgencyOrAdmin` (ja existente) alem do `useCurrentUserRole` para determinar quais itens mostrar.
-
-### 3. Protecao de rotas
-
-As rotas que nao devem ser acessiveis por usuarios agency puro (Clients, Contents, Team, Healthscore, Users) ja estao como `ProtectedRoute` -- precisaremos troca-las para `AdminRoute` para que apenas admins acessem. Isso garante que mesmo digitando a URL diretamente, o usuario agency nao consiga entrar.
-
-Rotas que mudam:
-- `/clients` -> de `ProtectedRoute` para `AdminRoute`
-- `/contents` -> de `ProtectedRoute` para `AdminRoute`
-- `/team` -> de `ProtectedRoute` para `AdminRoute`
-- `/healthscore` -> de `ProtectedRoute` para `AdminRoute`
-- `/users` -> de `ProtectedRoute` para `AdminRoute`
-- `/profile` -> permanece `ProtectedRoute` (todos podem editar perfil)
-- `/` (Dashboard) -> permanece `ProtectedRoute`
-- `/reports` -> permanece `AgencyRoute` (agency + admin)
-
-### 4. Arquivos modificados
-
-| Arquivo | Mudanca |
+| Arquivo | Descricao |
 |---|---|
-| Migracao SQL | Trigger para atribuir role `agency` a novos usuarios |
-| `src/components/layout/AppSidebar.tsx` | Reorganizar itens de menu por nivel de acesso |
-| `src/App.tsx` | Trocar ProtectedRoute por AdminRoute em 5 rotas |
+| `src/components/meetings/MeetingCell.tsx` | Celula visual (check/tracinho), mesmo padrao do `ReportCell` |
+| `src/components/meetings/MeetingLinkDialog.tsx` | Dialog para adicionar/editar link + titulo da reuniao, mesmo padrao do `ReportLinkDialog` |
+| `src/components/meetings/MeetingTrackingTable.tsx` | Tabela com clientes x semanas + mensal, mesmo padrao do `ReportTrackingTable` |
 
+### 4. Pagina: `src/pages/Meetings.tsx`
+
+Nova pagina seguindo o padrao exato de `Reports.tsx`:
+- Icone de calendario no header
+- `ReportMonthSelector` reutilizado para navegacao de mes
+- `MeetingTrackingTable` com a mesma logica de semanas
+
+### 5. Rota e Sidebar
+
+- Adicionar rota `/meetings` em `App.tsx` protegida por `AgencyRoute` (mesma permissao de Relatorios)
+- Adicionar item "Reunioes" na sidebar em `agencyNavigationItems` com icone `Calendar`
+
+### 6. Sem mudancas em RLS
+
+As policies da tabela `client_meetings` ja permitem ALL para `is_admin_or_agency()` e SELECT para clientes que sao donos. Nenhuma alteracao necessaria.
+
+## Detalhes Tecnicos
+
+- A `meeting_date` sera usada como `reference_date` (primeira segunda da semana ou dia 1 do mes)
+- O `meeting_link` armazena o link da reuniao (Google Meet, Zoom, etc.)
+- O `meeting_period` sera "weekly" ou "monthly", mesmo padrao dos relatorios
+- O componente `ReportMonthSelector` sera reutilizado pois e generico
