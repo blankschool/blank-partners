@@ -76,7 +76,7 @@ export function ReportLinkDialog({
                 Abrir
               </Button>
             )}
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50">Cancelar</Button>
+            
             <Button type="submit" disabled={isSaving || !link.trim()} className="bg-gray-900 text-white hover:bg-gray-800">
               {isSaving ? "Salvando..." : "Salvar"}
             </Button>
