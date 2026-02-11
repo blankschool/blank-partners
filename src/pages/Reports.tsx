@@ -1,23 +1,44 @@
 import { useState, useMemo } from "react";
-import { ClipboardList, Plus } from "lucide-react";
+import { ClipboardList } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { Button } from "@/components/ui/button";
-import { useReports, type Report } from "@/hooks/useReports";
+import { useReports } from "@/hooks/useReports";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ReportFilters } from "@/components/reports/ReportFilters";
-import { ReportCard } from "@/components/reports/ReportCard";
-import { CreateReportDialog } from "@/components/reports/CreateReportDialog";
-import { ReportDetailDialog } from "@/components/reports/ReportDetailDialog";
-import { DeleteConfirmDialog } from "@/components/admin/DeleteConfirmDialog";
+import { ReportMonthSelector } from "@/components/reports/ReportMonthSelector";
+import { ReportTrackingTable } from "@/components/reports/ReportTrackingTable";
+
+function getWeeksForMonth(month: Date) {
+  const year = month.getFullYear();
+  const m = month.getMonth();
+  const lastDay = new Date(year, m + 1, 0).getDate();
+
+  const ranges = [
+    { start: 1, end: 7 },
+    { start: 8, end: 14 },
+    { start: 15, end: 21 },
+    { start: 22, end: lastDay },
+  ];
+
+  return ranges.map((r, i) => {
+    const refDate = new Date(year, m, r.start);
+    return {
+      label: `Sem ${i + 1}`,
+      referenceDate: refDate.toISOString().split("T")[0],
+    };
+  });
+}
 
 export default function Reports() {
-  const { reports, isLoading, createReport, updateReport, deleteReport } = useReports();
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
+
+  const { reports, isLoading, upsertReport, deleteReport } = useReports(selectedMonth);
   const { toast } = useToast();
 
-  // Clients for selects
-  const { data: clients = [] } = useQuery({
+  const { data: clients = [], isLoading: loadingClients } = useQuery({
     queryKey: ["clients-list"],
     queryFn: async () => {
       const { data } = await supabase.from("clients").select("id, name").order("name");
@@ -25,61 +46,26 @@ export default function Reports() {
     },
   });
 
-  // Filters
-  const [search, setSearch] = useState("");
-  const [period, setPeriod] = useState("all");
-  const [clientId, setClientId] = useState("all");
+  const weeks = useMemo(() => getWeeksForMonth(selectedMonth), [selectedMonth]);
+  const monthRefDate = `${selectedMonth.getFullYear()}-${String(selectedMonth.getMonth() + 1).padStart(2, "0")}-01`;
 
-  // Dialogs
-  const [createOpen, setCreateOpen] = useState(false);
-  const [editingReport, setEditingReport] = useState<Report | null>(null);
-  const [viewingReport, setViewingReport] = useState<Report | null>(null);
-  const [deletingReport, setDeletingReport] = useState<Report | null>(null);
-
-  const filtered = useMemo(() => {
-    return reports.filter((r) => {
-      if (search && !r.title.toLowerCase().includes(search.toLowerCase())) return false;
-      if (period !== "all" && r.report_period !== period) return false;
-      if (clientId !== "all" && r.client_id !== clientId) return false;
-      return true;
+  const handleUpsert = (data: { client_id: string; report_period: "weekly" | "monthly"; reference_date: string; report_link: string; title: string }) => {
+    upsertReport.mutate(data, {
+      onSuccess: () => toast({ title: "Relatório salvo" }),
+      onError: () => toast({ title: "Erro ao salvar", variant: "destructive" }),
     });
-  }, [reports, search, period, clientId]);
-
-  const handleSave = (data: any) => {
-    if (data.id) {
-      updateReport.mutate(data, {
-        onSuccess: () => {
-          toast({ title: "Relatório atualizado" });
-          setEditingReport(null);
-        },
-        onError: () => toast({ title: "Erro ao atualizar", variant: "destructive" }),
-      });
-    } else {
-      createReport.mutate(data, {
-        onSuccess: () => {
-          toast({ title: "Relatório criado" });
-          setCreateOpen(false);
-        },
-        onError: () => toast({ title: "Erro ao criar", variant: "destructive" }),
-      });
-    }
   };
 
-  const handleDelete = () => {
-    if (!deletingReport) return;
-    deleteReport.mutate(deletingReport.id, {
-      onSuccess: () => {
-        toast({ title: "Relatório excluído" });
-        setDeletingReport(null);
-      },
-      onError: () => toast({ title: "Erro ao excluir", variant: "destructive" }),
+  const handleDelete = (id: string) => {
+    deleteReport.mutate(id, {
+      onSuccess: () => toast({ title: "Relatório removido" }),
+      onError: () => toast({ title: "Erro ao remover", variant: "destructive" }),
     });
   };
 
   return (
     <AppLayout>
       <div className="space-y-6 p-6">
-        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
@@ -87,81 +73,28 @@ export default function Reports() {
             </div>
             <div>
               <h1 className="text-2xl font-semibold tracking-tight">Relatórios</h1>
-              <p className="text-sm text-muted-foreground">Gerencie relatórios semanais e mensais dos clientes</p>
+              <p className="text-sm text-muted-foreground">Acompanhe os relatórios semanais e mensais de cada cliente</p>
             </div>
           </div>
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Relatório
-          </Button>
+          <ReportMonthSelector selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} />
         </div>
 
-        {/* Filters */}
-        <ReportFilters
-          search={search}
-          onSearchChange={setSearch}
-          period={period}
-          onPeriodChange={setPeriod}
-          clientId={clientId}
-          onClientIdChange={setClientId}
-          clients={clients}
-        />
-
-        {/* Content */}
-        {isLoading ? (
+        {isLoading || loadingClients ? (
           <div className="flex items-center justify-center py-12">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
           </div>
-        ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <ClipboardList className="h-12 w-12 text-muted-foreground/40 mb-3" />
-            <p className="text-muted-foreground">Nenhum relatório encontrado.</p>
-          </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((r) => (
-              <ReportCard
-                key={r.id}
-                report={r}
-                onView={setViewingReport}
-                onEdit={(r) => setEditingReport(r)}
-                onDelete={(r) => setDeletingReport(r)}
-              />
-            ))}
-          </div>
+          <ReportTrackingTable
+            clients={clients}
+            reports={reports}
+            weeks={weeks}
+            monthReferenceDate={monthRefDate}
+            onUpsert={handleUpsert}
+            onDelete={handleDelete}
+            isSaving={upsertReport.isPending}
+          />
         )}
       </div>
-
-      {/* Create / Edit Dialog */}
-      <CreateReportDialog
-        open={createOpen || !!editingReport}
-        onOpenChange={(open) => {
-          if (!open) {
-            setCreateOpen(false);
-            setEditingReport(null);
-          }
-        }}
-        onSave={handleSave}
-        isSaving={createReport.isPending || updateReport.isPending}
-        clients={clients}
-        editingReport={editingReport}
-      />
-
-      {/* Detail Dialog */}
-      <ReportDetailDialog
-        open={!!viewingReport}
-        onOpenChange={(open) => !open && setViewingReport(null)}
-        report={viewingReport}
-      />
-
-      {/* Delete Confirm */}
-      <DeleteConfirmDialog
-        open={!!deletingReport}
-        onOpenChange={(open) => !open && setDeletingReport(null)}
-        onConfirm={handleDelete}
-        title="Excluir Relatório"
-        description={`Tem certeza que deseja excluir "${deletingReport?.title}"? Esta ação não pode ser desfeita.`}
-      />
     </AppLayout>
   );
 }
