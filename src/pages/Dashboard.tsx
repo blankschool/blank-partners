@@ -18,7 +18,7 @@ const Dashboard = () => {
                 <span className="flex h-2 w-2 rounded-full bg-accent-orange" />
                 <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Overview</span>
               </div>
-              <h2 className="font-serif text-3xl font-normal text-foreground">Welcome back, John!</h2>
+              <h2 className="font-serif text-3xl font-normal text-foreground">Welcome back!</h2>
               <p className="mt-2 text-sm text-muted-foreground">
                 Here's what's happening with your agency today.
               </p>
@@ -29,7 +29,7 @@ const Dashboard = () => {
                 {new Date().toLocaleDateString("en-US", {
                   weekday: "long",
                   month: "long",
-                  day: "numeric",
+                  day: "numeric"
                 })}
               </p>
             </div>
@@ -47,28 +47,28 @@ const Dashboard = () => {
               title="Active Clients"
               value={24}
               icon={Users}
-              trend={{ value: 12, isPositive: true }}
-            />
+              trend={{ value: 12, isPositive: true }} />
+
             <StatCard
               title="Total Contents"
               value={358}
               description="This month"
               icon={FileText}
-              trend={{ value: 8, isPositive: true }}
-            />
+              trend={{ value: 8, isPositive: true }} />
+
             <StatCard
               title="Contents Approved"
               value={312}
               description="87% approval rate"
-              icon={CheckCircle}
-            />
+              icon={CheckCircle} />
+
             <StatCard
               title="Engagement Rate"
               value="4.8%"
               description="Avg. across all platforms"
               icon={TrendingUp}
-              trend={{ value: 0.5, isPositive: true }}
-            />
+              trend={{ value: 0.5, isPositive: true }} />
+
           </div>
         </div>
 
@@ -110,8 +110,8 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
-    </AppLayout>
-  );
+    </AppLayout>);
+
 };
 
 export default Dashboard;
