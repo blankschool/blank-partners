@@ -49,7 +49,7 @@ export default function Meetings() {
   const weeks = useMemo(() => getWeeksForMonth(selectedMonth), [selectedMonth]);
   const monthRefDate = `${selectedMonth.getFullYear()}-${String(selectedMonth.getMonth() + 1).padStart(2, "0")}-01`;
 
-  const handleUpsert = (data: { client_id: string; meeting_period: "weekly" | "monthly"; meeting_date: string; meeting_link: string; title: string }) => {
+  const handleUpsert = (data: { client_id: string; meeting_period: "weekly" | "monthly"; meeting_date: string; meeting_link: string; title: string; description: string }) => {
     upsertMeeting.mutate(data, {
       onSuccess: () => toast({ title: "Reunião salva" }),
       onError: () => toast({ title: "Erro ao salvar", variant: "destructive" }),

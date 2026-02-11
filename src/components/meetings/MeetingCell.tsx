@@ -8,7 +8,7 @@ interface MeetingCellProps {
 }
 
 export function MeetingCell({ meeting, onClick }: MeetingCellProps) {
-  if (!meeting || !meeting.meeting_link) {
+  if (!meeting || !meeting.title) {
     return (
       <button
         onClick={onClick}

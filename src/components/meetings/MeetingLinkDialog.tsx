@@ -3,39 +3,52 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { ExternalLink } from "lucide-react";
 
 interface MeetingLinkDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (data: { meeting_link: string; title: string }) => void;
+  onSave: (data: { meeting_link: string; title: string; description: string; meeting_date: string }) => void;
   onDelete?: () => void;
   isSaving: boolean;
   initialLink?: string;
   initialTitle?: string;
+  initialDescription?: string;
+  initialMeetingDate?: string;
   clientName: string;
   periodLabel: string;
 }
 
 export function MeetingLinkDialog({
   open, onOpenChange, onSave, onDelete, isSaving,
-  initialLink = "", initialTitle = "", clientName, periodLabel,
+  initialLink = "", initialTitle = "", initialDescription = "", initialMeetingDate = "",
+  clientName, periodLabel,
 }: MeetingLinkDialogProps) {
   const [link, setLink] = useState(initialLink);
   const [title, setTitle] = useState(initialTitle);
+  const [description, setDescription] = useState(initialDescription);
+  const [meetingDate, setMeetingDate] = useState(initialMeetingDate);
 
   useEffect(() => {
     setLink(initialLink);
     setTitle(initialTitle);
-  }, [initialLink, initialTitle, open]);
+    setDescription(initialDescription);
+    setMeetingDate(initialMeetingDate);
+  }, [initialLink, initialTitle, initialDescription, initialMeetingDate, open]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!link.trim()) return;
-    onSave({ meeting_link: link.trim(), title: title.trim() });
+    if (!title.trim()) return;
+    onSave({
+      title: title.trim(),
+      description: description.trim(),
+      meeting_date: meetingDate,
+      meeting_link: link.trim(),
+    });
   };
 
-  const isEditing = !!initialLink;
+  const isEditing = !!initialTitle;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -46,21 +59,39 @@ export function MeetingLinkDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label className="text-gray-700">Link da Reunião *</Label>
+            <Label className="text-gray-700">Título *</Label>
             <Input
-              type="url"
-              value={link}
-              onChange={(e) => setLink(e.target.value)}
-              placeholder="https://meet.google.com/..."
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Ex: Reunião de alinhamento"
               className="bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400"
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-gray-700">Título / Observação</Label>
+            <Label className="text-gray-700">Descrição</Label>
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Observações sobre a reunião (opcional)"
+              className="bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400 min-h-[80px]"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-gray-700">Data da Reunião</Label>
             <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Opcional"
+              type="date"
+              value={meetingDate}
+              onChange={(e) => setMeetingDate(e.target.value)}
+              className="bg-gray-50 border-gray-300 text-gray-900"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-gray-700">Link da Reunião</Label>
+            <Input
+              type="url"
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
+              placeholder="https://meet.google.com/... (opcional)"
               className="bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400"
             />
           </div>
@@ -70,13 +101,13 @@ export function MeetingLinkDialog({
                 Remover
               </Button>
             )}
-            {isEditing && (
+            {isEditing && link.trim() && (
               <Button type="button" variant="outline" size="sm" onClick={() => window.open(link, "_blank")} className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50">
                 <ExternalLink className="mr-1 h-4 w-4" />
                 Abrir
               </Button>
             )}
-            <Button type="submit" disabled={isSaving || !link.trim()} className="bg-gray-900 text-white hover:bg-gray-800">
+            <Button type="submit" disabled={isSaving || !title.trim()} className="bg-gray-900 text-white hover:bg-gray-800">
               {isSaving ? "Salvando..." : "Salvar"}
             </Button>
           </DialogFooter>
