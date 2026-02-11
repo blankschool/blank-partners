@@ -24,7 +24,7 @@ export function ReportCell({ report, onClick }: ReportCellProps) {
       <TooltipTrigger asChild>
       <button
         onClick={onClick}
-        className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/15 text-primary transition-colors hover:bg-primary/25"
+        className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400 transition-colors hover:bg-emerald-500/30"
       >
         <Check className="h-4 w-4" />
         </button>
