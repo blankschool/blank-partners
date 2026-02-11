@@ -170,6 +170,7 @@ export type Database = {
           meeting_date: string
           meeting_link: string
           meeting_period: string | null
+          report_id: string | null
           title: string
           updated_at: string
         }
@@ -183,6 +184,7 @@ export type Database = {
           meeting_date: string
           meeting_link: string
           meeting_period?: string | null
+          report_id?: string | null
           title: string
           updated_at?: string
         }
@@ -196,6 +198,7 @@ export type Database = {
           meeting_date?: string
           meeting_link?: string
           meeting_period?: string | null
+          report_id?: string | null
           title?: string
           updated_at?: string
         }
@@ -205,6 +208,20 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_meetings_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "client_reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_meetings_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "client_reports_view"
             referencedColumns: ["id"]
           },
         ]

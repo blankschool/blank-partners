@@ -3,6 +3,7 @@ import { Calendar } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useMeetings } from "@/hooks/useMeetings";
+import { useReports } from "@/hooks/useReports";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportMonthSelector } from "@/components/reports/ReportMonthSelector";
@@ -36,6 +37,7 @@ export default function Meetings() {
   });
 
   const { meetings, isLoading, upsertMeeting, deleteMeeting } = useMeetings(selectedMonth);
+  const { reports, isLoading: loadingReports } = useReports(selectedMonth);
   const { toast } = useToast();
 
   const { data: clients = [], isLoading: loadingClients } = useQuery({
@@ -49,7 +51,7 @@ export default function Meetings() {
   const weeks = useMemo(() => getWeeksForMonth(selectedMonth), [selectedMonth]);
   const monthRefDate = `${selectedMonth.getFullYear()}-${String(selectedMonth.getMonth() + 1).padStart(2, "0")}-01`;
 
-  const handleUpsert = (data: { client_id: string; meeting_period: "weekly" | "monthly"; meeting_date: string; meeting_link: string; title: string; description: string }) => {
+  const handleUpsert = (data: { client_id: string; meeting_period: "weekly" | "monthly"; meeting_date: string; meeting_link: string; title: string; description: string; report_id: string | null }) => {
     upsertMeeting.mutate(data, {
       onSuccess: () => toast({ title: "Reunião salva" }),
       onError: () => toast({ title: "Erro ao salvar", variant: "destructive" }),
@@ -79,7 +81,7 @@ export default function Meetings() {
           <ReportMonthSelector selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} />
         </div>
 
-        {isLoading || loadingClients ? (
+        {isLoading || loadingClients || loadingReports ? (
           <div className="flex items-center justify-center py-12">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
           </div>
@@ -89,6 +91,7 @@ export default function Meetings() {
             meetings={meetings}
             weeks={weeks}
             monthReferenceDate={monthRefDate}
+            reports={reports}
             onUpsert={handleUpsert}
             onDelete={handleDelete}
             isSaving={upsertMeeting.isPending}

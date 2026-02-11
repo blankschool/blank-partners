@@ -10,6 +10,7 @@ export interface Meeting {
   meeting_period: string | null;
   meeting_link: string;
   meeting_date: string;
+  report_id: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -22,6 +23,7 @@ interface UpsertMeetingInput {
   meeting_link: string;
   title: string;
   description: string;
+  report_id: string | null;
 }
 
 export function useMeetings(month?: Date) {
@@ -69,6 +71,7 @@ export function useMeetings(month?: Date) {
             meeting_link: input.meeting_link,
             title: input.title,
             description: input.description || null,
+            report_id: input.report_id || null,
           })
           .eq("id", existing.id);
         if (error) throw error;
@@ -82,6 +85,7 @@ export function useMeetings(month?: Date) {
             meeting_link: input.meeting_link,
             title: input.title,
             description: input.description || null,
+            report_id: input.report_id || null,
             created_by: user?.id ?? null,
           });
         if (error) throw error;
