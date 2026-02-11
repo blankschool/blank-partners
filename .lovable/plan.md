@@ -1,41 +1,36 @@
 
-
-# Liberar Pagina de Relatorios para Todo o Time Interno (agency)
+# Criar Pagina de Cadastro de Contas
 
 ## Resumo
 
-Atualmente a rota `/reports` esta protegida por `AdminRoute`, permitindo acesso apenas a admins. Vamos trocar para `ProtectedRoute` com uma verificacao que permita usuarios com role `admin` ou `agency`. Nao e necessario alterar nada no banco de dados, pois as RLS policies da tabela `client_reports` ja permitem ALL para `is_admin_or_agency()`.
+Criar uma pagina `/register` para cadastro de novas contas, restrita a emails `@blankschool.com.br`. O fluxo sera similar ao login (OTP por email), mas com `shouldCreateUser: true` e validacao do dominio do email.
 
 ## Mudancas
 
-### 1. Criar componente `AgencyRoute`
+### 1. Adicionar funcao `signUpWithOtp` no `useAuth.tsx`
 
-Novo arquivo: `src/components/AgencyRoute.tsx`
+Adicionar uma nova funcao ao contexto de autenticacao que chama `supabase.auth.signInWithOtp` com `shouldCreateUser: true` (ao contrario do login que usa `false`).
 
-Similar ao `AdminRoute`, mas usando `is_admin_or_agency()` -- ou seja, verificando se o usuario tem role `admin` OU `agency`. Usaremos o hook `useCurrentUserRole` adaptado ou criaremos uma verificacao direta via `supabase.rpc("is_admin_or_agency")`.
+### 2. Criar pagina `src/pages/Register.tsx`
 
-### 2. Criar hook `useIsAgencyOrAdmin`
-
-Novo hook simples que chama `supabase.rpc("is_admin_or_agency")` para verificar se o usuario logado tem permissao de agency ou admin.
+Nova pagina com o mesmo visual da pagina de Auth (branding Blank, card centralizado, gradiente), mas com:
+- Validacao client-side: aceitar apenas emails terminados em `@blankschool.com.br`
+- Mensagem de erro clara se o dominio for diferente
+- Fluxo: email -> verificacao OTP -> redirect ao dashboard
+- Texto adaptado: "Criar conta" em vez de "Welcome back"
 
 ### 3. Atualizar `src/App.tsx`
 
-Trocar o wrapper da rota `/reports` de `AdminRoute` para `AgencyRoute`:
+Adicionar rota publica `/register` apontando para a nova pagina.
 
-```text
-// De:
-<AdminRoute><Reports /></AdminRoute>
+### 4. Adicionar link na pagina de login
 
-// Para:
-<AgencyRoute><Reports /></AgencyRoute>
-```
-
-### 4. Sem mudancas no banco de dados
-
-As RLS policies da tabela `client_reports` ja usam `is_admin_or_agency()` para ALL operations, entao usuarios com role `agency` ja podem ler, inserir, atualizar e deletar relatorios. Nenhuma migracao e necessaria.
+Adicionar um link discreto na pagina `Auth.tsx`: "Primeira vez? Criar conta" apontando para `/register`.
 
 ## Detalhes Tecnicos
 
-- O componente `AgencyRoute` segue o mesmo padrao do `AdminRoute` existente (loading state, redirect para `/auth` se nao logado, redirect para `/` se sem permissao)
-- A funcao `is_admin_or_agency()` ja existe no banco e verifica ambos os roles
-- Usuarios com role `client` continuarao sem acesso a esta pagina
+- A validacao do dominio sera feita no client (`email.endsWith("@blankschool.com.br")`) antes de enviar o OTP
+- A funcao `signUpWithOtp` usara `shouldCreateUser: true` para permitir criacao de conta
+- O trigger `handle_new_user` ja existente no banco criara automaticamente o registro na tabela `users` com role `client`
+- Nenhuma migracao de banco necessaria
+- A pagina de registro nao precisa de `ProtectedRoute` (e publica, como `/auth`)
