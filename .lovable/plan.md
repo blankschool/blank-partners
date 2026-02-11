@@ -1,90 +1,94 @@
 
 
-# Limpeza do Supabase - Remover Recursos Externos (mantendo painel_de_conteudos)
+# Pagina de Relatorios
 
-## O que sera MANTIDO
+## Contexto
 
-| Origem | Recursos |
-|--------|----------|
-| Minhas migrations | `positions`, `user_roles`, `profiles`, `notifications`, `team_members`, `clients`, `team_member_clients`, `client_scopes`, `client_scope_actuals`, `users` + enums, funcoes, storage `avatars` |
-| Outra fonte (manter) | `painel_de_conteudos` (com trigger e funcao associada) |
+A tabela `client_reports` ja existe no Supabase com as colunas solicitadas e RLS configurado (admin/agency gerencia tudo, clientes veem apenas os seus). Nenhuma migration e necessaria.
 
-## O que sera REMOVIDO
+## Arquivos a Criar
 
-### Tabelas (18)
-`activity_feed`, `attachments`, `audit_logs`, `client_team_assignments`, `external_supabase_connections`, `kpi_definitions`, `kpi_entries`, `notion_goal_kpis`, `notion_integrations`, `notion_mappings`, `notion_pages`, `post_comments`, `posts`, `social_profiles`, `source_mappings`, `sync_cursors`, `timeline_events`, `user_projects`
+| Arquivo | Descricao |
+|---------|-----------|
+| `src/pages/Reports.tsx` | Pagina principal de relatorios |
+| `src/hooks/useReports.tsx` | Hook para CRUD de relatorios |
+| `src/components/reports/ReportCard.tsx` | Card de exibicao de cada relatorio |
+| `src/components/reports/ReportFilters.tsx` | Filtros (busca, periodo, cliente) |
+| `src/components/reports/CreateReportDialog.tsx` | Dialog para criar/editar relatorio |
+| `src/components/reports/ReportDetailDialog.tsx` | Dialog para visualizar relatorio completo |
 
-### Views (1)
-`team_members_public`
+## Arquivos a Modificar
 
-### Enums (1)
-`upsert_status`
+| Arquivo | Mudanca |
+|---------|---------|
+| `src/App.tsx` | Adicionar rota `/reports` com `AdminRoute` |
+| `src/components/layout/AppSidebar.tsx` | Adicionar "Relatorios" no menu admin com icone `ClipboardList` |
 
-### Funcoes (14 - mantendo update_painel_conteudos_updated_at e update_updated_at_column)
-`_activity_insert`, `_notify_throttle_minutes`, `_notify_user`, `get_auth_user_id_by_email`, `handle_new_auth_user`, `map_notion_to_kpi`, `map_notion_to_post`, `map_notion_to_social_profile`, `map_notion_to_team_member`, `map_notion_to_timeline`, `trg_post_comments_after_insert`, `trg_posts_after_insert`, `trg_posts_after_update`, `upsert_notion_page`
+## Detalhes Tecnicos
 
-### Storage Buckets (1)
-`attachments`
+### 1. useReports.tsx
 
-## Migration SQL
+Hook com react-query para:
+- **Listar** relatorios com join no nome do cliente (`clients.name`)
+- **Criar** relatorio (title, content, report_period = "weekly" | "monthly", client_id, created_by = auth.uid)
+- **Atualizar** relatorio
+- **Excluir** relatorio
+- Invalidar queries apos mutations
 
-```sql
--- 1. Triggers (apenas de tabelas que serao removidas)
-DROP TRIGGER IF EXISTS post_comments_after_insert_activity_notify ON post_comments;
-DROP TRIGGER IF EXISTS posts_after_insert_activity_notify ON posts;
-DROP TRIGGER IF EXISTS posts_after_update_activity_notify ON posts;
+### 2. Reports.tsx (Pagina)
 
--- 2. Views
-DROP VIEW IF EXISTS team_members_public;
+Layout seguindo o padrao existente (como ScopeControl):
+- Header com icone + titulo "Relatorios" + subtitulo
+- Botao "Novo Relatorio" no header
+- Filtros: busca por titulo, filtro por periodo (Todos/Semanal/Mensal), filtro por cliente
+- Grid de cards dos relatorios
+- Estados: loading spinner, empty state, lista
 
--- 3. Tabelas (ordem segura)
-DROP TABLE IF EXISTS kpi_entries CASCADE;
-DROP TABLE IF EXISTS notion_goal_kpis CASCADE;
-DROP TABLE IF EXISTS notion_mappings CASCADE;
-DROP TABLE IF EXISTS sync_cursors CASCADE;
-DROP TABLE IF EXISTS post_comments CASCADE;
-DROP TABLE IF EXISTS attachments CASCADE;
-DROP TABLE IF EXISTS posts CASCADE;
-DROP TABLE IF EXISTS notion_pages CASCADE;
-DROP TABLE IF EXISTS notion_integrations CASCADE;
-DROP TABLE IF EXISTS activity_feed CASCADE;
-DROP TABLE IF EXISTS audit_logs CASCADE;
-DROP TABLE IF EXISTS client_team_assignments CASCADE;
-DROP TABLE IF EXISTS external_supabase_connections CASCADE;
-DROP TABLE IF EXISTS kpi_definitions CASCADE;
-DROP TABLE IF EXISTS social_profiles CASCADE;
-DROP TABLE IF EXISTS source_mappings CASCADE;
-DROP TABLE IF EXISTS timeline_events CASCADE;
-DROP TABLE IF EXISTS user_projects CASCADE;
+### 3. ReportCard.tsx
 
--- 4. Funcoes (NAO remove update_painel_conteudos_updated_at nem update_updated_at_column)
-DROP FUNCTION IF EXISTS _activity_insert;
-DROP FUNCTION IF EXISTS _notify_throttle_minutes;
-DROP FUNCTION IF EXISTS _notify_user;
-DROP FUNCTION IF EXISTS get_auth_user_id_by_email;
-DROP FUNCTION IF EXISTS handle_new_auth_user;
-DROP FUNCTION IF EXISTS map_notion_to_kpi;
-DROP FUNCTION IF EXISTS map_notion_to_post;
-DROP FUNCTION IF EXISTS map_notion_to_social_profile;
-DROP FUNCTION IF EXISTS map_notion_to_team_member;
-DROP FUNCTION IF EXISTS map_notion_to_timeline;
-DROP FUNCTION IF EXISTS trg_post_comments_after_insert;
-DROP FUNCTION IF EXISTS trg_posts_after_insert;
-DROP FUNCTION IF EXISTS trg_posts_after_update;
-DROP FUNCTION IF EXISTS upsert_notion_page;
+Card mostrando:
+- Titulo do relatorio
+- Nome do cliente
+- Badge de periodo (Weekly = "Semanal", Monthly = "Mensal")
+- Data de criacao formatada
+- Preview do conteudo (truncado)
+- Botoes: Ver, Editar, Excluir
 
--- 5. Enums
-DROP TYPE IF EXISTS upsert_status;
+### 4. CreateReportDialog.tsx
 
--- 6. Storage
-DELETE FROM storage.objects WHERE bucket_id = 'attachments';
-DELETE FROM storage.buckets WHERE id = 'attachments';
+Dialog com formulario:
+- Select de cliente (busca da tabela `clients`)
+- Input de titulo
+- Textarea de conteudo
+- RadioGroup para periodo: "weekly" ou "monthly"
+- Botoes Cancelar / Salvar
+
+### 5. ReportDetailDialog.tsx
+
+Dialog de leitura mostrando o relatorio completo:
+- Titulo, cliente, periodo, data
+- Conteudo completo renderizado
+
+### 6. ReportFilters.tsx
+
+Barra de filtros:
+- Input de busca por titulo
+- Select de periodo (Todos / Semanal / Mensal)
+- Select de cliente (Todos / lista de clientes)
+
+### 7. Rota e Navegacao
+
+- Rota: `/reports` protegida com `AdminRoute`
+- Sidebar: item "Relatorios" no array `adminNavigationItems` com icone `ClipboardList`
+
+## Fluxo do Usuario
+
+```text
+1. Admin acessa "Relatorios" no menu lateral
+2. Ve lista de relatorios com filtros
+3. Clica "Novo Relatorio" -> dialog de criacao
+4. Seleciona cliente, preenche titulo/conteudo, escolhe periodo
+5. Salva -> card aparece na lista
+6. Pode clicar para ver, editar ou excluir
 ```
-
-## Resultado
-
-O Supabase ficara com:
-- Todas as tabelas das minhas migrations + `painel_de_conteudos`
-- Funcoes e triggers da `painel_de_conteudos` preservados
-- Tudo mais removido
 
