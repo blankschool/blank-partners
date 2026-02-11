@@ -119,7 +119,7 @@ export function MeetingLinkDialog({
                   <SelectItem key={r.id} value={r.id} className="text-gray-900">
                     <span className="flex items-center gap-1.5">
                       <FileText className="h-3 w-3 text-gray-400" />
-                      {r.title}
+                      {r.title || (r.report_link ? r.report_link.substring(0, 40) + '...' : 'Relatório sem título')}
                     </span>
                   </SelectItem>
                 ))}
