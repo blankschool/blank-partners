@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminRoute } from "@/components/AdminRoute";
+import { AgencyRoute } from "@/components/AgencyRoute";
 import Dashboard from "./pages/Dashboard";
 import Clients from "./pages/Clients";
 import Contents from "./pages/Contents";
@@ -105,9 +106,9 @@ const App = () => (
             <Route
               path="/reports"
               element={
-                <AdminRoute>
+                <AgencyRoute>
                   <Reports />
-                </AdminRoute>
+                </AgencyRoute>
               }
             />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
