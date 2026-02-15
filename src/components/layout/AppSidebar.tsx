@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, FileText, UsersRound, HeartPulse, LogOut, UserCog, Shield, Target, ClipboardList, Calendar } from "lucide-react";
+import { LayoutDashboard, Users, FileText, UsersRound, HeartPulse, LogOut, UserCog, Shield, Target, ClipboardList, Calendar, Clapperboard } from "lucide-react";
 import { Link } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
@@ -40,6 +40,7 @@ const adminNavigationItems = [
   { title: "Users", url: "/users", icon: UserCog },
   { title: "Admin", url: "/admin", icon: Shield },
   { title: "Controle de Escopo", url: "/scope-control", icon: Target },
+  { title: "Controle de Produção", url: "/production", icon: Clapperboard },
 ];
 
 export function AppSidebar() {

@@ -18,6 +18,7 @@ import Admin from "./pages/Admin";
 import ScopeControl from "./pages/ScopeControl";
 import Reports from "./pages/Reports";
 import Meetings from "./pages/Meetings";
+import Production from "./pages/Production";
 import Auth from "./pages/Auth";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
@@ -120,6 +121,14 @@ const App = () => (
                 <AgencyRoute>
                   <Meetings />
                 </AgencyRoute>
+              }
+            />
+            <Route
+              path="/production"
+              element={
+                <AdminRoute>
+                  <Production />
+                </AdminRoute>
               }
             />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
