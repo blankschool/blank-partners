@@ -1,37 +1,64 @@
 
 
-# Incluir Mes e Ano no Label do Relatorio
+# Painel de Performance de Relatorios
 
-## Problema
+## Objetivo
 
-O dropdown mostra apenas "Sem 1" sem indicar o mes/ano, dificultando a identificacao quando ha relatorios de meses diferentes.
+Criar um painel de indicadores e grafico acima da tabela de relatorios, mostrando a performance de entrega do mes selecionado: quantos relatorios eram esperados, quantos foram entregues, taxa de cumprimento geral e por semana, alem de um grafico de barras comparando projetado vs realizado por semana.
 
-## Solucao
+## Dados e Logica
 
-Alterar a funcao `getReportLabel` em `MeetingLinkDialog.tsx` para incluir o mes abreviado e ano. O formato passara a ser:
+Os dados ja existem: a lista de `clients` define o "projetado" (cada cliente deve ter 1 relatorio por semana + 1 mensal), e a lista de `reports` define o "realizado" (relatorios ja cadastrados com link).
 
-- `"Sem 1/Fev 26 — Titulo"` para relatorios semanais
-- `"Mensal/Fev 26 — Titulo"` para relatorios mensais
+Calculos:
+- **Projetado por semana**: numero de clientes (cada um deve ter 1 relatorio semanal)
+- **Projetado mensal**: numero de clientes (cada um deve ter 1 mensal)
+- **Projetado total do mes**: (clientes x 4 semanas) + clientes = clientes x 5
+- **Realizado**: contagem de relatorios existentes para cada periodo
+- **Taxa**: realizado / projetado x 100
 
-### Arquivo: `src/components/meetings/MeetingLinkDialog.tsx`
+## Componentes
 
-Atualizar a funcao `getReportLabel` para extrair mes e ano do `reference_date`:
+### 1. Painel KPI (`ReportStatsPanel.tsx`)
 
-```text
-function getReportLabel(r: Report): string {
-  const date = new Date(r.reference_date + "T12:00:00");
-  const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-  const monthYear = `${monthNames[date.getMonth()]} ${String(date.getFullYear()).slice(2)}`;
-  const periodPrefix = r.report_period === "monthly"
-    ? `Mensal/${monthYear}`
-    : `Sem ${Math.ceil(date.getDate() / 7)}/${monthYear}`;
-  const name = r.title || (r.report_link ? r.report_link.substring(0, 30) + '...' : 'Sem título');
-  return `${periodPrefix} — ${name}`;
-}
-```
+Cards de metricas no estilo existente (uppercase label + numero grande serif), seguindo o padrao do `StageStatsPanel` e `ScopeKPISummary`:
 
-## Escopo
+| Card | Valor |
+|------|-------|
+| Total Projetado | clientes x 5 |
+| Total Entregue | count de reports do mes |
+| Taxa Geral | entregue/projetado % |
+| Pendentes | projetado - entregue |
 
-- 1 arquivo alterado: `MeetingLinkDialog.tsx`
-- Apenas a funcao `getReportLabel` sera modificada
+Grid de 4 colunas com `rounded-2xl border`.
+
+### 2. Grafico Projetado vs Realizado (`ReportDeliveryChart.tsx`)
+
+Grafico de barras agrupadas (recharts `BarChart`) com:
+- Eixo X: Sem 1, Sem 2, Sem 3, Sem 4, Mensal
+- Duas barras por grupo: Projetado (cor neutra) e Realizado (cor accent)
+- Seguindo o estilo visual do `ContentPerformanceChart` existente (cores CSS vars, tooltip estilizado, sem eixo vertical, grid tracejado)
+
+### 3. Integracao na pagina (`Reports.tsx`)
+
+Adicionar os dois componentes acima da tabela, na ordem:
+1. `ReportStatsPanel` (cards KPI)
+2. `ReportDeliveryChart` (grafico)
+3. `ReportTrackingTable` (tabela existente)
+
+Os dados serao calculados via `useMemo` na pagina `Reports.tsx` e passados como props.
+
+## Arquivos
+
+| Arquivo | Acao |
+|---------|------|
+| `src/components/reports/ReportStatsPanel.tsx` | Criar - painel de KPIs |
+| `src/components/reports/ReportDeliveryChart.tsx` | Criar - grafico barras |
+| `src/pages/Reports.tsx` | Editar - calcular metricas e renderizar novos componentes |
+
+## Estilo Visual
+
+- Cards KPI: `rounded-2xl border bg-card p-5`, label `text-[10px] uppercase tracking-widest text-muted-foreground`, valor `font-serif text-4xl`
+- Grafico: `Card` com `CardHeader` + `CardContent`, altura 240px, barras com `radius={[4,4,0,0]}`, cores `var(--chart-1)` e `var(--chart-3)`
+- Barra de progresso nas metricas semanais usando o componente `Progress` existente
 
