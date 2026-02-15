@@ -964,6 +964,10 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_admin_or_agency: { Args: never; Returns: boolean }
       is_agency: { Args: never; Returns: boolean }
+      is_pending_post_status: {
+        Args: { status_text: string }
+        Returns: boolean
+      }
       process_post_approval: {
         Args: {
           p_action: string

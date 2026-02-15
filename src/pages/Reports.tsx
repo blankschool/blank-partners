@@ -7,6 +7,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportMonthSelector } from "@/components/reports/ReportMonthSelector";
 import { ReportTrackingTable } from "@/components/reports/ReportTrackingTable";
+import { ReportStatsPanel } from "@/components/reports/ReportStatsPanel";
+import { ReportDeliveryChart } from "@/components/reports/ReportDeliveryChart";
 
 function getWeeksForMonth(month: Date) {
   const year = month.getFullYear();
@@ -49,6 +51,46 @@ export default function Reports() {
   const weeks = useMemo(() => getWeeksForMonth(selectedMonth), [selectedMonth]);
   const monthRefDate = `${selectedMonth.getFullYear()}-${String(selectedMonth.getMonth() + 1).padStart(2, "0")}-01`;
 
+  const stats = useMemo(() => {
+    const numClients = clients.length;
+    const totalProjected = numClients * 5;
+
+    const weeklyBreakdown = weeks.map((w, i) => {
+      const delivered = reports.filter(
+        (r) => r.report_period === "weekly" && r.reference_date === w.referenceDate && r.report_link
+      ).length;
+      return {
+        label: w.label,
+        projected: numClients,
+        delivered,
+        rate: numClients > 0 ? Math.round((delivered / numClients) * 100) : 0,
+      };
+    });
+
+    const monthlyDelivered = reports.filter(
+      (r) => r.report_period === "monthly" && r.report_link
+    ).length;
+
+    const monthlyBreakdown = {
+      label: "Mensal",
+      projected: numClients,
+      delivered: monthlyDelivered,
+      rate: numClients > 0 ? Math.round((monthlyDelivered / numClients) * 100) : 0,
+    };
+
+    const allBreakdown = [...weeklyBreakdown, monthlyBreakdown];
+    const totalDelivered = allBreakdown.reduce((s, b) => s + b.delivered, 0);
+    const rate = totalProjected > 0 ? Math.round((totalDelivered / totalProjected) * 100) : 0;
+
+    const chartData = allBreakdown.map((b) => ({
+      label: b.label,
+      projetado: b.projected,
+      realizado: b.delivered,
+    }));
+
+    return { totalProjected, totalDelivered, rate, pending: totalProjected - totalDelivered, weeklyBreakdown: allBreakdown, chartData };
+  }, [clients, reports, weeks]);
+
   const handleUpsert = (data: { client_id: string; report_period: "weekly" | "monthly"; reference_date: string; report_link: string; title: string }) => {
     upsertReport.mutate(data, {
       onSuccess: () => toast({ title: "Relatório salvo" }),
@@ -84,15 +126,25 @@ export default function Reports() {
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
           </div>
         ) : (
-          <ReportTrackingTable
-            clients={clients}
-            reports={reports}
-            weeks={weeks}
-            monthReferenceDate={monthRefDate}
-            onUpsert={handleUpsert}
-            onDelete={handleDelete}
-            isSaving={upsertReport.isPending}
-          />
+          <>
+            <ReportStatsPanel
+              totalProjected={stats.totalProjected}
+              totalDelivered={stats.totalDelivered}
+              rate={stats.rate}
+              pending={stats.pending}
+              weeklyBreakdown={stats.weeklyBreakdown}
+            />
+            <ReportDeliveryChart data={stats.chartData} />
+            <ReportTrackingTable
+              clients={clients}
+              reports={reports}
+              weeks={weeks}
+              monthReferenceDate={monthRefDate}
+              onUpsert={handleUpsert}
+              onDelete={handleDelete}
+              isSaving={upsertReport.isPending}
+            />
+          </>
         )}
       </div>
     </AppLayout>
