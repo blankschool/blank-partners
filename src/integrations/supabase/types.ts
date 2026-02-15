@@ -588,6 +588,50 @@ export type Database = {
         }
         Relationships: []
       }
+      production_assignments: {
+        Row: {
+          content_id: string
+          created_at: string
+          day_of_week: number | null
+          id: string
+          production_status: string | null
+          sort_order: number
+          team_member_id: string
+          updated_at: string
+          week_start: string
+        }
+        Insert: {
+          content_id: string
+          created_at?: string
+          day_of_week?: number | null
+          id?: string
+          production_status?: string | null
+          sort_order?: number
+          team_member_id: string
+          updated_at?: string
+          week_start: string
+        }
+        Update: {
+          content_id?: string
+          created_at?: string
+          day_of_week?: number | null
+          id?: string
+          production_status?: string | null
+          sort_order?: number
+          team_member_id?: string
+          updated_at?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_assignments_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
