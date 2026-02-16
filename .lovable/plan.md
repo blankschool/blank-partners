@@ -1,37 +1,43 @@
 
 
-# Correcao: Seletor de Visualizacao (Calendario/Grid/Lista)
+# Ajuste: Visualizacao Calendario e Lista na aba Analise
 
 ## Problema
 
-O toggle de visualizacao (calendario, grid, lista) esta dentro do componente `ContentFilters`, que e renderizado fora das abas. Quando o usuario esta na aba "Analise", clicar nos botoes de visualizacao muda o estado interno mas nao tem efeito visivel, dando a impressao de que esta "travado" na lista.
+A aba "Analise" so mostra a tabela estatica. O usuario quer ter as mesmas opcoes de visualizacao (calendario e lista) tambem na aba de Analise, mas filtrando apenas os conteudos das etapas de producao (Edicao de Video e Criacao Design). Alem disso, o filtro de etapa deve ser ocultado na aba Analise, ja que as etapas estao pre-definidas.
 
 ## Solucao
 
-Controlar a aba ativa com estado e so mostrar o toggle de visualizacao quando a aba "Painel" estiver selecionada.
+### 1. Mostrar view toggle na aba Analise (`Contents.tsx`)
 
-### Arquivo: `src/pages/Contents.tsx`
+- Mudar `showViewToggle` para `true` em ambas as abas (remover condicional)
+- Ocultar o filtro de etapa quando `activeTab === "analise"` (nova prop `showStageFilter`)
 
-1. Adicionar estado para a aba ativa:
-```text
-const [activeTab, setActiveTab] = useState("painel");
-```
+### 2. Adicionar visualizacao calendario/lista ao `ContentAnalysisPanel.tsx`
 
-2. Tornar o `Tabs` controlado:
-```text
-<Tabs value={activeTab} onValueChange={setActiveTab}>
-```
+O painel de analise passa a receber `viewMode` e os handlers necessarios. Abaixo dos KPI cards, renderiza:
+- **Calendario**: reutiliza `ContentCalendar` com os items ja filtrados por etapas de producao
+- **Lista**: reutiliza `ContentCard` com variant "list"
+- A tabela de detalhamento por cliente continua visivel em ambos os modos
 
-3. Passar `activeTab` para `ContentFilters` para esconder o toggle na aba "Analise"
+### 3. Ocultar filtro de etapa na aba Analise (`ContentFilters.tsx`)
 
-### Arquivo: `src/components/contents/ContentFilters.tsx`
+- Nova prop `showStageFilter?: boolean` (default `true`)
+- Quando `false`, esconde o Select de etapas
 
-1. Adicionar prop `showViewToggle?: boolean` (default `true`)
-2. Renderizar o bloco do toggle de visualizacao apenas quando `showViewToggle` for `true`
+## Arquivos
 
-## Escopo
+| Arquivo | Mudanca |
+|---------|---------|
+| `src/components/contents/ContentFilters.tsx` | Adicionar prop `showStageFilter`, esconder Select de etapa quando `false` |
+| `src/components/contents/ContentAnalysisPanel.tsx` | Receber `viewMode`, `onDayClick`; renderizar `ContentCalendar` ou lista de `ContentCard` abaixo dos KPIs |
+| `src/pages/Contents.tsx` | Passar `showViewToggle=true` sempre, `showStageFilter={activeTab === "painel"}`, passar `viewMode`/handlers ao `ContentAnalysisPanel`, gerenciar `DayContentDialog` para a aba analise |
 
-- 2 arquivos editados
-- Adicao de 1 estado e 1 prop booleana
-- Sem mudanca de layout ou comportamento nos filtros existentes
+## Fluxo
+
+1. Na aba Analise, os items sao pre-filtrados para apenas Edicao de Video + Criacao Design (ja feito pelo `ContentAnalysisPanel`)
+2. O toggle calendario/lista aparece nos filtros
+3. Se calendario: mostra os KPI cards + calendario com apenas esses conteudos
+4. Se lista: mostra os KPI cards + lista de cards com apenas esses conteudos
+5. A tabela de detalhamento por cliente aparece sempre, abaixo da visualizacao
 
