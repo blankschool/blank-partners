@@ -18,7 +18,8 @@ import { useState } from "react";
 
 const VIDEO_STAGES = ["edicao de video", "ajustes edicao de video"];
 const DESIGN_STAGES = ["criacao design", "ajustes criacao design"];
-const PRODUCTION_STAGES = [...VIDEO_STAGES, ...DESIGN_STAGES];
+const BRIEFING_STAGES = ["em briefing"];
+const PRODUCTION_STAGES = [...VIDEO_STAGES, ...DESIGN_STAGES, ...BRIEFING_STAGES];
 
 const ITEMS_PER_PAGE = 50;
 
@@ -31,33 +32,30 @@ interface ContentAnalysisPanelProps {
 export function ContentAnalysisPanel({ items, viewMode, onDayClick }: ContentAnalysisPanelProps) {
   const [currentPage, setCurrentPage] = useState(1);
 
-  const { videoCount, designCount, clientBreakdown, productionItems } = useMemo(() => {
+  const { videoCount, designCount, briefingCount, clientBreakdown, productionItems } = useMemo(() => {
     let video = 0;
     let design = 0;
-    const byClient: Record<string, { video: number; design: number }> = {};
+    let briefing = 0;
+    const byClient: Record<string, { video: number; design: number; briefing: number }> = {};
     const prodItems: ContentItem[] = [];
 
     items.forEach((item) => {
       const normalized = normalizeStatus(item.status);
       const isVideo = VIDEO_STAGES.includes(normalized);
       const isDesign = DESIGN_STAGES.includes(normalized);
+      const isBriefing = BRIEFING_STAGES.includes(normalized);
 
-      if (!isVideo && !isDesign) return;
+      if (!isVideo && !isDesign && !isBriefing) return;
 
       prodItems.push(item);
 
       if (!byClient[item.client]) {
-        byClient[item.client] = { video: 0, design: 0 };
+        byClient[item.client] = { video: 0, design: 0, briefing: 0 };
       }
 
-      if (isVideo) {
-        video++;
-        byClient[item.client].video++;
-      }
-      if (isDesign) {
-        design++;
-        byClient[item.client].design++;
-      }
+      if (isVideo) { video++; byClient[item.client].video++; }
+      if (isDesign) { design++; byClient[item.client].design++; }
+      if (isBriefing) { briefing++; byClient[item.client].briefing++; }
     });
 
     const breakdown = Object.entries(byClient)
@@ -65,11 +63,12 @@ export function ContentAnalysisPanel({ items, viewMode, onDayClick }: ContentAna
         client,
         video: counts.video,
         design: counts.design,
-        total: counts.video + counts.design,
+        briefing: counts.briefing,
+        total: counts.video + counts.design + counts.briefing,
       }))
       .sort((a, b) => b.total - a.total);
 
-    return { videoCount: video, designCount: design, clientBreakdown: breakdown, productionItems: prodItems };
+    return { videoCount: video, designCount: design, briefingCount: briefing, clientBreakdown: breakdown, productionItems: prodItems };
   }, [items]);
 
   const paginatedItems = useMemo(() => {
@@ -80,7 +79,7 @@ export function ContentAnalysisPanel({ items, viewMode, onDayClick }: ContentAna
   return (
     <div className="space-y-6">
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <div className="flex flex-col items-start p-5 rounded-2xl border border-purple-200 bg-purple-100 transition-all">
           <span className="text-[10px] font-medium uppercase tracking-widest text-purple-600">
             Edição de Vídeo
@@ -101,6 +100,18 @@ export function ContentAnalysisPanel({ items, viewMode, onDayClick }: ContentAna
             {designCount}
           </span>
           <span className="mt-1 text-xs text-orange-600/70">
+            conteúdos nesta etapa
+          </span>
+        </div>
+
+        <div className="flex flex-col items-start p-5 rounded-2xl border border-blue-200 bg-blue-100 transition-all">
+          <span className="text-[10px] font-medium uppercase tracking-widest text-blue-600">
+            Em Briefing
+          </span>
+          <span className="mt-2 font-serif text-5xl font-normal tracking-tight text-blue-600">
+            {briefingCount}
+          </span>
+          <span className="mt-1 text-xs text-blue-600/70">
             conteúdos nesta etapa
           </span>
         </div>
@@ -146,6 +157,7 @@ export function ContentAnalysisPanel({ items, viewMode, onDayClick }: ContentAna
               <TableHeader>
                 <TableRow>
                   <TableHead>Cliente</TableHead>
+                  <TableHead className="text-center">Briefing</TableHead>
                   <TableHead className="text-center">Ed. Vídeo</TableHead>
                   <TableHead className="text-center">Cr. Design</TableHead>
                   <TableHead className="text-center">Total Prod.</TableHead>
@@ -155,6 +167,13 @@ export function ContentAnalysisPanel({ items, viewMode, onDayClick }: ContentAna
                 {clientBreakdown.map((row) => (
                   <TableRow key={row.client}>
                     <TableCell className="font-medium">{row.client}</TableCell>
+                    <TableCell className="text-center">
+                      {row.briefing > 0 ? (
+                        <span className="text-blue-600 font-medium">{row.briefing}</span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-center">
                       {row.video > 0 ? (
                         <span className="text-purple-600 font-medium">{row.video}</span>
