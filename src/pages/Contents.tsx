@@ -10,8 +10,9 @@ import { ContentCalendar } from "@/components/contents/ContentCalendar";
 import { DayContentDialog } from "@/components/contents/DayContentDialog";
 import { ContentPagination } from "@/components/contents/ContentPagination";
 import { ContentAnalysisPanel } from "@/components/contents/ContentAnalysisPanel";
+import { PendingStatusPanel } from "@/components/contents/PendingStatusPanel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, RefreshCw, LayoutDashboard, BarChart3 } from "lucide-react";
+import { AlertCircle, RefreshCw, LayoutDashboard, BarChart3, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { parseISO, isValid, isWithinInterval } from "date-fns";
 import { normalizeStatus, STAGE_GROUPS } from "@/lib/contentStages";
@@ -192,6 +193,10 @@ const Contents = () => {
               <BarChart3 className="h-4 w-4" />
               Análise
             </TabsTrigger>
+            <TabsTrigger value="pendentes" className="gap-2">
+              <AlertTriangle className="h-4 w-4" />
+              Pendente de Status
+            </TabsTrigger>
           </TabsList>
 
           {/* Filters shared across both tabs */}
@@ -213,7 +218,7 @@ const Contents = () => {
               clients={clients}
               persons={persons}
               showViewToggle={true}
-              showStageFilter={activeTab === "painel"}
+              showStageFilter={activeTab === "painel" || activeTab === "analise"}
             />
           </div>
 
@@ -283,6 +288,17 @@ const Contents = () => {
             <ContentAnalysisPanel items={itemsForStats} viewMode={viewMode} onDayClick={handleDayClick} />
             <DayContentDialog
               open={selectedDay !== null && activeTab === "analise"}
+              onOpenChange={(open) => !open && setSelectedDay(null)}
+              date={selectedDay}
+              items={selectedDayItems}
+            />
+          </TabsContent>
+
+          {/* Pendente de Status tab */}
+          <TabsContent value="pendentes">
+            <PendingStatusPanel items={itemsForStats} viewMode={viewMode} onDayClick={handleDayClick} />
+            <DayContentDialog
+              open={selectedDay !== null && activeTab === "pendentes"}
               onOpenChange={(open) => !open && setSelectedDay(null)}
               date={selectedDay}
               items={selectedDayItems}
