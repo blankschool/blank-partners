@@ -9,7 +9,9 @@ import { ContentCard } from "@/components/contents/ContentCard";
 import { ContentCalendar } from "@/components/contents/ContentCalendar";
 import { DayContentDialog } from "@/components/contents/DayContentDialog";
 import { ContentPagination } from "@/components/contents/ContentPagination";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { ContentAnalysisPanel } from "@/components/contents/ContentAnalysisPanel";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertCircle, RefreshCw, LayoutDashboard, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { parseISO, isValid, isWithinInterval } from "date-fns";
 import { normalizeStatus, STAGE_GROUPS } from "@/lib/contentStages";
@@ -18,12 +20,10 @@ const ITEMS_PER_PAGE = 50;
 
 function parseDate(dateStr: string): Date | null {
   if (!dateStr) return null;
-  
   try {
     const date = parseISO(dateStr);
     if (isValid(date)) return date;
   } catch {}
-  
   if (dateStr.includes('/')) {
     const parts = dateStr.split('/');
     if (parts.length === 3) {
@@ -32,13 +32,12 @@ function parseDate(dateStr: string): Date | null {
       if (isValid(date)) return date;
     }
   }
-  
   return null;
 }
 
 const Contents = () => {
   const { data, isLoading, error, refetch } = useGoogleSheetsContent();
-  
+
   // Filter states
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPerson, setSelectedPerson] = useState("all");
@@ -54,165 +53,88 @@ const Contents = () => {
 
   const items = data?.items || [];
 
-  // Extract unique clients
   const clients = useMemo(() => {
     const uniqueClients = new Set<string>();
-    items.forEach(item => {
-      if (item.client) uniqueClients.add(item.client);
-    });
+    items.forEach(item => { if (item.client) uniqueClients.add(item.client); });
     return Array.from(uniqueClients).sort();
   }, [items]);
 
-  // Extract unique persons (SM/responsáveis)
   const persons = useMemo(() => {
     const uniquePersons = new Set<string>();
-    items.forEach(item => {
-      if (item.socialMedia) uniquePersons.add(item.socialMedia);
-    });
+    items.forEach(item => { if (item.socialMedia) uniquePersons.add(item.socialMedia); });
     return Array.from(uniquePersons).sort();
   }, [items]);
 
-  // Items filtered by date, person, client, and search (for stats panel)
+  // Items filtered by date, person, client, and search (for stats & analysis)
   const itemsForStats = useMemo(() => {
     return items.filter(item => {
-      // Search filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
-        const matchesSearch = 
+        const matchesSearch =
           item.id.toLowerCase().includes(query) ||
           item.client.toLowerCase().includes(query) ||
           item.status.toLowerCase().includes(query);
         if (!matchesSearch) return false;
       }
-
-      // Person (SM) filter
-      if (selectedPerson !== "all") {
-        if (item.socialMedia !== selectedPerson) return false;
-      }
-
-      // Client filter
-      if (selectedClient !== "all") {
-        if (item.client !== selectedClient) return false;
-      }
-
-      // Date range filter
+      if (selectedPerson !== "all" && item.socialMedia !== selectedPerson) return false;
+      if (selectedClient !== "all" && item.client !== selectedClient) return false;
       if (dateRange) {
         const itemDate = parseDate(item.date);
-        if (!itemDate || !isWithinInterval(itemDate, { start: dateRange.from, end: dateRange.to })) {
-          return false;
-        }
+        if (!itemDate || !isWithinInterval(itemDate, { start: dateRange.from, end: dateRange.to })) return false;
       }
-
       return true;
     });
   }, [items, searchQuery, selectedPerson, selectedClient, dateRange]);
 
-  // Apply all filters
   const filteredItems = useMemo(() => {
     return items.filter(item => {
-      // Search filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
-        const matchesSearch = 
+        const matchesSearch =
           item.id.toLowerCase().includes(query) ||
           item.client.toLowerCase().includes(query) ||
           item.status.toLowerCase().includes(query);
         if (!matchesSearch) return false;
       }
-
-      // Person (SM) filter
-      if (selectedPerson !== "all") {
-        if (item.socialMedia !== selectedPerson) return false;
-      }
-
-      // Client filter
-      if (selectedClient !== "all") {
-        if (item.client !== selectedClient) return false;
-      }
-
-      // Stage filter (from dropdown)
-      if (selectedStage !== "all") {
-        if (normalizeStatus(item.status) !== selectedStage) return false;
-      }
-
-      // Group filter (from panel)
+      if (selectedPerson !== "all" && item.socialMedia !== selectedPerson) return false;
+      if (selectedClient !== "all" && item.client !== selectedClient) return false;
+      if (selectedStage !== "all" && normalizeStatus(item.status) !== selectedStage) return false;
       if (selectedGroupFromPanel) {
         const group = STAGE_GROUPS.find(g => g.key === selectedGroupFromPanel);
-        if (group) {
-          const normalizedStatus = normalizeStatus(item.status);
-          if (!group.stages.includes(normalizedStatus)) return false;
-        }
+        if (group && !group.stages.includes(normalizeStatus(item.status))) return false;
       }
-
-      // Date range filter
       if (dateRange) {
         const itemDate = parseDate(item.date);
-        if (!itemDate || !isWithinInterval(itemDate, { start: dateRange.from, end: dateRange.to })) {
-          return false;
-        }
+        if (!itemDate || !isWithinInterval(itemDate, { start: dateRange.from, end: dateRange.to })) return false;
       }
-
       return true;
     });
   }, [items, searchQuery, selectedPerson, selectedClient, selectedStage, selectedGroupFromPanel, dateRange]);
 
-  // Paginated items for grid/list views
   const paginatedItems = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredItems.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredItems, currentPage]);
 
-  // Reset pagination when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, selectedPerson, selectedClient, selectedStage, selectedGroupFromPanel, dateRange]);
+  useEffect(() => { setCurrentPage(1); }, [searchQuery, selectedPerson, selectedClient, selectedStage, selectedGroupFromPanel, dateRange]);
 
   const handlePeriodChange = useCallback((type: PeriodType, range?: { from: Date; to: Date }) => {
-    startTransition(() => {
-      setPeriodType(type);
-      setDateRange(range || null);
-    });
+    startTransition(() => { setPeriodType(type); setDateRange(range || null); });
   }, []);
 
   const handleGroupFromPanel = useCallback((group: string | null) => {
-    startTransition(() => {
-      setSelectedGroupFromPanel(group);
-      if (group) {
-        setSelectedStage("all");
-      }
-    });
+    startTransition(() => { setSelectedGroupFromPanel(group); if (group) setSelectedStage("all"); });
   }, []);
 
   const handleViewModeChange = useCallback((mode: ViewMode) => {
-    startTransition(() => {
-      setViewMode(mode);
-      setCurrentPage(1);
-    });
+    startTransition(() => { setViewMode(mode); setCurrentPage(1); });
   }, []);
 
-  const handleSearchChange = useCallback((query: string) => {
-    startTransition(() => {
-      setSearchQuery(query);
-    });
-  }, []);
-
-  const handlePersonChange = useCallback((person: string) => {
-    startTransition(() => {
-      setSelectedPerson(person);
-    });
-  }, []);
-
-  const handleClientChange = useCallback((client: string) => {
-    startTransition(() => {
-      setSelectedClient(client);
-    });
-  }, []);
-
+  const handleSearchChange = useCallback((query: string) => { startTransition(() => setSearchQuery(query)); }, []);
+  const handlePersonChange = useCallback((person: string) => { startTransition(() => setSelectedPerson(person)); }, []);
+  const handleClientChange = useCallback((client: string) => { startTransition(() => setSelectedClient(client)); }, []);
   const handleStageChange = useCallback((stage: string) => {
-    startTransition(() => {
-      setSelectedStage(stage);
-      setSelectedGroupFromPanel(null);
-    });
+    startTransition(() => { setSelectedStage(stage); setSelectedGroupFromPanel(null); });
   }, []);
 
   const handleDayClick = useCallback((date: Date, dayItems: ContentItem[]) => {
@@ -220,11 +142,7 @@ const Contents = () => {
     setSelectedDayItems(dayItems);
   }, []);
 
-  const handlePageChange = useCallback((page: number) => {
-    startTransition(() => {
-      setCurrentPage(page);
-    });
-  }, []);
+  const handlePageChange = useCallback((page: number) => { startTransition(() => setCurrentPage(page)); }, []);
 
   if (isLoading) {
     return (
@@ -233,9 +151,7 @@ const Contents = () => {
           <Skeleton className="h-24 w-full" />
           <Skeleton className="h-12 w-full" />
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[...Array(6)].map((_, i) => (
-              <Skeleton key={i} className="h-40" />
-            ))}
+            {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-40" />)}
           </div>
         </div>
       </AppLayout>
@@ -265,84 +181,106 @@ const Contents = () => {
   return (
     <AppLayout title="Conteúdos">
       <div className="space-y-6">
-        {/* Stage Stats Panel */}
-        <StageStatsPanel
-          items={itemsForStats}
-          selectedGroup={selectedGroupFromPanel}
-          onGroupClick={handleGroupFromPanel}
-        />
+        <Tabs defaultValue="painel">
+          <TabsList>
+            <TabsTrigger value="painel" className="gap-2">
+              <LayoutDashboard className="h-4 w-4" />
+              Painel
+            </TabsTrigger>
+            <TabsTrigger value="analise" className="gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Análise
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Filters */}
-        <ContentFilters
-          searchQuery={searchQuery}
-          onSearchChange={handleSearchChange}
-          selectedPerson={selectedPerson}
-          onPersonChange={handlePersonChange}
-          selectedClient={selectedClient}
-          onClientChange={handleClientChange}
-          selectedStage={selectedStage}
-          onStageChange={handleStageChange}
-          viewMode={viewMode}
-          onViewModeChange={handleViewModeChange}
-          periodType={periodType}
-          onPeriodChange={handlePeriodChange}
-          dateRange={dateRange}
-          clients={clients}
-          persons={persons}
-        />
-
-        {/* Content display */}
-        {filteredItems.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center text-muted-foreground">
-              Nenhum conteúdo encontrado com os filtros selecionados
-            </CardContent>
-          </Card>
-        ) : viewMode === "calendar" ? (
-          <>
-            <ContentCalendar items={filteredItems} onDayClick={handleDayClick} />
-            <DayContentDialog
-              open={selectedDay !== null}
-              onOpenChange={(open) => !open && setSelectedDay(null)}
-              date={selectedDay}
-              items={selectedDayItems}
+          {/* Filters shared across both tabs */}
+          <div className="mt-4">
+            <ContentFilters
+              searchQuery={searchQuery}
+              onSearchChange={handleSearchChange}
+              selectedPerson={selectedPerson}
+              onPersonChange={handlePersonChange}
+              selectedClient={selectedClient}
+              onClientChange={handleClientChange}
+              selectedStage={selectedStage}
+              onStageChange={handleStageChange}
+              viewMode={viewMode}
+              onViewModeChange={handleViewModeChange}
+              periodType={periodType}
+              onPeriodChange={handlePeriodChange}
+              dateRange={dateRange}
+              clients={clients}
+              persons={persons}
             />
-          </>
-        ) : viewMode === "grid" ? (
-          <>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {paginatedItems.map((item, index) => (
-                <ContentCard key={`${item.id}-${index}`} item={item} variant="grid" />
-              ))}
+          </div>
+
+          {/* Painel tab */}
+          <TabsContent value="painel">
+            <div className="space-y-6">
+              <StageStatsPanel
+                items={itemsForStats}
+                selectedGroup={selectedGroupFromPanel}
+                onGroupClick={handleGroupFromPanel}
+              />
+
+              {filteredItems.length === 0 ? (
+                <Card>
+                  <CardContent className="py-12 text-center text-muted-foreground">
+                    Nenhum conteúdo encontrado com os filtros selecionados
+                  </CardContent>
+                </Card>
+              ) : viewMode === "calendar" ? (
+                <>
+                  <ContentCalendar items={filteredItems} onDayClick={handleDayClick} />
+                  <DayContentDialog
+                    open={selectedDay !== null}
+                    onOpenChange={(open) => !open && setSelectedDay(null)}
+                    date={selectedDay}
+                    items={selectedDayItems}
+                  />
+                </>
+              ) : viewMode === "grid" ? (
+                <>
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {paginatedItems.map((item, index) => (
+                      <ContentCard key={`${item.id}-${index}`} item={item} variant="grid" />
+                    ))}
+                  </div>
+                  <ContentPagination
+                    currentPage={currentPage}
+                    totalItems={filteredItems.length}
+                    itemsPerPage={ITEMS_PER_PAGE}
+                    onPageChange={handlePageChange}
+                  />
+                </>
+              ) : (
+                <>
+                  <Card>
+                    <CardContent className="p-0">
+                      <div className="divide-y divide-border/50">
+                        {paginatedItems.map((item, index) => (
+                          <ContentCard key={`${item.id}-${index}`} item={item} variant="list" />
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <ContentPagination
+                    currentPage={currentPage}
+                    totalItems={filteredItems.length}
+                    itemsPerPage={ITEMS_PER_PAGE}
+                    onPageChange={handlePageChange}
+                  />
+                </>
+              )}
             </div>
-            <ContentPagination
-              currentPage={currentPage}
-              totalItems={filteredItems.length}
-              itemsPerPage={ITEMS_PER_PAGE}
-              onPageChange={handlePageChange}
-            />
-          </>
-        ) : (
-          <>
-            <Card>
-              <CardContent className="p-0">
-                <div className="divide-y divide-border/50">
-                  {paginatedItems.map((item, index) => (
-                    <ContentCard key={`${item.id}-${index}`} item={item} variant="list" />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-            <ContentPagination
-              currentPage={currentPage}
-              totalItems={filteredItems.length}
-              itemsPerPage={ITEMS_PER_PAGE}
-              onPageChange={handlePageChange}
-            />
-          </>
-        )}
+          </TabsContent>
 
-        {/* Last sync info */}
+          {/* Análise tab */}
+          <TabsContent value="analise">
+            <ContentAnalysisPanel items={itemsForStats} />
+          </TabsContent>
+        </Tabs>
+
         {data?.fetchedAt && (
           <p className="text-xs text-muted-foreground text-center">
             Última atualização: {new Date(data.fetchedAt).toLocaleString('pt-BR')}
