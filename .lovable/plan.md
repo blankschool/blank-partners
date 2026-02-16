@@ -1,66 +1,37 @@
 
 
-# Analise de Conteudos (dentro da pagina Contents)
+# Correcao: Seletor de Visualizacao (Calendario/Grid/Lista)
 
-## Abordagem
+## Problema
 
-Adicionar uma secao de analise dentro da pagina de Conteudos existente, usando o componente `Tabs` para separar a visualizacao atual ("Painel") da nova visualizacao ("Analise"). Isso evita criar uma nova pagina e mantém tudo no mesmo contexto, com os mesmos filtros ja aplicados.
+O toggle de visualizacao (calendario, grid, lista) esta dentro do componente `ContentFilters`, que e renderizado fora das abas. Quando o usuario esta na aba "Analise", clicar nos botoes de visualizacao muda o estado interno mas nao tem efeito visivel, dando a impressao de que esta "travado" na lista.
 
-## Layout
+## Solucao
 
-A pagina de Conteudos ganha duas abas:
-- **Painel**: conteudo atual (stats panel + filtros + calendario/grid/list)
-- **Analise**: nova secao com indicadores focados
+Controlar a aba ativa com estado e so mostrar o toggle de visualizacao quando a aba "Painel" estiver selecionada.
 
-Na aba Analise, o usuario vera:
+### Arquivo: `src/pages/Contents.tsx`
 
+1. Adicionar estado para a aba ativa:
 ```text
-+-----------------------------------------------------------+
-| [Painel]  [Analise]                                        |
-+-----------------------------------------------------------+
-| Filtros (mesmos: responsavel, cliente, periodo, busca)     |
-+-----------------------------------------------------------+
-|  Edicao de Video          |  Criacao Design                |
-|  [numero grande]          |  [numero grande]               |
-|  conteudos nesta etapa    |  conteudos nesta etapa         |
-+-----------------------------------------------------------+
-| Detalhamento por cliente                                   |
-| +-------------------------------------------------------+ |
-| | Cliente      | Ed. Video | Cr. Design | Total Prod.   | |
-| | Cliente A    |     3     |     2      |      5        | |
-| | Cliente B    |     1     |     4      |      5        | |
-| | ...          |           |            |               | |
-| +-------------------------------------------------------+ |
-+-----------------------------------------------------------+
+const [activeTab, setActiveTab] = useState("painel");
 ```
 
-Os dois cards principais contam conteudos cujo status normalizado e `edicao de video` ou `criacao design` (incluindo ajustes: `ajustes edicao de video` e `ajustes criacao design`).
+2. Tornar o `Tabs` controlado:
+```text
+<Tabs value={activeTab} onValueChange={setActiveTab}>
+```
 
-A tabela abaixo detalha por cliente quantos conteudos estao em cada uma dessas etapas, permitindo identificar gargalos.
+3. Passar `activeTab` para `ContentFilters` para esconder o toggle na aba "Analise"
 
-## Detalhes Tecnicos
+### Arquivo: `src/components/contents/ContentFilters.tsx`
 
-### Arquivos
+1. Adicionar prop `showViewToggle?: boolean` (default `true`)
+2. Renderizar o bloco do toggle de visualizacao apenas quando `showViewToggle` for `true`
 
-| Arquivo | Acao |
-|---------|------|
-| `src/components/contents/ContentAnalysisPanel.tsx` | Criar -- painel com 2 KPI cards + tabela por cliente |
-| `src/pages/Contents.tsx` | Editar -- envolver conteudo em Tabs ("Painel" / "Analise"), mover filtros para fora das tabs para que se apliquem a ambas |
+## Escopo
 
-### Logica
-
-- Os filtros (responsavel, cliente, periodo, busca) ficam acima das abas e se aplicam tanto ao Painel quanto a Analise
-- O `ContentAnalysisPanel` recebe `itemsForStats` (ja filtrados) e calcula:
-  - Count de items com `normalizeStatus(status)` em `['edicao de video', 'ajustes edicao de video']`
-  - Count de items com `normalizeStatus(status)` em `['criacao design', 'ajustes criacao design']`
-  - Agrupamento por `item.client` para a tabela detalhada
-- Cards seguem o mesmo estilo do `StageStatsPanel`: label uppercase + numero serif grande + cores purple (video) e orange (design)
-- Tabela usa o componente `Table` existente, com linhas ordenadas pelo total de producao (decrescente)
-
-### Estilo
-
-- KPI cards: `rounded-2xl border p-5`, grid de 2 colunas
-- Card Edicao de Video: borda/fundo purple (coerente com o stage existente)
-- Card Criacao Design: borda/fundo orange
-- Tabela: `Card` com `Table` dentro, sem paginacao (lista de clientes e curta)
+- 2 arquivos editados
+- Adicao de 1 estado e 1 prop booleana
+- Sem mudanca de layout ou comportamento nos filtros existentes
 
