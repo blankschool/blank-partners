@@ -50,6 +50,7 @@ const Contents = () => {
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [selectedDayItems, setSelectedDayItems] = useState<ContentItem[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [activeTab, setActiveTab] = useState("painel");
 
   const items = data?.items || [];
 
@@ -181,7 +182,7 @@ const Contents = () => {
   return (
     <AppLayout title="Conteúdos">
       <div className="space-y-6">
-        <Tabs defaultValue="painel">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="painel" className="gap-2">
               <LayoutDashboard className="h-4 w-4" />
@@ -211,6 +212,7 @@ const Contents = () => {
               dateRange={dateRange}
               clients={clients}
               persons={persons}
+              showViewToggle={activeTab === "painel"}
             />
           </div>
 

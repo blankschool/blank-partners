@@ -39,6 +39,7 @@ interface ContentFiltersProps {
   dateRange: { from: Date; to: Date } | null;
   clients: string[];
   persons: string[];
+  showViewToggle?: boolean;
 }
 
 export function ContentFilters({
@@ -57,6 +58,7 @@ export function ContentFilters({
   dateRange,
   clients,
   persons,
+  showViewToggle = true,
 }: ContentFiltersProps) {
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [pendingRange, setPendingRange] = useState<{ from: Date; to?: Date } | undefined>(undefined);
@@ -224,33 +226,35 @@ export function ContentFilters({
           />
         </div>
 
-        {/* View mode toggle */}
-        <div className="flex items-center rounded-xl border border-border p-1">
-          <Button
-            variant={viewMode === "calendar" ? "secondary" : "ghost"}
-            size="sm"
-            onClick={() => onViewModeChange("calendar")}
-            className="rounded-lg"
-          >
-            <CalendarIcon className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={viewMode === "grid" ? "secondary" : "ghost"}
-            size="sm"
-            onClick={() => onViewModeChange("grid")}
-            className="rounded-lg"
-          >
-            <Grid3X3 className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={viewMode === "list" ? "secondary" : "ghost"}
-            size="sm"
-            onClick={() => onViewModeChange("list")}
-            className="rounded-lg"
-          >
-            <List className="h-4 w-4" />
-          </Button>
-        </div>
+        {/* View mode toggle - only shown when showViewToggle is true */}
+        {showViewToggle && (
+          <div className="flex items-center rounded-xl border border-border p-1">
+            <Button
+              variant={viewMode === "calendar" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => onViewModeChange("calendar")}
+              className="rounded-lg"
+            >
+              <CalendarIcon className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "grid" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => onViewModeChange("grid")}
+              className="rounded-lg"
+            >
+              <Grid3X3 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "list" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => onViewModeChange("list")}
+              className="rounded-lg"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
