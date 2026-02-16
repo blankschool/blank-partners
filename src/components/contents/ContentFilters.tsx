@@ -40,6 +40,7 @@ interface ContentFiltersProps {
   clients: string[];
   persons: string[];
   showViewToggle?: boolean;
+  showStageFilter?: boolean;
 }
 
 export function ContentFilters({
@@ -59,6 +60,7 @@ export function ContentFilters({
   clients,
   persons,
   showViewToggle = true,
+  showStageFilter = true,
 }: ContentFiltersProps) {
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [pendingRange, setPendingRange] = useState<{ from: Date; to?: Date } | undefined>(undefined);
@@ -137,19 +139,21 @@ export function ContentFilters({
         </Select>
 
         {/* Stage filter */}
-        <Select value={selectedStage} onValueChange={onStageChange}>
-          <SelectTrigger className="w-[160px] font-sans">
-            <SelectValue placeholder="Etapa" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas etapas</SelectItem>
-            {CONTENT_STAGES.map(stage => (
-              <SelectItem key={stage.key} value={stage.key}>
-                {stage.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {showStageFilter && (
+          <Select value={selectedStage} onValueChange={onStageChange}>
+            <SelectTrigger className="w-[160px] font-sans">
+              <SelectValue placeholder="Etapa" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas etapas</SelectItem>
+              {CONTENT_STAGES.map(stage => (
+                <SelectItem key={stage.key} value={stage.key}>
+                  {stage.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
 
         {/* Period filter */}
         <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>

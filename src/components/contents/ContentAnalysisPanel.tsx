@@ -10,19 +10,32 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ViewMode } from "@/components/contents/ContentFilters";
+import { ContentCalendar } from "@/components/contents/ContentCalendar";
+import { ContentCard } from "@/components/contents/ContentCard";
+import { ContentPagination } from "@/components/contents/ContentPagination";
+import { useState } from "react";
 
 const VIDEO_STAGES = ["edicao de video", "ajustes edicao de video"];
 const DESIGN_STAGES = ["criacao design", "ajustes criacao design"];
+const PRODUCTION_STAGES = [...VIDEO_STAGES, ...DESIGN_STAGES];
+
+const ITEMS_PER_PAGE = 50;
 
 interface ContentAnalysisPanelProps {
   items: ContentItem[];
+  viewMode: ViewMode;
+  onDayClick?: (date: Date, dayItems: ContentItem[]) => void;
 }
 
-export function ContentAnalysisPanel({ items }: ContentAnalysisPanelProps) {
-  const { videoCount, designCount, clientBreakdown } = useMemo(() => {
+export function ContentAnalysisPanel({ items, viewMode, onDayClick }: ContentAnalysisPanelProps) {
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const { videoCount, designCount, clientBreakdown, productionItems } = useMemo(() => {
     let video = 0;
     let design = 0;
     const byClient: Record<string, { video: number; design: number }> = {};
+    const prodItems: ContentItem[] = [];
 
     items.forEach((item) => {
       const normalized = normalizeStatus(item.status);
@@ -30,6 +43,8 @@ export function ContentAnalysisPanel({ items }: ContentAnalysisPanelProps) {
       const isDesign = DESIGN_STAGES.includes(normalized);
 
       if (!isVideo && !isDesign) return;
+
+      prodItems.push(item);
 
       if (!byClient[item.client]) {
         byClient[item.client] = { video: 0, design: 0 };
@@ -54,8 +69,13 @@ export function ContentAnalysisPanel({ items }: ContentAnalysisPanelProps) {
       }))
       .sort((a, b) => b.total - a.total);
 
-    return { videoCount: video, designCount: design, clientBreakdown: breakdown };
+    return { videoCount: video, designCount: design, clientBreakdown: breakdown, productionItems: prodItems };
   }, [items]);
+
+  const paginatedItems = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return productionItems.slice(start, start + ITEMS_PER_PAGE);
+  }, [productionItems, currentPage]);
 
   return (
     <div className="space-y-6">
@@ -85,6 +105,35 @@ export function ContentAnalysisPanel({ items }: ContentAnalysisPanelProps) {
           </span>
         </div>
       </div>
+
+      {/* View: Calendar or List */}
+      {productionItems.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center text-muted-foreground">
+            Nenhum conteúdo em Edição de Vídeo ou Criação Design com os filtros selecionados
+          </CardContent>
+        </Card>
+      ) : viewMode === "calendar" ? (
+        <ContentCalendar items={productionItems} onDayClick={onDayClick} />
+      ) : (
+        <>
+          <Card>
+            <CardContent className="p-0">
+              <div className="divide-y divide-border/50">
+                {paginatedItems.map((item, index) => (
+                  <ContentCard key={`${item.id}-${index}`} item={item} variant="list" />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+          <ContentPagination
+            currentPage={currentPage}
+            totalItems={productionItems.length}
+            itemsPerPage={ITEMS_PER_PAGE}
+            onPageChange={setCurrentPage}
+          />
+        </>
+      )}
 
       {/* Client breakdown table */}
       {clientBreakdown.length > 0 && (
@@ -125,14 +174,6 @@ export function ContentAnalysisPanel({ items }: ContentAnalysisPanelProps) {
                 ))}
               </TableBody>
             </Table>
-          </CardContent>
-        </Card>
-      )}
-
-      {clientBreakdown.length === 0 && (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            Nenhum conteúdo em Edição de Vídeo ou Criação Design com os filtros selecionados
           </CardContent>
         </Card>
       )}

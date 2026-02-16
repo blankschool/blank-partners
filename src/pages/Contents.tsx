@@ -212,7 +212,8 @@ const Contents = () => {
               dateRange={dateRange}
               clients={clients}
               persons={persons}
-              showViewToggle={activeTab === "painel"}
+              showViewToggle={true}
+              showStageFilter={activeTab === "painel"}
             />
           </div>
 
@@ -279,7 +280,13 @@ const Contents = () => {
 
           {/* Análise tab */}
           <TabsContent value="analise">
-            <ContentAnalysisPanel items={itemsForStats} />
+            <ContentAnalysisPanel items={itemsForStats} viewMode={viewMode} onDayClick={handleDayClick} />
+            <DayContentDialog
+              open={selectedDay !== null && activeTab === "analise"}
+              onOpenChange={(open) => !open && setSelectedDay(null)}
+              date={selectedDay}
+              items={selectedDayItems}
+            />
           </TabsContent>
         </Tabs>
 
