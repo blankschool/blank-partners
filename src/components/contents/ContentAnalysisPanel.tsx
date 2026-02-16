@@ -14,12 +14,13 @@ import { ViewMode } from "@/components/contents/ContentFilters";
 import { ContentCalendar } from "@/components/contents/ContentCalendar";
 import { ContentCard } from "@/components/contents/ContentCard";
 import { ContentPagination } from "@/components/contents/ContentPagination";
-import { useState } from "react";
+import { useState, useCallback } from "react";
+
+type StageKey = "video" | "design" | "briefing";
 
 const VIDEO_STAGES = ["edicao de video", "ajustes edicao de video"];
 const DESIGN_STAGES = ["criacao design", "ajustes criacao design"];
 const BRIEFING_STAGES = ["em briefing"];
-const PRODUCTION_STAGES = [...VIDEO_STAGES, ...DESIGN_STAGES, ...BRIEFING_STAGES];
 
 const ITEMS_PER_PAGE = 50;
 
@@ -31,6 +32,18 @@ interface ContentAnalysisPanelProps {
 
 export function ContentAnalysisPanel({ items, viewMode, onDayClick }: ContentAnalysisPanelProps) {
   const [currentPage, setCurrentPage] = useState(1);
+  const [activeStages, setActiveStages] = useState<Set<StageKey>>(new Set(["video", "design", "briefing"]));
+
+  const toggleStage = useCallback((stage: StageKey) => {
+    setActiveStages((prev) => {
+      if (prev.has(stage) && prev.size === 1) return prev;
+      const next = new Set(prev);
+      if (next.has(stage)) next.delete(stage);
+      else next.add(stage);
+      return next;
+    });
+    setCurrentPage(1);
+  }, []);
 
   const { videoCount, designCount, briefingCount, clientBreakdown, productionItems } = useMemo(() => {
     let video = 0;
@@ -47,29 +60,39 @@ export function ContentAnalysisPanel({ items, viewMode, onDayClick }: ContentAna
 
       if (!isVideo && !isDesign && !isBriefing) return;
 
-      prodItems.push(item);
+      // Count totals regardless of active filter
+      if (isVideo) video++;
+      if (isDesign) design++;
+      if (isBriefing) briefing++;
 
       if (!byClient[item.client]) {
         byClient[item.client] = { video: 0, design: 0, briefing: 0 };
       }
+      if (isVideo) byClient[item.client].video++;
+      if (isDesign) byClient[item.client].design++;
+      if (isBriefing) byClient[item.client].briefing++;
 
-      if (isVideo) { video++; byClient[item.client].video++; }
-      if (isDesign) { design++; byClient[item.client].design++; }
-      if (isBriefing) { briefing++; byClient[item.client].briefing++; }
+      // Only include in production items if stage is active
+      const include =
+        (isVideo && activeStages.has("video")) ||
+        (isDesign && activeStages.has("design")) ||
+        (isBriefing && activeStages.has("briefing"));
+      if (include) prodItems.push(item);
     });
 
     const breakdown = Object.entries(byClient)
-      .map(([client, counts]) => ({
-        client,
-        video: counts.video,
-        design: counts.design,
-        briefing: counts.briefing,
-        total: counts.video + counts.design + counts.briefing,
-      }))
+      .map(([client, counts]) => {
+        const t =
+          (activeStages.has("video") ? counts.video : 0) +
+          (activeStages.has("design") ? counts.design : 0) +
+          (activeStages.has("briefing") ? counts.briefing : 0);
+        return { client, video: counts.video, design: counts.design, briefing: counts.briefing, total: t };
+      })
+      .filter((r) => r.total > 0)
       .sort((a, b) => b.total - a.total);
 
     return { videoCount: video, designCount: design, briefingCount: briefing, clientBreakdown: breakdown, productionItems: prodItems };
-  }, [items]);
+  }, [items, activeStages]);
 
   const paginatedItems = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -80,7 +103,10 @@ export function ContentAnalysisPanel({ items, viewMode, onDayClick }: ContentAna
     <div className="space-y-6">
       {/* KPI Cards */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="flex flex-col items-start p-5 rounded-2xl border border-purple-200 bg-purple-100 transition-all">
+        <div
+          onClick={() => toggleStage("video")}
+          className={`flex flex-col items-start p-5 rounded-2xl border transition-all cursor-pointer select-none ${activeStages.has("video") ? "border-purple-200 bg-purple-100" : "border-dashed border-purple-200/50 bg-purple-100/30 opacity-40"}`}
+        >
           <span className="text-[10px] font-medium uppercase tracking-widest text-purple-600">
             Edição de Vídeo
           </span>
@@ -92,7 +118,10 @@ export function ContentAnalysisPanel({ items, viewMode, onDayClick }: ContentAna
           </span>
         </div>
 
-        <div className="flex flex-col items-start p-5 rounded-2xl border border-orange-200 bg-orange-100 transition-all">
+        <div
+          onClick={() => toggleStage("design")}
+          className={`flex flex-col items-start p-5 rounded-2xl border transition-all cursor-pointer select-none ${activeStages.has("design") ? "border-orange-200 bg-orange-100" : "border-dashed border-orange-200/50 bg-orange-100/30 opacity-40"}`}
+        >
           <span className="text-[10px] font-medium uppercase tracking-widest text-orange-600">
             Criação Design
           </span>
@@ -104,7 +133,10 @@ export function ContentAnalysisPanel({ items, viewMode, onDayClick }: ContentAna
           </span>
         </div>
 
-        <div className="flex flex-col items-start p-5 rounded-2xl border border-blue-200 bg-blue-100 transition-all">
+        <div
+          onClick={() => toggleStage("briefing")}
+          className={`flex flex-col items-start p-5 rounded-2xl border transition-all cursor-pointer select-none ${activeStages.has("briefing") ? "border-blue-200 bg-blue-100" : "border-dashed border-blue-200/50 bg-blue-100/30 opacity-40"}`}
+        >
           <span className="text-[10px] font-medium uppercase tracking-widest text-blue-600">
             Em Briefing
           </span>
@@ -157,9 +189,9 @@ export function ContentAnalysisPanel({ items, viewMode, onDayClick }: ContentAna
               <TableHeader>
                 <TableRow>
                   <TableHead>Cliente</TableHead>
-                  <TableHead className="text-center">Briefing</TableHead>
-                  <TableHead className="text-center">Ed. Vídeo</TableHead>
-                  <TableHead className="text-center">Cr. Design</TableHead>
+                  {activeStages.has("briefing") && <TableHead className="text-center">Briefing</TableHead>}
+                  {activeStages.has("video") && <TableHead className="text-center">Ed. Vídeo</TableHead>}
+                  {activeStages.has("design") && <TableHead className="text-center">Cr. Design</TableHead>}
                   <TableHead className="text-center">Total Prod.</TableHead>
                 </TableRow>
               </TableHeader>
@@ -167,27 +199,33 @@ export function ContentAnalysisPanel({ items, viewMode, onDayClick }: ContentAna
                 {clientBreakdown.map((row) => (
                   <TableRow key={row.client}>
                     <TableCell className="font-medium">{row.client}</TableCell>
-                    <TableCell className="text-center">
-                      {row.briefing > 0 ? (
-                        <span className="text-blue-600 font-medium">{row.briefing}</span>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {row.video > 0 ? (
-                        <span className="text-purple-600 font-medium">{row.video}</span>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {row.design > 0 ? (
-                        <span className="text-orange-600 font-medium">{row.design}</span>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
+                    {activeStages.has("briefing") && (
+                      <TableCell className="text-center">
+                        {row.briefing > 0 ? (
+                          <span className="text-blue-600 font-medium">{row.briefing}</span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                    )}
+                    {activeStages.has("video") && (
+                      <TableCell className="text-center">
+                        {row.video > 0 ? (
+                          <span className="text-purple-600 font-medium">{row.video}</span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                    )}
+                    {activeStages.has("design") && (
+                      <TableCell className="text-center">
+                        {row.design > 0 ? (
+                          <span className="text-orange-600 font-medium">{row.design}</span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                    )}
                     <TableCell className="text-center font-semibold">{row.total}</TableCell>
                   </TableRow>
                 ))}
