@@ -67,8 +67,8 @@ const Contents = () => {
     return Array.from(uniquePersons).sort();
   }, [items]);
 
-  // Items filtered by date, person, client, and search (for stats & analysis)
-  const itemsForStats = useMemo(() => {
+  // Items filtered by person, client, and search only (no date filter) - for rhythm calculation
+  const allItemsFiltered = useMemo(() => {
     return items.filter(item => {
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
@@ -80,13 +80,20 @@ const Contents = () => {
       }
       if (selectedPerson !== "all" && item.socialMedia !== selectedPerson) return false;
       if (selectedClient !== "all" && item.client !== selectedClient) return false;
+      return true;
+    });
+  }, [items, searchQuery, selectedPerson, selectedClient]);
+
+  // Items filtered by date, person, client, and search (for stats & analysis)
+  const itemsForStats = useMemo(() => {
+    return allItemsFiltered.filter(item => {
       if (dateRange) {
         const itemDate = parseDate(item.date);
         if (!itemDate || !isWithinInterval(itemDate, { start: dateRange.from, end: dateRange.to })) return false;
       }
       return true;
     });
-  }, [items, searchQuery, selectedPerson, selectedClient, dateRange]);
+  }, [allItemsFiltered, dateRange]);
 
   const filteredItems = useMemo(() => {
     return items.filter(item => {
@@ -285,7 +292,7 @@ const Contents = () => {
 
           {/* Análise tab */}
           <TabsContent value="analise">
-            <ContentAnalysisPanel items={itemsForStats} viewMode={viewMode} onDayClick={handleDayClick} />
+            <ContentAnalysisPanel items={itemsForStats} allItems={allItemsFiltered} viewMode={viewMode} onDayClick={handleDayClick} />
             <DayContentDialog
               open={selectedDay !== null && activeTab === "analise"}
               onOpenChange={(open) => !open && setSelectedDay(null)}

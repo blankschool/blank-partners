@@ -14,6 +14,7 @@ import { ViewMode } from "@/components/contents/ContentFilters";
 import { ContentCalendar } from "@/components/contents/ContentCalendar";
 import { ContentCard } from "@/components/contents/ContentCard";
 import { ContentPagination } from "@/components/contents/ContentPagination";
+import { ProtectionDaysPanel } from "@/components/contents/ProtectionDaysPanel";
 import { useState, useCallback } from "react";
 
 type StageKey = "video" | "design" | "briefing" | "ready";
@@ -27,11 +28,12 @@ const ITEMS_PER_PAGE = 50;
 
 interface ContentAnalysisPanelProps {
   items: ContentItem[];
+  allItems?: ContentItem[];
   viewMode: ViewMode;
   onDayClick?: (date: Date, dayItems: ContentItem[]) => void;
 }
 
-export function ContentAnalysisPanel({ items, viewMode, onDayClick }: ContentAnalysisPanelProps) {
+export function ContentAnalysisPanel({ items, allItems, viewMode, onDayClick }: ContentAnalysisPanelProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [activeStages, setActiveStages] = useState<Set<StageKey>>(new Set(["video", "design", "briefing", "ready"]));
 
@@ -197,6 +199,9 @@ export function ContentAnalysisPanel({ items, viewMode, onDayClick }: ContentAna
           />
         </>
       )}
+
+      {/* Protection Days */}
+      <ProtectionDaysPanel allItems={allItems ?? items} />
 
       {/* Client breakdown table */}
       {clientBreakdown.length > 0 && (
