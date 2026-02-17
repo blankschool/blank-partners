@@ -19,6 +19,7 @@ import ScopeControl from "./pages/ScopeControl";
 import Reports from "./pages/Reports";
 import Meetings from "./pages/Meetings";
 import Production from "./pages/Production";
+import ProtectionDays from "./pages/ProtectionDays";
 import Auth from "./pages/Auth";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
@@ -128,6 +129,14 @@ const App = () => (
               element={
                 <AdminRoute>
                   <Production />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/contents/protection"
+              element={
+                <AdminRoute>
+                  <ProtectionDays />
                 </AdminRoute>
               }
             />
