@@ -2,6 +2,7 @@ import { useMemo, useState, useCallback } from "react";
 import { ContentItem } from "@/hooks/useGoogleSheetsContent";
 import { normalizeStatus } from "@/lib/contentStages";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -68,8 +69,11 @@ interface ProtectionDaysFullPageProps {
   allItems: ContentItem[];
 }
 
+const HORIZON_OPTIONS = [7, 14, 21, 30] as const;
+
 export function ProtectionDaysFullPage({ allItems }: ProtectionDaysFullPageProps) {
   const [showOnlyBad, setShowOnlyBad] = useState(false);
+  const [horizonDays, setHorizonDays] = useState(14);
   const [activeFilters, setActiveFilters] = useState<Set<FilterKey>>(
     new Set(["excellent", "ok", "bad", "no_calendar"])
   );
@@ -86,7 +90,7 @@ export function ProtectionDaysFullPage({ allItems }: ProtectionDaysFullPageProps
 
   const { clientData, totalOverdue, summary } = useMemo(() => {
     const today = startOfToday();
-    const horizon = addDays(today, 14);
+    const horizon = addDays(today, horizonDays);
     const past28 = subDays(today, 28);
 
     const byClient: Record<string, ContentItem[]> = {};
@@ -169,7 +173,7 @@ export function ProtectionDaysFullPage({ allItems }: ProtectionDaysFullPageProps
         noCal: results.filter((r) => r.classification === "no_calendar").length,
       },
     };
-  }, [allItems]);
+  }, [allItems, horizonDays]);
 
   const displayData = useMemo(() => {
     let data = clientData;
@@ -274,6 +278,23 @@ export function ProtectionDaysFullPage({ allItems }: ProtectionDaysFullPageProps
             {totalOverdue} {totalOverdue === 1 ? "item vencido" : "itens vencidos"} (excluídos do cálculo)
           </div>
         )}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground font-medium">Horizonte:</span>
+          <div className="flex items-center gap-1">
+            {HORIZON_OPTIONS.map((days) => (
+              <Button
+                key={days}
+                variant={horizonDays === days ? "default" : "outline"}
+                size="sm"
+                className="h-7 px-2.5 text-xs"
+                onClick={() => setHorizonDays(days)}
+              >
+                {days}d
+              </Button>
+            ))}
+          </div>
+        </div>
+
         <div className="flex items-center gap-3 ml-auto">
           <Switch id="show-bad-full" checked={showOnlyBad} onCheckedChange={setShowOnlyBad} />
           <Label htmlFor="show-bad-full" className="text-sm cursor-pointer">
