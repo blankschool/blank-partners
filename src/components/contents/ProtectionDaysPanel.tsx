@@ -55,7 +55,8 @@ interface ClientProtection {
   protectionDays: number | null;
   classification: Classification;
   readyCount: number;
-  inProductionCount: number;
+  creationCount: number;
+  briefingCount: number;
   overdueCount: number;
   ce: number;
   postsPerDay: number;
@@ -87,7 +88,8 @@ export function ProtectionDaysPanel({ allItems }: ProtectionDaysPanelProps) {
     Object.entries(byClient).forEach(([client, clientItems]) => {
       let ce = 0;
       let readyCount = 0;
-      let inProdCount = 0;
+      let creationCount = 0;
+      let briefingCount = 0;
       let overdueCount = 0;
       let scheduledLast28 = 0;
 
@@ -117,7 +119,8 @@ export function ProtectionDaysPanel({ allItems }: ProtectionDaysPanelProps) {
           const weight = WEIGHTS[normalized] ?? 0;
           ce += weight;
           if (normalized === "pronto para postar") readyCount++;
-          else inProdCount++;
+          else if (normalized === "em briefing") briefingCount++;
+          else creationCount++;
         }
       });
 
@@ -137,7 +140,8 @@ export function ProtectionDaysPanel({ allItems }: ProtectionDaysPanelProps) {
         protectionDays,
         classification,
         readyCount,
-        inProductionCount: inProdCount,
+        creationCount,
+        briefingCount,
         overdueCount,
         ce,
         postsPerDay,
@@ -252,7 +256,7 @@ export function ProtectionDaysPanel({ allItems }: ProtectionDaysPanelProps) {
                       <Badge variant={cfg.variant}>{cfg.label}</Badge>
                     </TableCell>
                     <TableCell className="text-right text-xs text-muted-foreground">
-                      Prontos: {row.readyCount} | Em prod: {row.inProductionCount}
+                      Prontos: {row.readyCount} | Em criação: {row.creationCount} | Briefing: {row.briefingCount}
                     </TableCell>
                   </TableRow>
                 );
