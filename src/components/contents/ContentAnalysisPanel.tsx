@@ -14,8 +14,9 @@ import { ViewMode } from "@/components/contents/ContentFilters";
 import { ContentCalendar } from "@/components/contents/ContentCalendar";
 import { ContentCard } from "@/components/contents/ContentCard";
 import { ContentPagination } from "@/components/contents/ContentPagination";
-import { ProtectionDaysPanel } from "@/components/contents/ProtectionDaysPanel";
 import { useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { Shield, ArrowRight } from "lucide-react";
 
 type StageKey = "video" | "design" | "briefing" | "ready";
 
@@ -34,6 +35,7 @@ interface ContentAnalysisPanelProps {
 }
 
 export function ContentAnalysisPanel({ items, allItems, viewMode, onDayClick }: ContentAnalysisPanelProps) {
+  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [activeStages, setActiveStages] = useState<Set<StageKey>>(new Set(["video", "design", "briefing", "ready"]));
 
@@ -200,8 +202,22 @@ export function ContentAnalysisPanel({ items, allItems, viewMode, onDayClick }: 
         </>
       )}
 
-      {/* Protection Days */}
-      <ProtectionDaysPanel allItems={allItems ?? items} />
+      {/* Protection Days link */}
+      <Card
+        className="cursor-pointer hover:border-primary/30 transition-colors"
+        onClick={() => navigate("/contents/protection")}
+      >
+        <CardContent className="flex items-center justify-between py-5">
+          <div className="flex items-center gap-3">
+            <Shield className="h-5 w-5 text-primary" />
+            <div>
+              <p className="font-medium">Dias de Proteção</p>
+              <p className="text-sm text-muted-foreground">Ver painel completo</p>
+            </div>
+          </div>
+          <ArrowRight className="h-4 w-4 text-muted-foreground" />
+        </CardContent>
+      </Card>
 
       {/* Client breakdown table */}
       {clientBreakdown.length > 0 && (
