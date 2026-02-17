@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo } from "react"; // v2
 import { ContentItem } from "@/hooks/useGoogleSheetsContent";
 import { normalizeStatus } from "@/lib/contentStages";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +14,6 @@ import { ViewMode } from "@/components/contents/ContentFilters";
 import { ContentCalendar } from "@/components/contents/ContentCalendar";
 import { ContentCard } from "@/components/contents/ContentCard";
 import { ContentPagination } from "@/components/contents/ContentPagination";
-import { ReadinessDashboard } from "@/components/contents/ReadinessDashboard";
 import { useState, useCallback } from "react";
 
 type StageKey = "video" | "design" | "briefing" | "ready";
@@ -265,9 +264,6 @@ export function ContentAnalysisPanel({ items, viewMode, onDayClick }: ContentAna
           </CardContent>
         </Card>
       )}
-
-      {/* Readiness Dashboard */}
-      <ReadinessDashboard items={items} />
     </div>
   );
 }
